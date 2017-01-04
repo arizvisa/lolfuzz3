@@ -1,0 +1,192 @@
+{
+    "builders" : [
+        { "type" : "qemu",
+            "format" : "ovf",
+            "headless" : false,
+            "boot_wait" : "45s",
+            "boot_command" : [
+                "sudo -i<enter><wait><enter>",
+                "systemctl stop sshd.socket<enter>",
+                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "<wait10>reboot<enter>",
+                "<wait10>"
+            ],
+            "shutdown_command" : "sudo -S shutdown -P now",
+
+            "vm_name" : "{{user `guest-name`}}",
+            "output_directory" : "{{user `install-output`}}",
+            "http_directory" : "{{user `install-input`}}",
+    
+            "iso_url" : "{{user `iso-url`}}",
+            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
+            "iso_checksum" : "{{user `iso-checksum`}}",
+
+            "ssh_username" : "{{user `provision-user`}}",
+            "ssh_port" : 22,
+            "ssh_private_key_file" : "{{user `provision-key`}}",
+
+            "disk_interface" : "scsi",
+            "format" : "qcow2",
+            "disk_compression" : true,
+            "disk_size" : "{{user `guest-disk-size`}}"
+        },
+        { "type" : "parallels-iso",
+            "boot_wait" : "45s",
+            "boot_command" : [
+                "sudo -i<enter><wait><enter>",
+                "systemctl stop sshd.socket<enter>",
+                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "<wait10>reboot<enter>",
+                "<wait10>"
+            ],
+            "shutdown_command" : "sudo -S shutdown -P now",
+
+            "vm_name" : "{{user `guest-name`}}",
+            "output_directory" : "{{user `install-output`}}",
+            "http_directory" : "{{user `install-input`}}",
+
+            "iso_url" : "{{user `iso-url`}}",
+            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
+            "iso_checksum" : "{{user `iso-checksum`}}",
+
+            "ssh_username" : "{{user `provision-user`}}",
+            "ssh_port" : 22,
+            "ssh_private_key_file" : "{{user `provision-key`}}",
+
+            "hard_drive_interface" : "scsi",
+            "disk_size" : "{{user `guest-disk-size`}}",
+            "parallels_tools_flavor" : "disable",
+            "prlctl" : [
+                [ "set", "{{.Name}}", "--memsize", "{{user `guest-memory-size`}}" ],
+                [ "set", "{{.Name}}", "--cpus", "{{user `guest-cpu-count`}}" ],
+                []
+            ]
+        },
+        { "type" : "virtualbox-iso",
+            "format" : "ovf",
+            "headless" : false,
+            "boot_wait" : "45s",
+            "boot_command" : [
+                "sudo -i<enter><wait><enter>",
+                "systemctl stop sshd.socket<enter>",
+                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "<wait10>reboot<enter>",
+                "<wait10>"
+            ],
+            "shutdown_command" : "sudo -S shutdown -P now",
+
+            "vm_name" : "{{user `guest-name`}}",
+            "output_directory" : "{{user `install-output`}}",
+            "http_directory" : "{{user `install-input`}}",
+
+            "iso_url" : "{{user `iso-url`}}",
+            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
+            "iso_checksum" : "{{user `iso-checksum`}}",
+
+            "ssh_username" : "{{user `provision-user`}}",
+            "ssh_port" : 22,
+            "ssh_private_key_file" : "{{user `provision-key`}}",
+
+            "hard_drive_interface" : "scsi",
+            "disk_size" : "{{user `guest-disk-size`}}",
+            "guest_additions_mode" : "disable",
+            "vboxmanage" : [
+                [ "modifyvm", "{{.Name}}", "--memory", "{{user `guest-memory-size`}}" ],
+                [ "modifyvm", "{{.Name}}", "--cpus", "{{user `guest-cpu-count`}}" ],
+                []
+            ]
+        },
+        { "type" : "vmware-iso",
+            "format" : "ovf",
+            "headless" : false,
+            "boot_wait" : "45s",
+            "boot_command" : [
+                "sudo -i<enter><wait><enter>",
+                "systemctl stop sshd.socket<enter>",
+                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "<wait10>reboot<enter>",
+                "<wait10>"
+            ],
+            "shutdown_command" : "sudo -S shutdown -P now",
+
+            "vm_name" : "{{user `guest-name`}}",
+            "output_directory" : "{{user `install-output`}}",
+            "http_directory" : "{{user `install-input`}}",
+
+            "iso_url" : "{{user `iso-url`}}",
+            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
+            "iso_checksum" : "{{user `iso-checksum`}}",
+
+            "ssh_username" : "{{user `provision-user`}}",
+            "ssh_port" : 22,
+            "ssh_private_key_file" : "{{user `provision-key`}}",
+
+            "guest_os_type" : "linux",
+            "tools_upload_flavor" : "linux",
+            "disk_size" : "{{user `guest-disk-size`}}",
+            "vmx_data" : {
+                "memsize" : "{{user `guest-memory-size`}}",
+                "numvcpus" : "{{user `guest-cpu-count`}}"
+            }
+        },
+        { "type" : "hyperv-iso",
+            "boot_wait" : "45s",
+            "boot_command" : [
+                "sudo -i<enter><wait><enter>",
+                "systemctl stop sshd.socket<enter>",
+                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "<wait10>reboot<enter>",
+                "<wait10>"
+            ],
+            "shutdown_command" : "sudo -S shutdown -P now",
+
+            "vm_name" : "{{user `guest-name`}}",
+            "output_directory" : "{{user `install-output`}}",
+            "http_directory" : "{{user `install-input`}}",
+    
+            "iso_url" : "{{user `iso-url`}}",
+            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
+            "iso_checksum" : "{{user `iso-checksum`}}",
+
+            "ssh_username" : "{{user `provision-user`}}",
+            "ssh_port" : 22,
+            "ssh_private_key_file" : "{{user `provision-key`}}",
+
+            "cpu" : "{{user `guest-cpu-count`}}",
+            "disk_size" : "{{user `guest-disk-size`}}",
+            "ram_size" : "{{user `guest-memory-size`}}"
+        }
+    ],
+    "provisioners" : [
+        { "type" : "shell",
+            "inline" : [
+                "uname -a",
+                "echo machine-id:;cat /etc/machine-id",
+                "cat /etc/lsb-release"
+            ]
+        }
+    ],
+    "post-processors" : [],
+    "variables" : {
+        "guest-name" : "unnamed-project.master",
+        "guest-cpu-count" : "1",
+        "guest-disk-size" : "102400",
+        "guest-memory-size" : "4096",
+        "guest-config" : "path-to-yaml-file",
+
+        "provision-user" : "core",
+        "provision-key" : "path-to-ssh-private-key",
+
+        "iso-checksum-type" : "iso-hash-checksum-type",
+        "iso-url" : "uri-to-iso-file",
+        "iso-checksum" : "iso-hash-checksum",
+
+        "install-input" : "path-to-wwwroot-files",
+        "install-output" : "output-master-image"
+    }
+}

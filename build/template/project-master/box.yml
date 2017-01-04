@@ -1,0 +1,127 @@
+#cloud-config
+#hostname: "unnamed.master"
+
+coreos:
+  update:
+    reboot-strategy: "etcd-lock"
+
+  etcd2:
+    advertise-client-urls: http://0.0.0.0:4001
+    listen-client-urls: http://0.0.0.0:4001
+
+  fleet:
+    etcd_servers: "http://0.0.0.0:4001"
+    #etcd_key_prefix: "/project-name/fleet"
+    etcd_key_prefix: "/fleet"
+
+  units:
+    - name: "etcd2.service"
+      command: "start"
+
+    - name: "fleet.service"
+      command: "start"
+
+    - name: "docker-build.service"
+      command: "start"
+      runtime: true
+      content: |
+        [Unit]
+        Description=Docker-Build Service
+
+        [Service]
+        User=root
+        Type=oneshot
+        RemainAfterExit=yes
+        Environment="DOCKER_BUILDDIR=/opt/docker"
+        ExecStart=/bin/sh -c \
+            '${DOCKER_BUILDDIR}/docker-create.sh; ${DOCKER_BUILDDIR}/docker-update.sh'
+
+        [Install]
+        WantedBy=multi-user.target
+
+#    - name: "docker-run.service"
+#      command: "start"
+#      runtime: true
+#      content: |
+#        [Unit]
+#        Description=Docker-Test Service
+#        Wants=docker-build.service
+#
+#        [Service]
+#        User=root
+#        Type=oneshot
+#        RemainAfterExit=yes
+#        ExecStart=/bin/sh -c \
+#            '/bin/touch /root/docker-has-been-built'
+#
+#        [Install]
+#        WantedBy=multi-user.target
+
+manage_etc_hosts: "localhost"
+
+write_files:
+    - path: "/opt/docker/docker-create.sh"
+      permissions: "0750"
+      owner: "root"
+      content: |
+        [ ! -d "$DOCKER_BUILDDIR" ] && echo "DOCKER_BUILDDIR does not exist." && exit 1
+
+        umask 077
+        state="$DOCKER_BUILDDIR/docker-build.create.$$"
+        trap "[ -f \"$state\" ] && /bin/rm -f \"$state\"; exit" SIGHUP SIGINT SIGTERM
+
+        # Export the list of current images for comparing against directory
+        /bin/docker images --format=$'{{.Repository}}\t{{.ID}}' >| "$state"
+
+        # Build all images that aren't in docker
+        cd "$DOCKER_BUILDDIR" && for d in *; do
+            [ ! -d "$d" ] && continue
+            grep -q "^$d"$'\t' "$state" && continue
+            printf "Creating new docker image for %s\n" "$d"
+            /bin/docker build -t `basename "$d"`:latest "$d"
+        done
+        /bin/rm -f "$state"
+
+    - path: "/opt/docker/docker-update.sh"
+      permissions: "0750"
+      owner: "root"
+      content: |
+        [ ! -d "$DOCKER_BUILDDIR" ] && echo "DOCKER_BUILDDIR does not exist." && exit 1
+
+        umask 077
+        state="$DOCKER_BUILDDIR/docker-build.update.$$"
+        trap "[ -f \"$state\" ] && /bin/rm -f \"$state\"; exit" SIGHUP SIGINT SIGTERM
+
+        # Enumerate all images in docker
+        /bin/docker images --format=$'{{.ID}}\t{{.Repository}}\t{{.Tag}}\t{{.CreatedAt}}' | sed 's/ +[^+]\+$//' | while read digest name tag creation; do
+            # Check timestamp of directory
+            [ ! -d "$DOCKER_BUILDDIR/${name}" ] && continue
+            buildts=`date +%s -d "${creation}"`
+            filets=`stat -c%Y "$DOCKER_BUILDDIR/${name}"/Dockerfile`
+            [ ${filets} -lt ${buildts} ] && printf "Docker image %s:%s(%s) is up-to-date\n" "${name}" "${tag}" "${digest}" && continue
+
+            printf "Docker image %s:%s(%s) needs to be updated\n" "${name}" "${tag}" "${digest}"
+
+            # Build it if it's not up-to-date
+            /bin/docker build -t "${name}:latest" "$DOCKER_BUILDDIR/${name}"
+
+        #    # Check to see if any running containers are using the previous image
+        #    /bin/docker ps -f "ancestor=${digest}" -f status=created -f status=restarting -f status=running -f status=paused --format=$'{{.Status}}\t{{.Names}}\t{{.ID}}' >| "$state"
+        #    numcontainers=`cat "$state" | wc -l`
+        #    
+        #    # if no containers are found, we can just delete the old image
+        #    if [ ${numcontainers} -eq 0 ]; then
+        #        /bin/docker rmi "${digest}"
+        #    # otherwise, let the user know
+        #    else
+        #        /bin/printf "Unable to remove image %s due to following containers:\n" "${digest}"
+        #        cat "$state" | while read status name id; do
+        #            /bin/printf "%s(%s) -- %s\n" "${name}" "${id}" "${status}"
+        #        done
+        #    fi
+        done
+        /bin/rm -f "$state"
+
+    - path: "/srv/.empty"
+      permissions: "0644"
+      owner: "root"

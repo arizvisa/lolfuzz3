@@ -1,0 +1,4 @@
+coreos_production_iso_image.iso
+coreos_production_image.bin.bz2
+coreos_production_image.bin.bz2.sig
+version.txt

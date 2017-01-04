@@ -1,0 +1,6 @@
+HiYaPyCo==0.4.8
+Jinja2==2.8
+jsonmerge==1.2.1
+jsonschema==2.4.0
+MarkupSafe==0.23
+PyYAML==3.12

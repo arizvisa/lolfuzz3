@@ -1,0 +1,7 @@
+{
+    "post-processors" : [{
+        "type" : "vagrant-vmware-ovf",
+        "compression" : "9",
+        "format" : "ovf"
+    }]
+}
