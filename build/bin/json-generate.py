@@ -103,4 +103,4 @@ if __name__ == '__main__':
     else:
         res.update(value)
 
-    print >>sys.stdout, json.dumps(result, indent=args.indent, ensure_ascii=False)
+    json.dump(result, sys.stdout, indent=args.indent, ensure_ascii=False)

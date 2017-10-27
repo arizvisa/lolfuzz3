@@ -6,8 +6,8 @@ coreos:
     reboot-strategy: "etcd-lock"
 
   etcd2:
-    advertise-client-urls: http://0.0.0.0:4001
-    listen-client-urls: http://0.0.0.0:4001
+    advertise-client-urls: "http://0.0.0.0:4001"
+    listen-client-urls: "http://0.0.0.0:4001"
 
   fleet:
     etcd_servers: "http://0.0.0.0:4001"
@@ -20,6 +20,15 @@ coreos:
 
     - name: "fleet.service"
       command: "start"
+
+    - name: "flanneld.service"
+      #command: "stop"
+      drop-ins:
+        - name: "50-network-config.conf"
+          content: |
+            [Service]
+            ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config \
+                '{ "Network" : "10.1.0.0/16", "SubnetLen" : 28, "SubnetMin" : "10.1.10.0", "SubnetMax" : "10.1.50.0" }'
 
     - name: "docker-build.service"
       command: "start"
@@ -78,7 +87,7 @@ write_files:
             [ ! -d "$d" ] && continue
             grep -q "^$d"$'\t' "$state" && continue
             printf "Creating new docker image for %s\n" "$d"
-            /bin/docker build -t `basename "$d"`:latest "$d"
+            /bin/docker build --rm=true -t `basename "$d"`:latest "$d"
         done
         /bin/rm -f "$state"
 
@@ -103,7 +112,7 @@ write_files:
             printf "Docker image %s:%s(%s) needs to be updated\n" "${name}" "${tag}" "${digest}"
 
             # Build it if it's not up-to-date
-            /bin/docker build -t "${name}:latest" "$DOCKER_BUILDDIR/${name}"
+            /bin/docker build --rm=true -t "${name}:latest" "$DOCKER_BUILDDIR/${name}"
 
         #    # Check to see if any running containers are using the previous image
         #    /bin/docker ps -f "ancestor=${digest}" -f status=created -f status=restarting -f status=running -f status=paused --format=$'{{.Status}}\t{{.Names}}\t{{.ID}}' >| "$state"

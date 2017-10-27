@@ -11,7 +11,8 @@ def usage():
     return res
 
 if __name__ == '__main__':
-    import hiyapyco
+    import yamlreader
+    from yamlreader.yamlreader import yaml_load, safe_dump
 
     p = usage()
     args = p.parse_args()
@@ -19,5 +20,6 @@ if __name__ == '__main__':
         p.print_usage()
         sys.exit(1)
     
-    res = hiyapyco.load( *(args.template.name,) + tuple(map(operator.attrgetter('name'), args.source)), method=hiyapyco.METHOD_MERGE)
-    print >>sys.stdout, hiyapyco.dump(res, allow_unicode=False)
+    files = (args.template.name,) + tuple(map(operator.attrgetter('name'), args.source))
+    res = yaml_load(files, defaultdata={})
+    print >>sys.stdout, safe_dump(res, allow_unicode=True)

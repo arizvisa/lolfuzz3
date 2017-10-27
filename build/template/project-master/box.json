@@ -3,7 +3,7 @@
         { "type" : "qemu",
             "format" : "ovf",
             "headless" : false,
-            "boot_wait" : "45s",
+            "boot_wait" : "60s",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
@@ -32,7 +32,7 @@
             "disk_size" : "{{user `guest-disk-size`}}"
         },
         { "type" : "parallels-iso",
-            "boot_wait" : "45s",
+            "boot_wait" : "60s",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
@@ -67,7 +67,7 @@
         { "type" : "virtualbox-iso",
             "format" : "ovf",
             "headless" : false,
-            "boot_wait" : "45s",
+            "boot_wait" : "60s",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
@@ -102,7 +102,7 @@
         { "type" : "vmware-iso",
             "format" : "ovf",
             "headless" : false,
-            "boot_wait" : "45s",
+            "boot_wait" : "60s",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
@@ -131,10 +131,14 @@
             "vmx_data" : {
                 "memsize" : "{{user `guest-memory-size`}}",
                 "numvcpus" : "{{user `guest-cpu-count`}}"
-            }
+            },
+            "network" : "{{user `guest-network`}}",
+            "sound" : true,
+            "usb" : true,
+            "serial" : "{{user `guest-serial`}}"
         },
         { "type" : "hyperv-iso",
-            "boot_wait" : "45s",
+            "boot_wait" : "60s",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
@@ -178,6 +182,9 @@
         "guest-disk-size" : "102400",
         "guest-memory-size" : "4096",
         "guest-config" : "path-to-yaml-file",
+
+        "guest-network" : "nat",
+        "guest-serial" : "none",
 
         "provision-user" : "core",
         "provision-key" : "path-to-ssh-private-key",
