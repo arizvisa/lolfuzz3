@@ -183,7 +183,7 @@
         "guest-memory-size" : "4096",
         "guest-config" : "path-to-yaml-file",
 
-        "guest-network" : "nat",
+        "guest-network" : "hostonly",
         "guest-serial" : "none",
 
         "provision-user" : "core",
