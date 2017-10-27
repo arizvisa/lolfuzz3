@@ -1,4 +1,4 @@
-include template/project-master/Makefile
+include project-master/Makefile
 
 .PHONY: master-image
 master-image: master-base-download master-base-image master-base-output

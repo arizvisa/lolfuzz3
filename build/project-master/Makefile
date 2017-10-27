@@ -18,8 +18,8 @@ else
 endif
 
 boxname=${PROJECT}.master
-boxoutput=output-${boxname}
-workdir?=wwwroot
+boxoutput=template.${boxname}
+workdir?=build.${boxname}
 config=master.yml
 
 # files for template
