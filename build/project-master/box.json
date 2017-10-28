@@ -7,8 +7,8 @@
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
-                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
@@ -25,6 +25,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
+            "ssh_wait_timeout" : "10m",
 
             "disk_interface" : "scsi",
             "format" : "qcow2",
@@ -36,8 +37,8 @@
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
-                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
@@ -54,6 +55,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
+            "ssh_wait_timeout" : "10m",
 
             "hard_drive_interface" : "scsi",
             "disk_size" : "{{user `guest-disk-size`}}",
@@ -71,8 +73,8 @@
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
-                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
@@ -89,6 +91,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
+            "ssh_wait_timeout" : "10m",
 
             "hard_drive_interface" : "scsi",
             "disk_size" : "{{user `guest-disk-size`}}",
@@ -106,8 +109,8 @@
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
-                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
@@ -124,6 +127,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
+            "ssh_wait_timeout" : "10m",
 
             "guest_os_type" : "linux",
             "tools_upload_flavor" : "linux",
@@ -142,8 +146,8 @@
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
-                "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
@@ -160,6 +164,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
+            "ssh_wait_timeout" : "10m",
 
             "cpu" : "{{user `guest-cpu-count`}}",
             "disk_size" : "{{user `guest-disk-size`}}",
