@@ -22,4 +22,9 @@ if __name__ == '__main__':
     
     files = (args.template.name,) + tuple(map(operator.attrgetter('name'), args.source))
     res = yaml_load(files, defaultdata={})
+
+    if sys.platform == 'win32':
+        import msvcrt, os
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
     print >>sys.stdout, safe_dump(res, allow_unicode=True)

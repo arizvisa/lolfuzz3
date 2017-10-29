@@ -99,4 +99,8 @@ if __name__ == '__main__':
         res[:] = [value]
         res = res[0]
 
+    if sys.platform == 'win32':
+        import msvcrt, os
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
     print >>sys.stdout, yaml.dump_all(result if isinstance(result, list) else [result], indent=args.indent, allow_unicode=True)

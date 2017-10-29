@@ -84,4 +84,8 @@ if __name__ == '__main__':
         raise
     result = store(template, res, path)
 
+    if sys.platform == 'win32':
+        import msvcrt, os
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
     json.dump(result, sys.stdout, indent=args.indent, ensure_ascii=False)
