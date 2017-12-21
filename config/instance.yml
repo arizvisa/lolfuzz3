@@ -1,0 +1,13 @@
+machines:
+    - name: ldap-client
+      role: role.ldap-client
+
+    - name: ldap-server
+      agent: kerberos-capture
+      role: role.ldap-server
+
+    - name: ldap-service
+      agent: packet-capture
+      role: role.ldap-client
+
+    

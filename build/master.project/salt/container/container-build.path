@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch for any images that need to be built.
+
+[Path]
+PathChanged={{ container_path }}/build/
+Unit=container-build.service
+
+[Install]
+WantedBy=multi-user.target

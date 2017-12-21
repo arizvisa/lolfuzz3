@@ -1,0 +1,16 @@
+[Unit]
+Description=Image-Building Service
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+User=root
+Type=oneshot
+RemainAfterExit=yes
+Environment="CONTAINER_DIR={{ container_path }}"
+ExecStart=/bin/sh -c \
+    "${CONTAINER_DIR}"/container-build.sh
+
+[Install]
+RequiredBy=container-build.path
+WantedBy=multi-user.target

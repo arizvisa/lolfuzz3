@@ -3,11 +3,11 @@
         { "type" : "qemu",
             "format" : "ovf",
             "headless" : false,
-            "boot_wait" : "60s",
+            "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
-                "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
+                "curl --retry 10 --retry-connrefused --retry-max-time 0 -L -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
                 "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
@@ -17,7 +17,7 @@
             "vm_name" : "{{user `guest-name`}}",
             "output_directory" : "{{user `install-output`}}",
             "http_directory" : "{{user `install-input`}}",
-    
+
             "iso_url" : "{{user `iso-url`}}",
             "iso_checksum_type" : "{{user `iso-checksum-type`}}",
             "iso_checksum" : "{{user `iso-checksum`}}",
@@ -25,7 +25,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "10m",
+            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
 
             "disk_interface" : "scsi",
             "format" : "qcow2",
@@ -33,7 +33,7 @@
             "disk_size" : "{{user `guest-disk-size`}}"
         },
         { "type" : "parallels-iso",
-            "boot_wait" : "60s",
+            "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
@@ -55,7 +55,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "10m",
+            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
 
             "hard_drive_interface" : "scsi",
             "disk_size" : "{{user `guest-disk-size`}}",
@@ -69,7 +69,7 @@
         { "type" : "virtualbox-iso",
             "format" : "ovf",
             "headless" : false,
-            "boot_wait" : "60s",
+            "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
@@ -91,7 +91,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "10m",
+            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
 
             "hard_drive_interface" : "scsi",
             "disk_size" : "{{user `guest-disk-size`}}",
@@ -105,7 +105,7 @@
         { "type" : "vmware-iso",
             "format" : "ovf",
             "headless" : false,
-            "boot_wait" : "60s",
+            "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
@@ -127,7 +127,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "10m",
+            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
 
             "guest_os_type" : "linux",
             "tools_upload_flavor" : "linux",
@@ -142,7 +142,7 @@
             "serial" : "{{user `guest-serial`}}"
         },
         { "type" : "hyperv-iso",
-            "boot_wait" : "60s",
+            "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
@@ -156,7 +156,7 @@
             "vm_name" : "{{user `guest-name`}}",
             "output_directory" : "{{user `install-output`}}",
             "http_directory" : "{{user `install-input`}}",
-    
+
             "iso_url" : "{{user `iso-url`}}",
             "iso_checksum_type" : "{{user `iso-checksum-type`}}",
             "iso_checksum" : "{{user `iso-checksum`}}",
@@ -164,7 +164,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "10m",
+            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
 
             "cpu" : "{{user `guest-cpu-count`}}",
             "disk_size" : "{{user `guest-disk-size`}}",
@@ -172,17 +172,176 @@
         }
     ],
     "provisioners" : [
+        { "type" : "shell-local",
+            "command" : "echo [*] System was successfully installed"
+        },
         { "type" : "shell",
             "inline" : [
                 "uname -a",
                 "echo machine-id:;cat /etc/machine-id",
                 "cat /etc/lsb-release"
             ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [*] Uploading private key for connecting to localhost"
+        },
+        { "type" : "shell",
+            "inline" : [
+                "mkdir -p /home/core/.ssh",
+                "chmod 0700 /home/core/.ssh"
+            ]
+        },
+        { "type" : "file",
+            "source" : "{{user `provision-key`}}",
+            "destination" : "/home/core/.ssh/id_rsa"
+        },
+        { "type" : "shell",
+            "inline" : [
+                "chmod 0400 /home/core/.ssh/id_rsa"
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [*] Uploading generic CoreOS tools"
+        },
+        { "type" : "file",
+            "source" : "{{user `tools-directory`}}",
+            "destination" : "/home/core/coreos"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- /usr/bin/env -- {{.Vars}} '{{.Path}}'",
+            "inline" : [
+                "mkdir /opt",
+                "chmod 755 /opt",
+                "find /home/core/coreos -exec chmod 755 {} +",
+                "mv /home/core/coreos /opt/coreos"
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [*] Downloading toolbox container environment"
+        },
+        { "type" : "shell",
+            "inline" : [
+                "sudo -H -E -i -- toolbox -- /bin/true"
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [-] Installing salt-minion inside toolbox"
+        },
+        { "type" : "file",
+            "source" : "{{user `salt-bootstrap-installer`}}",
+            "destination" : "/tmp/install-salt.sh"
+        },
+
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/media/root",
+                "LOGFILE=/root/bootstrap.{{timestamp}}.install.log",
+                "MASTER_ID={{ user `guest-name` }}"
+            ],
+            "inline" : [
+                "dnf -y upgrade 2>&1 | tee \"$ROOT/$LOGFILE\"",
+                "dnf -y install systemd-container dnf-utils net-tools procps python-etcd 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y install PyYAML libyaml python-crypto python-jinja2 python-zmq python2-msgpack python2-requests python-etcd 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "#curl --retry 10 --retry-connrefused --retry-max-time 0 -L -o '/root/install-salt.sh' 'https://bootstrap.saltstack.com' 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "/usr/bin/bash \"$ROOT/tmp/install-salt.sh\" -X -i \"$MASTER_ID\" stable 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [-] Creating directory structure for salt-stack configuration"
+        },
+        { "type" : "shell",
+            "inline" : [
+                "umask 022",
+                "mkdir -p '{{user `tmp-bootstrap-root`}}/etc/salt'",
+                "mkdir -p '{{user `tmp-bootstrap-root`}}/srv/'{salt,pillar}"
+            ]
+        },
+        { "type" : "file",
+            "source" : "{{user `salt-bootstrap-config`}}",
+            "destination" : "{{user `tmp-bootstrap-root`}}/etc/salt/minion"
+        },
+        { "type" : "file",
+            "source" : "{{user `salt-bootstrap-files`}}",
+            "destination" : "{{user `tmp-bootstrap-root`}}/srv"
+        },
+        { "type" : "file",
+            "source" : "{{user `salt-bootstrap-pillar`}}",
+            "destination" : "{{user `tmp-bootstrap-root`}}/srv"
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [*] Installing salt-stack directories into root"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- /usr/bin/env -- {{.Vars}} '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "BOOTSTRAP_DIR={{ user `tmp-bootstrap-root` }}"
+            ],
+            "inline" : [
+                "umask 022",
+                "chown -R root:root \"$BOOTSTRAP_DIR\"",
+                "find \"$BOOTSTRAP_DIR\" -type f -exec chmod 644 {} +",
+                "find \"$BOOTSTRAP_DIR\" -type d -exec chmod 755 {} +",
+                "tar -C \"$BOOTSTRAP_DIR\" -cpf- . | tar -xpf- -C \"$ROOT\"",
+                "rm -rf \"$BOOTSTRAP_DIR\""
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [*] Starting etcd2-boot service"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- /usr/bin/env -- {{.Vars}} '{{.Path}}'",
+            "inline" : [
+                "systemctl start etcd2-boot",
+                "systemctl status etcd2-boot",
+                "until etcdctl cluster-health; do :; done",
+                "etcdctl setdir /coreos.com",
+                "etcdctl setdir /node",
+                "etcdctl setdir /project",
+                "etcdctl setdir /project/target",
+                "etcdctl setdir /project/pod",
+                "etcdctl setdir /project/service",
+                "etcdctl setdir /project/node",
+                "etcdctl setdir /project/role",
+                "etcdctl setdir /project/role/master",
+                "etcdctl setdir /project/role/service",
+                "etcdctl setdir /project/role/node"
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [-] Applying bootstrap state to {{ user `guest-name` }}"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/etc/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/media/root",
+                "LOGFILE=/root/bootstrap.{{timestamp}}.state.log",
+                "MASTER_ID={{ user `guest-name` }}"
+            ],
+            "inline" : [
+                "until salt-call --retcode-passthrough --local state.apply; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [*] Done!"
         }
     ],
     "post-processors" : [],
     "variables" : {
-        "guest-name" : "unnamed-project.master",
+        "timeout-boot" : "1m30s",
+        "timeout-wait" : "10m",
+
+        "guest-name" : "master.unnamed",
         "guest-cpu-count" : "1",
         "guest-disk-size" : "102400",
         "guest-memory-size" : "4096",
@@ -199,6 +358,14 @@
         "iso-checksum" : "iso-hash-checksum",
 
         "install-input" : "path-to-wwwroot-files",
-        "install-output" : "output-master-image"
+        "install-output" : "output-master-image",
+
+        "tmp-bootstrap-root" : "/home/core/bootstrap",
+        "salt-bootstrap-installer" : "path-to-bootstrap-sh",
+        "salt-bootstrap-config" : "path-to-bootstrap-config",
+        "salt-bootstrap-pillars" : "path-to-bootstrap-pillar",
+        "salt-bootstrap-files" : "path-to-bootstrap-files",
+
+        "tools-directory" : "path-to-coreos-tools"
     }
 }

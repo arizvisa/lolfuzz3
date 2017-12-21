@@ -1,0 +1,5 @@
+hostname: "master.unnamed"
+
+ssh_authorized_keys: []
+
+write_files: []

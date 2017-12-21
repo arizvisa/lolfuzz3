@@ -1,0 +1,32 @@
+begin --insecure docker://centos
+set-name lol/salt-master
+
+label add version {{ version }}
+label add arch amd64
+label add os linux
+label add distro centos
+
+run -- yum -y install epel-release
+run -- yum -y update
+run -- yum -y install yum-utils chkconfig PyYAML python-pip python-urllib3 zeromq
+run -- pip install --upgrade pip
+run -- pip install Jinja2 msgpack-python MarkupSafe requests tornado futures zmq python-etcd
+run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
+run -- yum -y upgrade
+run -- bash /root/install-salt.sh -L -F -P -X -N -M stable
+run -- mkdir -p /var/run/dbus /etc/salt /var/cache/salt /var/log/salt /var/run/salt /srv
+
+port add salt-job tcp 4505
+port add salt-result tcp 4506
+
+mount add dbus-socket /var/run/dbus
+
+mount add salt-etc /etc/salt
+mount add salt-cache /var/cache/salt
+mount add salt-logs /var/log/salt
+mount add salt-run /var/run/salt
+mount add salt-srv /srv
+
+annotation add appc.io/executor/supports-systemd-notify true
+set-exec -- /usr/bin/salt-master --log-level=error
+

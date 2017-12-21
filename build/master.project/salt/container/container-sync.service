@@ -1,0 +1,15 @@
+[Unit]
+Description=Image-Synchronization Service
+Requires=container-load.service
+After=container-load.service
+
+[Service]
+User=root
+Type=oneshot
+Environment="CONTAINER_DIR={{ container_path }}"
+ExecStart=/bin/sh -c \
+    "${CONTAINER_DIR}"/container-update.sh
+
+[Install]
+RequiredBy=container-sync.path
+WantedBy=multi-user.target

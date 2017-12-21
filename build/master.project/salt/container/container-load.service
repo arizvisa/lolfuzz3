@@ -1,0 +1,16 @@
+[Unit]
+Description=Image-Loading Service
+Wants=container-build.service
+After=container-build.service
+
+[Service]
+User=root
+Type=oneshot
+RemainAfterExit=yes
+Environment="CONTAINER_DIR={{ container_path }}"
+ExecStart=/bin/sh -c \
+    "${CONTAINER_DIR}"/container-load.sh
+
+[Install]
+RequiredBy=container-load.path
+WantedBy=multi-user.target

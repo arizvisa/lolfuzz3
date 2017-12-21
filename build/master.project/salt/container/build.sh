@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# Build an image based on the rules within the filesystem
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+umask 027
+
+# Set some default variables
+IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
+TOOLDIR=${TOOLDIR:-"$CONTAINER_DIR/tools"}
+
+# Check for existence of the acbuild tool.
+ACBUILD=`type -P acbuild 2>/dev/null || type -P "$TOOLDIR"/*/acbuild`
+if [ ! -x "$ACBUILD" ]; then
+    # If not, then check to see if we can internet...
+    printf '`%s` not found on host.\n' 'acbuild' 1>&2
+    printf 'Unable to locate acbuild tool in path. Skipping automatic image building.\n' 1>&2
+    exit 0
+fi
+
+# Check existence of the rule provided as the argument.
+rule="$1"
+[ ! -f "${rule}" ] && printf 'Rule %s not found. Terminating.\n' "${rule}" 1>&2 && exit 1
+
+case "$rule" in
+# If this is an acbuild-type rule.
+*.acb)
+    printf 'Discovered an acbuild-type rule in %s.\n' "${rule}" 1>&2
+
+    imgfull=`basename "${rule}" .acb`
+    imgname=`basename "${imgfull}" | cut -d: -f1`
+    imgver=`basename "${imgfull}" | cut -d: -f2`
+
+    imgfile="${imgname}:${imgver}.aci"
+    [ -e "$IMAGEDIR/${imgfile}" ] && printf 'Skipping build of %s due to %s already existing.\n' "${imgfull}" "$BUILDDIR/${imgfile}" 1>&2 && printf $'%s\t%s\n' "${imgname}" "${imgver}" && exit 0
+
+    cat "${rule}" <( printf 'write --overwrite %s\n' "$IMAGEDIR/${imgfile}" ) | "$ACBUILD" script /dev/stdin
+
+    printf 'Successfully built image "%s:%s" at %s.\n' "${imgname}" "${imgver}" "$IMAGEDIR/${imgname}:${imgver}.aci" 1>&2
+    printf $'%s\t%s\n' "${imgname}" "${imgver}"
+    exit 0
+    ;;
+
+# If it's a shell-script, then passthru down below.
+*.aci.sh|*.oci.sh|*.aci.bash|*.oci.bash|*.aci.csh|*.oci.csh)
+    printf 'Discovered a shellscript-type rule in %s.\n' "${rule}" 1>&2
+    ;;
+
+# Couldn't figure it out...so leave.
+*)
+    printf 'Unknown image/script type for script %s. Terminating.\n' "${rule}" 1>&2
+    exit 1
+    ;;
+esac
+
+# Figure out how to execute script
+case "${rule}" in
+    *.sh) shtype="sh" ;;
+    *.bash) shtype="bash" ;;
+    *.csh) shtype="csh" ;;
+    *)
+        printf 'Unknown shell type for script %s. Terminating.\n' "${rule}" 1>&2
+        exit 1
+        ;;
+esac
+imgfile=`basename "${rule}" ."${shtype}"`
+
+# Figure out the container type that's supposed to be emitted
+case "${imgfile}" in
+    *.aci) imgtype='.aci' ;;
+    *.oci) imgtype='.oci' ;;
+    *)
+        printf 'Unknown container type for script %s. Terminating.\n' "${rule}" 1>&2
+        exit 1
+        ;;
+esac
+
+# Extract components from filename.
+imgfull=`basename "${imgfile}" "${imgtype}"`
+imgname=`basename "${imgfull}" | cut -d: -f1`
+imgver=`basename "${imgfull}" | cut -d: -f2`
+
+imgfile="${imgname}:${imgver}${imgtype}"
+[ -f "$IMAGEDIR/${imgfile}" ] && printf 'Skipping build of %s due to %s already existing.\n' "${imgfull}" "$BUILDDIR/${imgfile}" 1>&2 && printf $'%s\t%s\n' "${imgname}" "${imgver}" && exit 0
+
+printf 'Found rule for image "%s:%s" at %s.\n' "${imgname}" "${imgver}" "$IMAGEDIR/${imgname}:${imgver}${imgtype}.${shtype}" 1>&2
+
+imgtemp="$BUILDDIR/${imgfull}.tmp"
+trap "[ -f \"${imgtemp}\" ] && /bin/rm -f \"${imgtemp}\"; exit" SIGHUP SIGINT SIGTERM
+
+# And now we can execute it..
+if "${shtype}" "$BUILDDIR/${rule}" >| "${imgtemp}"; then
+    mv -f "${imgtemp}" "$IMAGEDIR/${imgfile}"
+else
+    rm -f "${imgtemp}"
+    printf 'Failure while trying to generate image for rule "%s".\n' "${rule}" 1>&2
+    exit 1
+fi
+
+# ..and now we can inform the user that it's there.
+printf 'Successfully built image "%s:%s" at %s.\n' "${imgname}" "${imgver}" "$IMAGEDIR/${imgfile}" 1>&2
+printf $'%s\t%s\n' "${imgname}" "${imgver}"
+
+exit 0

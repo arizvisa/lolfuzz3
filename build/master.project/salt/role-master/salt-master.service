@@ -1,0 +1,46 @@
+[Unit]
+Description=Salt-Master Service
+ConditionPathExists={{ container_path }}/image/salt-master:{{ version }}.aci
+ConditionPathExists=/etc/salt/master
+Requires=etcd2.service
+After=etcd2.service
+
+[Service]
+LimitNOFILE=16384 
+Type=notify
+NotifyAccess=all
+TimeoutStartSec=infinity
+
+ExecStartPre=-/usr/bin/mkdir -p /var/cache/salt /var/log/salt /var/run/salt /srv
+ExecStartPre=/usr/bin/bash -c \
+    "{{ container_path }}/load.sh {{ container_path }}/image/salt-master:{{ version }}.aci | tee >( cut -d$'\t' -f3 >| {{ image_uuid_path }} )"
+ExecStart=/usr/bin/rkt run \
+            --uuid-file-save={{ run_uuid_path }} \
+            --net=default \
+            --port=salt-job:4505 \
+            --port=salt-result:4506 \
+            --volume dbus-socket,kind=host,source=/var/run/dbus \
+            --volume salt-etc,kind=host,source=/etc/salt \
+            --volume salt-cache,kind=host,source=/var/cache/salt \
+            --volume salt-logs,kind=host,source=/var/log/salt \
+            --volume salt-run,kind=host,source=/var/run/salt \
+            --volume salt-srv,kind=host,source=/srv \
+            --inherit-env=true lol/salt-master:{{ version }}
+{%- for svc in services -%}
+ExecStartPost=/usr/bin/bash -c \
+                "iptables -t nat -A PREROUTING -p tcp -s "`cat {{ run_uuid_path }} | xargs /opt/coreos/bin/rkt-by-name.sh | jq '.networks[0].ip'`" --dport {{ svc.port }} -j DNAT --to-destination {{ svc.host }}:{{ svc.port }}"
+{%- endfor -%}
+ExecStopPre=/usr/bin/bash -c \
+                "cat {{ run_uuid_path }} | xargs /opt/coreos/bin/rkt-by-name.sh | jq '.networks[0].ip' >| {{ run_uuid_path }}"
+{%- for svc in services -%}
+ExecStopPost=/usr/bin/bash -c \
+                "iptables -t nat -D PREROUTING -p tcp -s "`cat {{ run_uuid_path }}`" --dport {{ svc.port }} -j DNAT --to-destination {{ svc.host }}:{{ svc.port }}"
+{%- endfor -%}
+ExecStopPost=-/usr/bin/rm -f {{ run_uuid_path }}
+ExecStopPost=/usr/bin/rkt gc --mark-only
+
+KillMode=mixed
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch for any images that need to be updated.
+
+[Path]
+PathChanged={{ container_path }}/image/
+Unit=container-sync.service
+
+[Install]
+WantedBy=multi-user.target

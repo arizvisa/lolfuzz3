@@ -2,5 +2,6 @@
     "guest-name" : "unnamed.master",
     "guest-cpu-count" : "1",
     "guest-disk-size" : "102400",
-    "guest-memory-size" : "4096"
+    "guest-memory-size" : "4096",
+    "guest-network" : "nat"
 }

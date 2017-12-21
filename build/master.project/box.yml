@@ -1,0 +1,306 @@
+#cloud-config
+hostname: "master.unnamed"
+manage_etc_hosts: "localhost"
+
+coreos:
+  update:
+    reboot-strategy: "etcd-lock"
+
+  units:
+    - name: "setup-network-environment.service"
+      enable: true
+      command: "start"
+      content: |
+        [Unit]
+        Description=Setup Network Environment
+        Documentation=https://github.com/kelseyhightower/setup-network-environment
+        Requires=network-online.target
+        After=network-online.target
+
+        [Service]
+        Type=oneshot
+        #ExecStartPre=-/usr/bin/mkdir -p ${TARGET}/bin
+        #ExecStartPre=/usr/bin/wget -N -P ${TARGET}/bin ${URL}
+
+        #ExecStartPre=/usr/bin/chmod +x ${TARGET}/bin/setup-network-environment
+        ExecStart=/bin/sh -c \
+            "${TARGET}/bin/setup-network-environment"
+        RemainAfterExit=yes
+
+      drop-ins:
+        - name: "50-environment.conf"
+          content: |
+            [Service]
+            Environment=TARGET=/opt/coreos
+            Environment=URL=https://github.com/kelseyhightower/setup-network-environment/releases/download/1.0.1/setup-network-environment
+
+    ## Runs after system has been bootstrapped and cloned
+    - name: "etcd2.service"
+      enable: true
+      command: "start"
+      drop-ins:
+        - name: "00-instance.conf"
+          content: |
+            [Service]
+            ExecStart=
+            ExecStart=/bin/sh -c 'exec /usr/bin/etcd2 \
+                      --name=$(cat /etc/machine-id) \
+                      --listen-peer-urls="http://0.0.0.0:2380" \
+                      --initial-advertise-peer-urls="http://${DEFAULT_IPV4}:2380" \
+                      --listen-client-urls="http://0.0.0.0:4001" \
+                      --advertise-client-urls="http://${DEFAULT_IPV4}:4001" \
+                      --discovery "http://${BOOTSTRAP_IPV4}:4001/v2/keys/${BOOTSTRAP_ID}" \
+                      --discovery-fallback=exit \
+                      '
+
+        - name: "10-conflicts.conf"
+          content: |
+            [Unit]
+            Conflicts=etcd2-boot.service etcd2-reboot.service
+            OnFailure=etcd2-reboot.service
+
+        - name: "20-running.conf"
+          content: |
+            [Unit]
+            ConditionPathExists=/etc/bootstrap-environment
+
+            [Service]
+            EnvironmentFile=/etc/bootstrap-environment
+
+        - name: "30-network-environment.conf"
+          content: |
+            [Unit]
+            Requires=setup-network-environment.service
+            After=setup-network-environment.service
+            ConditionPathExists=/etc/network-environment
+
+            [Service]
+            EnvironmentFile=/etc/network-environment
+
+    ## Runs before etcd has been initialized/bootstrapped.
+    - name: "etcd2-boot.service"
+      content: |
+        [Unit]
+        Description=etcd2 bootstrap - initialize
+        Conflicts=etcd2.service etcd2-reboot.service
+        Before=flanneld.service fleet.service
+
+        [Service]
+        User=etcd
+        Type=notify
+
+        Environment=ETCD_DATA_DIR=/var/lib/etcd2
+        Environment=ETCD_NAME=%m
+
+        ExecStart=/bin/sh -c 'exec /usr/bin/etcd2 \
+                    --name=$(cat /etc/machine-id) \
+                    --listen-peer-urls="http://0.0.0.0:2380" \
+                    --initial-advertise-peer-urls="http://127.0.0.1:2380" \
+                    --listen-client-urls="http://0.0.0.0:4001" \
+                    --advertise-client-urls="http://127.0.0.1:4001" \
+                    --initial-cluster=$(cat /etc/machine-id)="http://127.0.0.1:2380" \
+                    '
+
+        Restart=always
+        RestartSec=10s
+        LimitNOFILE=40000
+        TimeoutStartSec=0
+
+        [Install]
+        WantedBy=multi-user.target
+
+      drop-ins:
+        - name: "20-bootstrap.conf"
+          content: |
+            [Unit]
+            ConditionPathExists=!/etc/bootstrap-environment
+
+        - name: "30-network-environment.conf"
+          content: |
+            [Unit]
+            Requires=setup-network-environment.service
+            After=setup-network-environment.service
+            ConditionPathExists=/etc/network-environment
+
+            [Service]
+            EnvironmentFile=/etc/network-environment
+
+    ## Runs when system boots up and is unable to discover a cluster to join.
+    - name: "etcd2-reboot.service"
+      enable: true
+      content: |
+        [Unit]
+        Description=etcd2 - re-initialize
+        Conflicts=etcd2.service etcd2-boot.service
+        Before=flanneld.service fleet.service
+
+        [Service]
+        User=etcd
+        Type=notify
+
+        Environment=ETCD_DATA_DIR=/var/lib/etcd2
+        Environment=ETCD_NAME=%m
+
+        ExecStart=/bin/sh -c 'exec /usr/bin/etcd2 \
+                    --name=$(cat /etc/machine-id) \
+                    --listen-peer-urls="http://0.0.0.0:2380" \
+                    --initial-advertise-peer-urls="http://${DEFAULT_IPV4}:2380" \
+                    --listen-client-urls="http://0.0.0.0:4001" \
+                    --advertise-client-urls="http://${DEFAULT_IPV4}:4001" \
+                    --initial-cluster=$(cat /etc/machine-id)="http://${DEFAULT_IPV4}:2380" \
+                    '
+
+        Restart=always
+        RestartSec=10s
+        LimitNOFILE=40000
+        TimeoutStartSec=0
+
+      drop-ins:
+        - name: "20-running.conf"
+          content: |
+            [Unit]
+            ConditionPathExists=/etc/bootstrap-environment
+
+            [Service]
+            EnvironmentFile=/etc/bootstrap-environment
+
+        - name: "30-network-environment.conf"
+          content: |
+            [Unit]
+            Requires=setup-network-environment.service
+            After=setup-network-environment.service
+            ConditionPathExists=/etc/network-environment
+
+            [Service]
+            EnvironmentFile=/etc/network-environment
+
+#        - name: "99-default.conf"
+#          content: |
+#            [Service]
+#            # FIXME: remove this when saltstack gets Etcd.directory
+#            ExecStartPost=/usr/bin/etcdctl --no-sync setdir /node
+#            ExecStartPost=/usr/bin/etcdctl --no-sync setdir /project
+#            ExecStartPost=/usr/bin/etcdctl --no-sync setdir /project/target
+#            ExecStartPost=/usr/bin/etcdctl --no-sync setdir /project/pod
+#            ExecStartPost=/usr/bin/etcdctl --no-sync setdir /project/service
+#            ExecStartPost=/usr/bin/etcdctl --no-sync setdir /project/node
+#            ExecStartPost=/usr/bin/etcdctl --no-sync setdir /project/role/master
+#            ExecStartPost=/usr/bin/etcdctl --no-sync setdir /project/role/service
+#            ExecStartPost=/usr/bin/etcdctl --no-sync setdir /project/role/node
+
+    ## Runs when containers are available. Should be exposed to each container.
+    - name: "flanneld.service"
+      enable: true
+      command: "start"
+      drop-ins:
+        - name: "00-instance.conf"
+          content: |
+            [Service]
+            Environment="FLANNELD_ETCD_PREFIX=/coreos.com/network"
+            ExecStart=
+            ExecStart=/usr/bin/env \
+                      FLANNELD_PUBLIC_IP="${DEFAULT_IPV4}" \
+                      FLANNELD_IFACE="${DEFAULT_IPV4}" \
+                      FLANNELD_ETCD_ENDPOINTS="http://127.0.0.1:4001" \
+                      /usr/lib/coreos/flannel-wrapper ${FLANNEL_OPTS}
+
+        - name: "20-running.conf"
+          content: |
+            [Unit]
+            ConditionPathExists=/etc/bootstrap-environment
+
+            [Service]
+            EnvironmentFile=/etc/bootstrap-environment
+
+        - name: "30-network-environment.conf"
+          content: |
+            [Unit]
+            Requires=setup-network-environment.service
+            After=setup-network-environment.service
+            ConditionPathExists=/etc/network-environment
+
+            [Service]
+            EnvironmentFile=/etc/network-environment
+
+        - name: "99-default.conf"
+          content: |
+            [Service]
+            ExecStartPost=-/usr/bin/etcdctl set /coreos.com/network/config '{}'
+
+    ## Runs when system is available. Used for distributing services.
+    - name: "fleet.service"
+      enable: true
+      command: "start"
+      drop-ins:
+        - name: "00-instance.conf"
+          content: |
+            [Service]
+            Environment="FLEET_ETCD_KEY_PREFIX=/coreos.com/fleet"
+            ExecStart=
+            ExecStart=/usr/bin/env \
+                      FLEET_ETCD_SERVERS="http://${DEFAULT_IPV4}:4001" \
+                      FLEET_PUBLIC_IP="${DEFAULT_IPV4}" \
+                      /usr/bin/fleetd
+
+        - name: "20-running.conf"
+          content: |
+            [Unit]
+            ConditionPathExists=/etc/bootstrap-environment
+
+            [Service]
+            EnvironmentFile=/etc/bootstrap-environment
+
+        - name: "30-network-environment.conf"
+          content: |
+            [Unit]
+            Requires=setup-network-environment.service
+            After=setup-network-environment.service
+            ConditionPathExists=/etc/network-environment
+
+            [Service]
+            EnvironmentFile=/etc/network-environment
+
+    # /etc/systemd/system/container-build.service
+    - name: "container-build.service"
+      enable: true
+      command: "start"
+
+      # /etc/systemd/system/container-build.service.d
+      drop-ins:
+        - name: "20-running.conf"
+          content: |
+            [Unit]
+            ConditionPathExists=/etc/bootstrap-environment
+
+    # /etc/systemd/system/container-load.service
+    - name: "container-load.service"
+      enable: true
+      command: "start"
+
+      # /etc/systemd/system/container-load.service.d
+      drop-ins:
+        - name: "20-running.conf"
+          content: |
+            [Unit]
+            ConditionPathExists=/etc/bootstrap-environment
+
+    # /etc/systemd/system/container-sync.service
+    - name: "container-sync.service"
+      enable: true
+      command: "start"
+
+      # /etc/systemd/system/container-sync.service.d
+      drop-ins:
+        - name: "20-running.conf"
+          content: |
+            [Unit]
+            ConditionPathExists=/etc/bootstrap-environment
+
+write_files:
+    - path: "/etc/sysctl.d/route-localnet.conf"
+      permissions: '0644'
+      owner: "root:root"
+      content: |
+        # allow all interfaces (including loopback) to route to localnet
+        net.ipv4.conf.all.route_localnet = 1
+
