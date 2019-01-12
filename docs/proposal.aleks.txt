@@ -1,0 +1,55 @@
+Hi All, 
+
+I’ve gone through the proposal and made some notes. Here is my braindump to break the ice. 
+
+First of all, the way I understand this is that is will enable us to do more complex fuzzing campaigns and go beyond just fuzzing. 
+With that in mind, I have a name proposal: BeyondFuzz !
+
+First a bit of an motivating example from my side. 
+When I say more complex fuzzing, I don’t necessarily just think about network fuzzing. It is my understanding that we could use this infrastructure 
+to enable orchestrating fuzzing campaigns not just against single target, but multiple targets with the same dataset. This is something that I’m currently 
+doing manually , but it has the potential to be very fruitful, I think. To give an example, I’m targeting PDF readers, I use evolved corpus from one target
+to fuzz the next one and evolve the corpus further. Tracking and shuffling the corpora is painful. This Ali’s proposal would enable the orchestration 
+of multiple targets, with multiple fuzzers/mutators to communicate and autoupdate their respectful corpora all while allowing for different tracers, corpus minimization 
+tools, mutators , OSes... And , in that , if we establish a standard way of doing that, just a small number of customizations in the specialization phase would 
+be needed to deploy a new pod for a completely different and mixed target.  Now, wouldn’t that be a beautiful thing to gaze upon? 
+
+Now, on to some questions/notes about the proposal as it is.
+
+1. After going through the whole proposal, this looks like something that will be pretty tailored to our very specific needs. Plus, it will probably be constantly evolving. 
+What if we dedicated ourselves in advance that this isn’t going to be published/presented/opensourced ? That way it can just keep evolving organically for our 
+needs without a pressure of having a set release date, or making it too generic so it’s at the same time usable on AWS, DigitalOcean,Azure,MyGrandma’sCloud and so on. 
+Maybe by keeping  it tailored to our infrastructure (which probably isn’t going to change in the forceable future) we could  make it easier to develop, without having to worry 
+about making it one-size-fit-all for general consumption. This will also tie in with limited human/dev time resources that we have. 
+
+2. For starters, I think it would be beneficial to do a little roleplaying and elaborate a concrete usecase that this infrastructure would facilitate. Like what I did with that motivation
+example, but more in depth, following the nomenclature Ali set out in the proposal. Like, define what a master would actually be/do, what would constitute a trigger, what agents
+would be in place and so on. This would make the whole idea clear to everybody , by making concrete examples , and would also make it easier to scope the project, to see what
+the bare minimum would be to start with. 
+
+3. Here we are basically defining a pipeline, which so far is mostly manual (at least on my part).
+My usual pipeline is cmin(or other corpus minimization)-> mutation-> crashdog -> crash bucketing -> triage where each of these steps is triggered/started semi-manually.
+With regards to this proposal, as a side quest, we would need supporting tools. We already have some work done on triaging tools, crash bucketing is solved issue, we 
+need a solid corpus minimization tool for Windows. We also need to make sure this all takes into account our existing workflows, which differ greatly between windows 
+and linux. 
+
+ 4. In multiple places there is mentioned that beanstalk is proposed as a way of storing reports. I might have said it wrong or passed the wrong notion about
+beanstalk, but it wouldn’t really be suitable for that part. It’s perfect for pipeline stuff, like passing one testcase from generator to trigger, and from trigger to bucketer, from 
+bucketer to triager. But for final reports, we’d need something persistent, beanstalk is for short lived jobs.  
+
+
+
+Now, about the project as a whole.  My worry is that this, from all our tasks, covers fuzzing only and that we just aren’t that big. 
+How much time and resources could we justify spend on it up front without a clear benefit to anybody outside our team.
+We could split work on it in different areas. One side would be DevOps development thats in this proposal directly, and another would be supporting tools
+that we’d need (tracers, crash bucketers, corpus minimization, more experimental tools … ). 
+
+Also, as separate worry is that our requirements, goals and workflows might change as it happened when AFL showed  up. Fuzzing large apps in slow loops was standard, 
+then all of a sudden it’s all about small libraries which changed the approach a lot. 
+
+We can start resolving both of these issues by that role-playing I mentioned, that could also include concrete targets for foreseeable future which in and of itself would be good.  
+
+I’ll follow up with elaborated concrete example. 
+
+Cheers,
+Aleks
