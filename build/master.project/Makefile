@@ -80,8 +80,9 @@ setup_network_environment_metaurl=$(shell printf -- '$(file <$(in_github))' '$(f
 salt_bootstrap_metaurl='$(file <$(in_salt_bootstrap_metaurl))'
 
 # some utility macros
-FETCH := curl -L -s -k
-PUT := ${FETCH} -X PUT --data-binary
+DOWNLOAD := curl -L -k --progress-bar
+FETCH := curl -L -k -s
+PUT := curl -L -K -s -X PUT --data-binary
 
 ifneq ("$(wildcard $(ROOTDIR)/github.token)","")
 GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
@@ -94,7 +95,7 @@ define gh_download
 $(1):
 	test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
 	$$(info [!] Downloading $$(notdir $(1)) from $(2))
-	$${GH_FETCH} -o '$$@' '$(2)'
+	$${DOWNLOAD} -o '$$@' '$(2)'
 endef
 
 # download rules for CoreOS components
@@ -102,7 +103,7 @@ define coreos_download
 $$(workdir)/$$(notdir $(1)):
 	test -d '$$(workdir)' || mkdir -p '$$(workdir)'
 	$$(info [!] Downloading CoreOS Installer $(coreos_url)/$(1))
-	$${FETCH} -o '$$@' '$(coreos_url)/$(1)'
+	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(1)'
 endef
 
 # rules for copying tools into staging directory
