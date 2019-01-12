@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:ns="urn:schemas-microsoft-com:unattend"
+  xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+  xmlns="urn:schemas-microsoft-com:unattend">
+
+  <!-- parameters -->
+  <xsl:param name="product-owner" required="yes" />
+  <xsl:param name="product-organization" required="yes" />
+  <xsl:param name="product-key" required="yes" />
+
+  <xsl:param name="computer-name" required="yes" />
+  <xsl:param name="disk-size" required="yes" />
+
+  <xsl:param name="default-root-password" required="yes" />
+  <xsl:param name="default-user-password" required="yes" />
+
+  <!-- hardcoded variables and not parameters. because fuck you. that's why. -->
+  <xsl:variable name="root-user">root</xsl:variable>
+  <xsl:variable name="root-password"><xsl:value-of select="$default-root-password" /></xsl:variable>
+  <xsl:variable name="regular-user">user</xsl:variable>
+  <xsl:variable name="regular-password"><xsl:value-of select="$default-user-password" /></xsl:variable>
+
+  <!-- functions -->
+  <xsl:template name="plaintext-password">
+    <xsl:param name="password" />
+    <Password>
+      <Value><xsl:value-of select="$password" /></Value>
+      <PlainText>true</PlainText>
+    </Password>
+  </xsl:template>
+
+  <xsl:template name="define-user">
+    <xsl:param name="username" />
+    <xsl:param name="password" />
+    <xsl:param name="group" />
+    <xsl:param name="description" />
+    <Name><xsl:value-of select="$username" /></Name>
+    <Group><xsl:value-of select="$group" /></Group>
+    <DisplayName><xsl:value-of select="$username" /></DisplayName>
+    <Description><xsl:value-of select="$description" /></Description>
+    <xsl:call-template name="plaintext-password">
+      <xsl:with-param name="password" select="$password" />
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template name="add-user">
+    <xsl:param name="username" />
+    <xsl:param name="password" />
+    <xsl:param name="group" />
+    <xsl:param name="description" />
+    <LocalAccount wcm:action="add">
+      <xsl:call-template name="define-user">
+        <xsl:with-param name="username" select="$username" />
+        <xsl:with-param name="password" select="$password" />
+        <xsl:with-param name="group" select="$group" />
+        <xsl:with-param name="description" select="$description" />
+      </xsl:call-template>
+    </LocalAccount>
+  </xsl:template>
+
+  <!-- identity template -->
+  <xsl:template name="identity" match="@*|node()">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:apply-templates select="@*|node()" />
+    </xsl:copy>
+  </xsl:template>
+
+  <!-- windowsPE -->
+  <xsl:template match="//ns:settings[@pass='windowsPE']/ns:component[@name='Microsoft-Windows-Setup']">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:apply-templates select="ns:UserData" />
+      <xsl:apply-templates select="ns:DiskConfiguration" />
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="//ns:settings[@pass='windowsPE']/ns:component[@name='Microsoft-Windows-Setup']/ns:DiskConfiguration//ns:CreatePartition/ns:Size">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:value-of select="$disk-size" />
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="//ns:settings[@pass='windowsPE']/ns:component[@name='Microsoft-Windows-Setup']/ns:UserData">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <FullName><xsl:value-of select="$product-owner" /></FullName>
+      <Organization><xsl:value-of select="$product-organization" /></Organization>
+      <ProductKey>
+        <Key><xsl:value-of select="$product-key" /></Key>
+        <WillShowUI>OnError</WillShowUI>
+      </ProductKey>
+      <AcceptEula>true</AcceptEula>
+    </xsl:copy>
+  </xsl:template>
+
+  <!-- specialize -->
+  <xsl:template match="//ns:settings[@pass='specialize']">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:apply-templates select="ns:component" />
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="//ns:settings[@pass='oobeSystem']/ns:component[@name='Microsoft-Windows-Shell-Setup']/ns:TimeZone">
+    <xsl:copy><xsl:copy-of select="@*" />GMT Standard Time</xsl:copy>
+  </xsl:template>
+
+  <!-- oobeSystem -->
+  <xsl:template match="//ns:settings[@pass='oobeSystem']">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:apply-templates select="ns:component" />
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="//ns:settings[@pass='oobeSystem']/ns:component[@name='Microsoft-Windows-Shell-Setup']">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:apply-templates select="ns:AutoLogon" />
+      <xsl:apply-templates select="ns:UserAccounts" />
+      <xsl:apply-templates select="ns:LocalAccounts" />
+      <RegisteredOwner><xsl:value-of select="$product-owner" /></RegisteredOwner>
+      <RegisteredOrganization><xsl:value-of select="$product-organization" /></RegisteredOrganization>
+      <ProductKey><xsl:value-of select="$product-key" /></ProductKey>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="//ns:settings[@pass='oobeSystem']/ns:component[@name='Microsoft-Windows-Shell-Setup']/ns:AutoLogon">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <Enabled>true</Enabled>
+      <Username><xsl:value-of select="$regular-user" /></Username>
+      <Password><xsl:copy-of select="$regular-password" /></Password>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="//ns:settings[@pass='oobeSystem']/ns:component[@name='Microsoft-Windows-Shell-Setup']/ns:UserAccounts">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:apply-templates select="ns:AdministratorPassword" />
+      <xsl:apply-templates select="ns:LocalAccounts" />
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="//ns:settings[@pass='oobeSystem']/ns:component[@name='Microsoft-Windows-Shell-Setup']/ns:UserAccounts/ns:AdministratorPassword">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:call-template name="plaintext-password">
+        <xsl:with-param name="password" select="$root-password" />
+      </xsl:call-template>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="//ns:settings[@pass='oobeSystem']/ns:component[@name='Microsoft-Windows-Shell-Setup']/ns:UserAccounts/ns:LocalAccounts">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:call-template name="add-user">
+        <xsl:with-param name="username" select="$root-user" />
+        <xsl:with-param name="password" select="$root-password" />
+        <xsl:with-param name="group" select="'Administrators'" />
+        <xsl:with-param name="description" select="'Default administrative user'" />
+      </xsl:call-template>
+      <xsl:call-template name="add-user">
+        <xsl:with-param name="username" select="$regular-user" />
+        <xsl:with-param name="password" select="$regular-password" />
+        <xsl:with-param name="group" select="'Administrators'" />
+        <xsl:with-param name="description" select="'Default user'" />
+      </xsl:call-template>
+    </xsl:copy>
+  </xsl:template>
+
+  <!--xsl:template match="//ns:settings[@pass='specialize']">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <xsl:apply-templates select="ns:component" />
+    </xsl:copy>
+  </xsl:template-->
+
+  <xsl:template match="//ns:settings[@pass='specialize']/ns:component[@name='Microsoft-Windows-Shell-Setup']">
+    <xsl:copy>
+      <xsl:copy-of select="@*" />
+      <ComputerName><xsl:value-of select="$computer-name" /></ComputerName>
+    </xsl:copy>
+  </xsl:template>
+
+</xsl:stylesheet>
