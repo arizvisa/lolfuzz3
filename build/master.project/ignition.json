@@ -1,0 +1,25 @@
+{
+  "ignition": {
+    "version": "2.2.0",
+    "config": {},
+    "security": {}
+  },
+  "storage": {
+    "disks": [],
+    "raid": [],
+    "filesystems": [],
+    "files": [],
+    "directories": [],
+    "links": []
+  },
+  "systemd": {
+    "units": []
+  },
+  "networkd": {
+    "units": []
+  },
+  "passwd": {
+    "users": [],
+    "groups": []
+  }
+}
