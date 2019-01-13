@@ -105,7 +105,7 @@ ignition_dropins_names=$(foreach f,$(wildcard $(ignition_config)dropins/*),$(not
 # gh_download '$filename'
 define gh_download
 $(1):
-	test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
+	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
 	$$(info [!] Downloading $$(notdir $(1)) from $(2))
 	$${DOWNLOAD} -o '$$@' '$(2)'
 endef
@@ -115,7 +115,7 @@ endef
 # coreos_download '$filename'
 define coreos_download
 $$(workdir)/$$(notdir $(1)):
-	test -d '$$(workdir)' || mkdir -p '$$(workdir)'
+	@test -d '$$(workdir)' || mkdir -p '$$(workdir)'
 	$$(info [!] Downloading CoreOS Installer $(coreos_url)/$(1))
 	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(1)'
 endef
@@ -125,7 +125,7 @@ endef
 # coreos_tool '$target' '$source'
 define coreos_tool
 $(2): $(1)
-	test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
+	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
 	$$(info [!] Copying file from $(1) to $(2))
 	cp -f '$(1)' '$(2)'
 endef
@@ -135,22 +135,45 @@ endef
 # ignition_file '$target.json' '$infile' '$decimal-mode'
 define ignition_file
 $(2): $(1)
-	test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
+	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
 	$$(info [!] Building ignition file $(2) from contents at $(1))
-	jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ path: "/etc/sysctl.d/$(notdir $(1))", mode: $(3), contents: $$$$contents[0] }' >| '$(2)'
+	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: $$$$contents[0] }' >| '$(2)'
 endef
 
-# ignition_unit_dropin_file '$dropin.conf' '$output.json'
-define ignition_unit_dropins_file
+# ignition_unit_file '$unit.service' '$output.json'
+define ignition_unit_file
 $(2): $(1)
-	test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
-	jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ name: "$(notdir $(1))", contents: $$$$contents[0] }' >| '$(2)'
+	$$(info [!] Building ignition unit $(2) from contents at $(1))
+	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ name: "$$(notdir $(1))", enabled: true, contents: $$$$contents[0], dropins: [] }' >| '$(2)'
 endef
 
 # ignition_unit_dropins '$target.json' '$space-separated-dropins'
 define ignition_unit_dropins
 $(1): $(2)
-	jq '[., inputs]' $(2) >| '$(1)'
+	$$(info [!] Building ignition unit dropins $(1) : $(2))
+	@jq '[., inputs]' $(2) >| '$(1)'
+endef
+
+# ignition_unit_dropin_file '$dropin.conf' '$target.json'
+define ignition_unit_dropins_file
+$(2): $(1)
+	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
+	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ name: "$$(notdir $(1))", contents: $$$$contents[0] }' >| '$(2)'
+endef
+
+# ignition_unit '$target.json' '$unit.json' '$dropins.json'
+define ignition_unit
+$(1): $(2) $(3)
+	$$(info [!] Building ignition unit $(1) : $(2) $(3))
+	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
+	@jq '.dropins = (inputs // .dropins)' $$^
+endef
+
+# ignition_unit '$target.json' '$dropins.json'
+define ignition_unit_missing
+$(1): $(2)
+	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
+	@jq -n --slurpfile dropins '$(2)' '{ name: "$$(notdir $(1))", dropins: $$$$dropins[0] }'
 endef
 
 ### assign some variables containing the different files we need
@@ -344,6 +367,8 @@ $(boxname_work)/$(boxname).ignition-sysctl.json: $(foreach f,$(ignition_sysctl_f
 	$(info [-] Aggregating all sysctl files into $@ : $^)
 	jq '[., inputs]' $^ >| $@
 
+# XXX: add ignition stuff here
+
 ### rules for saltstack prep
 $(boxname_work)/salt $(boxname_work)/pillar: $(MAKEDIR)salt $(MAKEDIR)pillar $(acbuild_files) $(boxname_work)/pillar/acbuild.sls
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
@@ -384,8 +409,16 @@ $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(eval $(call coreos_tool,$(f),$(work
 ## generate rules for making the ignition sysctl list (0644)
 $(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(f),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)),420)))
 
+## generate rules for making the ignition units list
+$(foreach name,$(ignition_units_names),$(eval $(call ignition_unit_file,$(ignition_config)units/$(name),$(boxname_work)/ignition-units.json-$(name))))
+
 ## generate rules for making the ignition unit dropins files
 $(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(eval $(call ignition_unit_dropins_file,$(f),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f))))))
 
 ## generate rules for making the ignition unit dropins list
 $(foreach name,$(ignition_dropins_names),$(eval $(call ignition_unit_dropins,$(boxname_work)/ignition-dropins.json-$(name),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f))))))
+
+## generate rules for combining the units and their dropins
+# XXX: figure out how to check the existence of files
+$(foreach name,$(ignition_units_names),$(eval $(call ignition_unit,$(boxname_work)/ignition-unit.json-$(name),$(boxname_work)/ignition-units.json-$(name),$(boxname_work)/ignition-dropins.json-$(name))))
+$(foreach name,$(ignition_dropins_names),$(eval $(call ignition_unit_missing,$(boxname_work)/ignition-unit.json-$(name),$(boxname_work)/ignition-dropins.json-$(name))))
