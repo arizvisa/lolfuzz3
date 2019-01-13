@@ -220,7 +220,7 @@
         },
         { "type" : "shell",
             "inline" : [
-                "sudo -H -E -i -- toolbox -- /bin/true"
+                "sudo -H -E -- toolbox -- /bin/true"
             ]
         },
 
