@@ -95,6 +95,8 @@ endif
 
 ## ignition variables
 ignition_config=$(MAKEDIR)ignition/
+ignition_units_names=$(foreach f,$(wildcard $(ignition_config)units/*),$(notdir $(f)))
+ignition_dropins_names=$(foreach f,$(wildcard $(ignition_config)dropins/*),$(notdir $(f)))
 
 ### definitions for generating rules
 
@@ -135,7 +137,20 @@ define ignition_file
 $(2): $(1)
 	test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
 	$$(info [!] Building ignition file $(2) from contents at $(1))
-	jq -n --slurpfile contents <(jq -Rs . '$(1)') '{path: "/etc/sysctl.d/$(notdir $(1))", mode: $(3), contents: $$$$contents[0]}' >| '$(2)'
+	jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ path: "/etc/sysctl.d/$(notdir $(1))", mode: $(3), contents: $$$$contents[0] }' >| '$(2)'
+endef
+
+# ignition_unit_dropin_file '$dropin.conf' '$output.json'
+define ignition_unit_dropins_file
+$(2): $(1)
+	test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
+	jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ name: "$(notdir $(1))", contents: $$$$contents[0] }' >| '$(2)'
+endef
+
+# ignition_unit_dropins '$target.json' '$space-separated-dropins'
+define ignition_unit_dropins
+$(1): $(2)
+	jq '[., inputs]' $(2) >| '$(1)'
 endef
 
 ### assign some variables containing the different files we need
@@ -368,3 +383,9 @@ $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(eval $(call coreos_tool,$(f),$(work
 
 ## generate rules for making the ignition sysctl list (0644)
 $(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(f),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)),420)))
+
+## generate rules for making the ignition unit dropins files
+$(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(eval $(call ignition_unit_dropins_file,$(f),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f))))))
+
+## generate rules for making the ignition unit dropins list
+$(foreach name,$(ignition_dropins_names),$(eval $(call ignition_unit_dropins,$(boxname_work)/ignition-dropins.json-$(name),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f))))))
