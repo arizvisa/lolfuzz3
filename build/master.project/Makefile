@@ -1,3 +1,5 @@
+SHELL=/usr/bin/bash
+
 MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ROOTDIR := $(realpath $(MAKEDIR)../..)
 
@@ -11,7 +13,7 @@ ifndef OUTPUT
     $(error Build variable path OUTPUT is undefined.)
 endif
 
-## Check input directory with configuration for master
+### Check input directory with configuration for master
 ifneq ("$(wildcard ${INPUT})","")
     # modifications to CoreOS bootstrap
     ifeq ("$(wildcard ${INPUT}/master-bootstrap/*)","")
@@ -32,6 +34,7 @@ else
     $(error Specified path for variable INPUT does not exist. : $(abspath ${INPUT}))
 endif
 
+### user variables
 boxname?=master.${PROJECT}
 outdir?=${ROOTDIR}/template
 workdir?=build.dir
@@ -44,7 +47,7 @@ boxname_template=$(workdir)/$(boxname)/template
 
 boxname_config=$(boxname).yml
 
-## Check output directory
+### Check output directory
 outdir=${OUTPUT}
 ifeq ("$(wildcard $(boxname_out))","")
     $(info Preparing to write "$(boxname)" to "$(abspath $(boxname_out))")
@@ -52,10 +55,10 @@ else
     $(warning Output path for image already exists. : $(abspath $(boxname_out)))
 endif
 
-# general configuration
+### default configuration
 checksum_type := md5
 
-# coreos configuration
+## coreos configuration
 in_coreos=$(MAKEDIR)coreos.url
 in_coreos_version=$(MAKEDIR)coreos.version
 in_coreos_validate=$(MAKEDIR)coreos.validate.url
@@ -63,23 +66,23 @@ in_coreos_files=$(MAKEDIR)coreos.files
 
 coreos_iso=coreos_production_iso_image.iso
 
-# github stuff
+## github stuff
 in_github=$(MAKEDIR)github.url
 in_acbuild_repo=$(MAKEDIR)acbuild.repo
 in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
 in_salt_bootstrap_metaurl=$(MAKEDIR)salt-bootstrap.url
 
-# generate the install url from the environment vars
+## generate the install url from the environment vars
 $(foreach var,$(file <$(in_coreos_version)),$(eval export $(var)))
 coreos_url=$(file <$(in_coreos))
 coreos_validate_url=$(file <$(in_coreos_validate))
 
-# generate the acbuild url for each file
+## generate the acbuild url for each file
 acbuild_metaurl=$(shell printf -- '$(file <$(in_github))' '$(file <$(in_acbuild_repo))')
 setup_network_environment_metaurl=$(shell printf -- '$(file <$(in_github))' '$(file <$(in_setup_network_environment_repo))')
 salt_bootstrap_metaurl='$(file <$(in_salt_bootstrap_metaurl))'
 
-# some utility macros
+## some utility macros
 DOWNLOAD := curl -L -k --progress-bar
 FETCH := curl -L -k -s
 PUT := curl -L -K -s -X PUT --data-binary
@@ -90,7 +93,14 @@ else
 GH_FETCH := ${FETCH}
 endif
 
-# download rules from github
+## ignition variables
+ignition_config=$(MAKEDIR)ignition/
+
+### definitions for generating rules
+
+## download rules from github
+
+# gh_download '$filename'
 define gh_download
 $(1):
 	test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
@@ -98,7 +108,9 @@ $(1):
 	$${DOWNLOAD} -o '$$@' '$(2)'
 endef
 
-# download rules for CoreOS components
+## download rules for CoreOS components
+
+# coreos_download '$filename'
 define coreos_download
 $$(workdir)/$$(notdir $(1)):
 	test -d '$$(workdir)' || mkdir -p '$$(workdir)'
@@ -106,7 +118,9 @@ $$(workdir)/$$(notdir $(1)):
 	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(1)'
 endef
 
-# rules for copying tools into staging directory
+## rules for copying tools into staging directory
+
+# coreos_tool '$target' '$source'
 define coreos_tool
 $(2): $(1)
 	test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
@@ -114,26 +128,41 @@ $(2): $(1)
 	cp -f '$(1)' '$(2)'
 endef
 
-# all files that are needed to install coreos
+## because fuck CoreOS for breaking cloud-init right before deprecating it
+
+# ignition_file '$target.json' '$infile' '$decimal-mode'
+define ignition_file
+$(2): $(1)
+	test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
+	$$(info [!] Building ignition file $(2) from contents at $(1))
+	jq -n --slurpfile contents <(jq -Rs . '$(1)') '{path: "/etc/sysctl.d/$(notdir $(1))", mode: $(3), contents: $$$$contents[0]}' >| '$(2)'
+endef
+
+### assign some variables containing the different files we need
+
+## all files that are needed to install coreos
 installer_files := $(foreach f,$(file <$(in_coreos_files)),$(workdir)/$(f))
 
-# required files for acbuild
+## required files for acbuild
 acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | python $(tools)json-query.py -d - '$$.assets.name'),$(workdir)/files/$(f))
 
-# files for kelseyhightower's setup-network-environment
+## files for kelseyhightower's setup-network-environment
 setup_network_environment_files := $(foreach f,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | python $(tools)json-query.py -d - '$$.assets.name'),$(workdir)/tools/bin/$(f))
 
-# extra tools
+## extra tools
 extra_tools_files := $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(workdir)/tools/bin/$(notdir $(f)))
 
-# salt-bootstrap.sh files
+## salt-bootstrap.sh files
 salt_bootstrap_file := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python $(tools)json-query.py -d - '$$.name')
 salt_bootstrap_file_url := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python $(tools)json-query.py -d - '$$.download_url')
 
-# all important files that are copied to output
+## all important files that are copied to output
 output_files := $(boxname).key $(boxname).key.pub $(boxname_config)
 
-# general utility rules
+# ignition sysctl
+ignition_sysctl_files := $(wildcard $(ignition_config)sysctl/*.conf)
+
+### general utility rules
 .PHONY: master-image
 master-image: $(boxname_out)
 	$(info [!] Wrote output image to $(boxname_out))
@@ -202,7 +231,7 @@ all: download-installer master-image master-output
 clean: clean-output clean-yaml clean-json clean-image
 	test -d '$(boxname_work)' && rmdir '$(boxname_work)' || exit 0
 
-# rules for actual output of template and related files
+### rules for actual output of template and related files
 $(boxname_out): $(boxname_template)
 	@test -d '$(outdir)' || mkdir -p '$(outdir)'
 	$(info [*] Moving output template into $(outdir) : $<)
@@ -213,12 +242,12 @@ $(foreach f,$(output_files),$(outdir)/$(f)): $(foreach f,$(output_files),$(workd
 	$(info [*] Copying output files to $(outdir) : $^)
 	cp $(foreach f,$^,'$(f)') '$(outdir)'
 
-# actually build the box
+### rules that actually build the box
 $(boxname_template): $(installer_files) $(boxname_work)/$(boxname).json $(boxname_work)/$(boxname)-vars.json $(workdir)/$(boxname_config)
 	$(info [!] Building template : $(MAKEDIR))
 	packer build --only=vmware-iso -var-file '$(boxname_work)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' '$(boxname_work)/$(boxname).json'
 
-# build json file containing all information about iso
+### build json file containing all information about the iso
 $(boxname_work)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Calculating $(checksum_type) checksum for $<)
@@ -226,19 +255,19 @@ $(boxname_work)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso)
 	$(info [*] Generating ISO variables for $@ : $^)
 	python $(tools)json-generate.py 'iso-checksum-type=$(checksum_type)' 'iso-url=file://$<' 'iso-checksum=$(iso_checksum)' >| '$@'
 
-# build json file containing all information for ssh'ing to the box
+### build json file containing all information for ssh'ing to the box
 $(boxname_work)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).key
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Generating SSH variables $@ : $^)
 	python $(tools)json-generate.py 'provision-key=$(workdir)/$(boxname).key' >| '$@'
 
-# build json file containing build-specific variables
+### build json file containing build-specific variables
 $(boxname_work)/$(boxname)-vars.json.base:
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Generating build variables : $@)
 	python $(tools)json-generate.py 'guest-name=$(boxname)' 'install-input=$(workdir)' 'install-output=$(boxname_template)' >| '$@'
 
-# concatenate all config into a single .json file for variables
+### concatenate entire config into a single .json file
 $(boxname_work)/$(boxname)-vars.json: $(MAKEDIR)default.json $(boxname_work)/$(boxname)-vars.json.iso $(boxname_work)/$(boxname)-vars.json.ssh $(boxname_work)/$(boxname)-vars.json.salt $(boxname_work)/$(boxname)-vars.json.tools $(boxname_work)/$(boxname)-vars.json.base
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Merging build variables together into $@ : $^)
@@ -249,25 +278,25 @@ $(boxname_work)/$(boxname)-vars.json.tools: $(extra_tools_files) $(setup_network
 	$(info [-] Generating variables for miscellaneous CoreOS tools)
 	python $(tools)json-generate.py 'tools-directory=$(workdir)/tools' >| '$@'
 
-# generate variables necessary for salt-stack
+## generate necessary configuration variables for salt-stack
 $(boxname_work)/$(boxname)-vars.json.salt: $(boxname_work)/salt $(boxname_work)/pillar $(boxname_work)/salt-minion.conf $(workdir)/$(salt_bootstrap_file)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Generating bootstrap variables for salt-bootstrap : : $^)
 	python $(tools)json-generate.py 'salt-bootstrap-config=$(boxname_work)/salt-minion.conf' 'salt-bootstrap-installer=$(workdir)/$(salt_bootstrap_file)' 'salt-bootstrap-files=$(boxname_work)/salt' 'salt-bootstrap-pillar=$(boxname_work)/pillar' >| '$@'
 
-# concatenate json template into a single .json file with plugins
+## concatenate json template into a single .json file together with plugins
 $(boxname_work)/$(boxname).json: $(MAKEDIR)box.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Merging box with enabled plugins into $@ : $^)
 	python $(tools)json-merge.py $(foreach d,$^,'$(d)') >| '$@'
 
-# generate ssh public/private key
+## generate ssh public/private key
 $(workdir)/$(boxname).key $(workdir)/$(boxname).key.pub:
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Generating public/private keypair : $(workdir)/$(boxname).key)
 	ssh-keygen -t rsa -C 'builder-generated public key' -f '$(workdir)/$(boxname).key' -N ''
 
-# rules for generating bootstrap config
+## rules for building bootstrap config
 $(workdir)/$(boxname_config): $(boxname_work)/$(boxname_config).header $(boxname_work)/$(boxname_config).merged
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Building YAML configuration $@ : $^)
@@ -294,7 +323,13 @@ $(boxname_work)/$(boxname_config).pubkey: $(workdir)/$(boxname).key.pub
 	$(info [-] Generating YAML configuration $@ with public key : $^)
 	python $(tools)yaml-generate.py -p ssh_authorized_keys '$(strip $(file < $<))' >| '$@'
 
-# rules for saltstack prep
+# bootstrap for ignition/sysctl directory
+$(boxname_work)/$(boxname).ignition-sysctl.json: $(foreach f,$(ignition_sysctl_files),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)))
+	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
+	$(info [-] Aggregating all sysctl files into $@ : $^)
+	jq '[., inputs]' $^ >| $@
+
+### rules for saltstack prep
 $(boxname_work)/salt $(boxname_work)/pillar: $(MAKEDIR)salt $(MAKEDIR)pillar $(acbuild_files) $(boxname_work)/pillar/acbuild.sls
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Copying states for bootstrapping $(boxname) to $(boxname_work)/salt.)
@@ -314,17 +349,22 @@ $(boxname_work)/pillar/acbuild.sls: $(acbuild_files) $(boxname_work)/pillar
 	$(info [-] Generating default pillar configuration for acbuild.)
 	@printf -- '- source: %s\n  algo: %s\n  hash: %s\n\n' $(foreach f,$(acbuild_files),'$(shell basename $(f))' '$(checksum_type)' "$(shell openssl dgst -r -$(checksum_type) '$(f)' | cut -d' ' -f1)") >| '$@'
 
-# rules for installer downloads
+### generated rules
+
+## generate rules for downloading the coreos installer
 $(foreach f,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(f))))
 
-# rules for acbuild downloads
+## generate rules for fetching acbuild
 $(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | python $(tools)json-query.py -d - '$$.assets.browser_download_url'),$(eval $(call gh_download,$(workdir)/files/$(notdir $(u)),$(u))))
 
-# rules for setup-network-environment downloads
+## generate rules for fetching setup-network-environment
 $(foreach u,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | python $(tools)json-query.py -d - '$$.assets.browser_download_url'),$(eval $(call gh_download,$(workdir)/tools/bin/$(notdir $(u)),$(u))))
 
-# rules for saltstack-bootstrap
+## generate rules for downloading saltstack-bootstrap
 $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_file_url)))
 
-# transfer rules for miscellaneous tools
+## generate rules for transferring miscellaneous tools
 $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(eval $(call coreos_tool,$(f),$(workdir)/tools/bin/$(notdir $(f)))))
+
+## generate rules for making the ignition sysctl list (0644)
+$(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(f),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)),420)))
