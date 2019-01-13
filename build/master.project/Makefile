@@ -140,17 +140,17 @@ $(2): $(1)
 	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: $$$$contents[0] }' >| '$(2)'
 endef
 
-# ignition_unit_file '$unit.service' '$output.json'
+# ignition_unit_file '$unit.service' '$source.service' '$output.json'
 define ignition_unit_file
-$(2): $(1)
-	$$(info [!] Building ignition unit $(2) from contents at $(1))
-	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ name: "$$(notdir $(1))", enabled: true, contents: $$$$contents[0], dropins: [] }' >| '$(2)'
+$(3): $(2)
+	$$(info [!] Creating ignition unit file $(3) : $(2))
+	@jq -n --slurpfile contents <(jq -Rs . '$(2)') '{ name: "$(1)", enabled: true, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
 endef
 
 # ignition_unit_dropins '$target.json' '$space-separated-dropins'
 define ignition_unit_dropins
 $(1): $(2)
-	$$(info [!] Building ignition unit dropins $(1) : $(2))
+	$$(info [!] Creating ignition unit dropins $(1) : $(2))
 	@jq '[., inputs]' $(2) >| '$(1)'
 endef
 
@@ -158,22 +158,23 @@ endef
 define ignition_unit_dropins_file
 $(2): $(1)
 	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
-	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ name: "$$(notdir $(1))", contents: $$$$contents[0] }' >| '$(2)'
+	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ name: "$(notdir $(1))", contents: $$$$contents[0] }' >| '$(2)'
 endef
 
 # ignition_unit '$target.json' '$unit.json' '$dropins.json'
 define ignition_unit
 $(1): $(2) $(3)
 	$$(info [!] Building ignition unit $(1) : $(2) $(3))
-	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
-	@jq '.dropins = (inputs // .dropins)' $$^
+	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(2))'
+	@jq '.dropins = (inputs // .dropins)' $$^ >| '$(1)'
 endef
 
-# ignition_unit '$target.json' '$dropins.json'
+# ignition_unit_missing '$unit.service' '$target.json' '$dropins.json'
 define ignition_unit_missing
-$(1): $(2)
-	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
-	@jq -n --slurpfile dropins '$(2)' '{ name: "$$(notdir $(1))", dropins: $$$$dropins[0] }'
+$(2): $(3)
+	$$(info [!] Building (missing) ignition unit $(2) : $(3))
+	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
+	@jq -n --slurpfile dropins '$(3)' '{ name: "$(1)", dropins: $$$$dropins[0] }' >| '$(2)'
 endef
 
 ### assign some variables containing the different files we need
@@ -410,7 +411,7 @@ $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(eval $(call coreos_tool,$(f),$(work
 $(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(f),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)),420)))
 
 ## generate rules for making the ignition units list
-$(foreach name,$(ignition_units_names),$(eval $(call ignition_unit_file,$(ignition_config)units/$(name),$(boxname_work)/ignition-units.json-$(name))))
+$(foreach name,$(ignition_units_names),$(eval $(call ignition_unit_file,$(name),$(ignition_config)units/$(name),$(boxname_work)/ignition-units.json-$(name))))
 
 ## generate rules for making the ignition unit dropins files
 $(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(eval $(call ignition_unit_dropins_file,$(f),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f))))))
@@ -419,6 +420,12 @@ $(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_confi
 $(foreach name,$(ignition_dropins_names),$(eval $(call ignition_unit_dropins,$(boxname_work)/ignition-dropins.json-$(name),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f))))))
 
 ## generate rules for combining the units and their dropins
-# XXX: figure out how to check the existence of files
-$(foreach name,$(ignition_units_names),$(eval $(call ignition_unit,$(boxname_work)/ignition-unit.json-$(name),$(boxname_work)/ignition-units.json-$(name),$(boxname_work)/ignition-dropins.json-$(name))))
-$(foreach name,$(ignition_dropins_names),$(eval $(call ignition_unit_missing,$(boxname_work)/ignition-unit.json-$(name),$(boxname_work)/ignition-dropins.json-$(name))))
+
+# rules that compose the unit with all of its dropins
+$(foreach name,$(filter $(ignition_dropins_names),$(ignition_units_names)),$(eval $(call ignition_unit,$(boxname_work)/ignition-unit.json-$(name),$(boxname_work)/ignition-units.json-$(name),$(boxname_work)/ignition-dropins.json-$(name))))
+
+# rules that compose the unit without any dropins
+$(foreach name,$(filter-out $(ignition_dropins_names),$(ignition_units_names)),$(eval $(call ignition_unit,$(boxname_work)/ignition-unit.json-$(name),$(boxname_work)/ignition-units.json-$(name))))
+
+# rules that compose a missing unit with all dropins
+$(foreach name,$(filter-out $(ignition_units_names),$(ignition_dropins_names)),$(eval $(call ignition_unit_missing,$(name),$(boxname_work)/ignition-unit.json-$(name),$(boxname_work)/ignition-dropins.json-$(name))))
