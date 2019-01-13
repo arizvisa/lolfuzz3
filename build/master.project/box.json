@@ -57,14 +57,12 @@
             "ssh_private_key_file" : "{{user `provision-key`}}",
             "ssh_wait_timeout" : "{{user `timeout-wait`}}",
 
+            "cpus" : "{{user `guest-cpu-count`}}",
+            "memory" : "{{user `guest-memory-size`}}",
+
             "hard_drive_interface" : "scsi",
             "disk_size" : "{{user `guest-disk-size`}}",
-            "parallels_tools_flavor" : "disable",
-            "prlctl" : [
-                [ "set", "{{.Name}}", "--memsize", "{{user `guest-memory-size`}}" ],
-                [ "set", "{{.Name}}", "--cpus", "{{user `guest-cpu-count`}}" ],
-                []
-            ]
+            "parallels_tools_flavor" : "disable"
         },
         { "type" : "virtualbox-iso",
             "format" : "ovf",
@@ -93,14 +91,12 @@
             "ssh_private_key_file" : "{{user `provision-key`}}",
             "ssh_wait_timeout" : "{{user `timeout-wait`}}",
 
+            "cpus" : "{{user `guest-cpu-count`}}",
+            "memory" : "{{user `guest-memory-size`}}",
+
             "hard_drive_interface" : "scsi",
             "disk_size" : "{{user `guest-disk-size`}}",
-            "guest_additions_mode" : "disable",
-            "vboxmanage" : [
-                [ "modifyvm", "{{.Name}}", "--memory", "{{user `guest-memory-size`}}" ],
-                [ "modifyvm", "{{.Name}}", "--cpus", "{{user `guest-cpu-count`}}" ],
-                []
-            ]
+            "guest_additions_mode" : "disable"
         },
         { "type" : "vmware-iso",
             "format" : "ovf",
@@ -132,10 +128,10 @@
             "guest_os_type" : "linux",
             "tools_upload_flavor" : "linux",
             "disk_size" : "{{user `guest-disk-size`}}",
-            "vmx_data" : {
-                "memsize" : "{{user `guest-memory-size`}}",
-                "numvcpus" : "{{user `guest-cpu-count`}}"
-            },
+
+            "cpus" : "{{user `guest-cpu-count`}}",
+            "memory" : "{{user `guest-memory-size`}}",
+
             "network" : "{{user `guest-network`}}",
             "sound" : true,
             "usb" : true,
