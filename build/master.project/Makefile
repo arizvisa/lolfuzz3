@@ -55,6 +55,17 @@ else
     $(warning Output path for image already exists. : $(abspath $(boxname_out)))
 endif
 
+## some utility macros for downloading
+DOWNLOAD := curl -L -k --progress-bar
+FETCH := curl -L -k -s
+PUT := curl -L -K -s -X PUT --data-binary
+
+ifneq ("$(wildcard $(ROOTDIR)/github.token)","")
+GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
+else
+GH_FETCH := ${FETCH}
+endif
+
 ### default configuration
 checksum_type := md5
 ignition_config := $(MAKEDIR)ignition/
@@ -111,17 +122,6 @@ ignition_users_files := $(wildcard $(ignition_config)users/*)
 
 ignition_units_names := $(foreach f,$(wildcard $(ignition_config)units/*),$(notdir $(f)))
 ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)dropins/*),$(notdir $(f)))
-
-## some utility macros
-DOWNLOAD := curl -L -k --progress-bar
-FETCH := curl -L -k -s
-PUT := curl -L -K -s -X PUT --data-binary
-
-ifneq ("$(wildcard $(ROOTDIR)/github.token)","")
-GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
-else
-GH_FETCH := ${FETCH}
-endif
 
 ### definitions for generating rules
 
@@ -356,7 +356,7 @@ $(boxname_work)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(
 	done
 	@jq '.result[] | select(.kind == "error") | .message | @sh' '$(boxname_work)/$(boxname_config).validated' | while read message; do \
 		printf 'Validation Error: %s\n' "$$message" 1>&2; \
-		rm -f '$@'
+		rm -f '$@'; \
 		exit 1; \
 	done
 
