@@ -8,7 +8,7 @@
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -L -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "time coreos-install -V . -i {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
@@ -38,7 +38,7 @@
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "time coreos-install -V . -i {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
@@ -72,7 +72,7 @@
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "time coreos-install -V . -i {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
@@ -106,7 +106,7 @@
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "time coreos-install -V . -i {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
@@ -143,7 +143,7 @@
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
-                "time coreos-install -V . -c {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
+                "time coreos-install -V . -i {{user `guest-config`}} -d /dev/sda -b 'http://{{.HTTPIP}}:{{.HTTPPort}}'<enter>",
                 "<wait10>reboot<enter>",
                 "<wait10>"
             ],
