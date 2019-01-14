@@ -169,7 +169,7 @@ endef
 define ignition_unit_file
 $(3): $(2)
 	$$(info [!] Creating ignition unit file $(3) : $(2))
-	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", enabled: true, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
+	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", enable: false, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
 endef
 
 # ignition_unit_dropins '$target.json' '$space-separated-dropins'
