@@ -57,6 +57,12 @@ endif
 
 ### default configuration
 checksum_type := md5
+ignition_config := $(MAKEDIR)ignition/
+salt_config := $(MAKEDIR)salt
+salt_pillar := $(MAKEDIR)pillar
+
+## all important files that are copied to output
+output_files := $(boxname).key $(boxname).key.pub $(boxname_config)
 
 ## coreos configuration
 in_coreos=$(MAKEDIR)coreos.url
@@ -66,21 +72,44 @@ in_coreos_files=$(MAKEDIR)coreos.files
 
 coreos_iso=coreos_production_iso_image.iso
 
-## github stuff
-in_github=$(MAKEDIR)github.url
-in_acbuild_repo=$(MAKEDIR)acbuild.repo
-in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
-in_salt_bootstrap_metaurl=$(MAKEDIR)salt-bootstrap.url
+# all files that are needed to install coreos
+coreos_installer_files := $(foreach f,$(file <$(in_coreos_files)),$(workdir)/$(f))
 
 ## generate the install url from the environment vars
 $(foreach var,$(file <$(in_coreos_version)),$(eval export $(var)))
 coreos_url=$(file <$(in_coreos))
 coreos_validate_url=$(file <$(in_coreos_validate))
 
-## generate the acbuild url for each file
-acbuild_metaurl=$(shell printf -- '$(file <$(in_github))' '$(file <$(in_acbuild_repo))')
-setup_network_environment_metaurl=$(shell printf -- '$(file <$(in_github))' '$(file <$(in_setup_network_environment_repo))')
-salt_bootstrap_metaurl='$(file <$(in_salt_bootstrap_metaurl))'
+## github stuff
+in_github=$(MAKEDIR)github.url
+in_acbuild_repo=$(MAKEDIR)acbuild.repo
+in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
+in_salt_bootstrap_metaurl=$(MAKEDIR)salt-bootstrap.url
+
+## acbuild variables
+acbuild_metaurl := $(shell printf -- '$(file <$(in_github))' '$(file <$(in_acbuild_repo))')
+
+# required files for acbuild
+acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | python $(tools)json-query.py -d - '$$.assets.name'),$(workdir)/files/$(f))
+
+## variables for kelseyhightower's setup-network-environment
+setup_network_environment_metaurl := $(shell printf -- '$(file <$(in_github))' '$(file <$(in_setup_network_environment_repo))')
+setup_network_environment_files := $(foreach f,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | python $(tools)json-query.py -d - '$$.assets.name'),$(workdir)/tools/bin/$(f))
+
+## extra tools
+extra_tools_files := $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(workdir)/tools/bin/$(notdir $(f)))
+
+## salt-bootstrap.sh variables
+salt_bootstrap_metaurl := '$(file <$(in_salt_bootstrap_metaurl))'
+salt_bootstrap_file := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python $(tools)json-query.py -d - '$$.name')
+salt_bootstrap_file_url := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python $(tools)json-query.py -d - '$$.download_url')
+
+## ignition related variables
+ignition_sysctl_files := $(wildcard $(ignition_config)sysctl/*.conf)
+ignition_users_files := $(wildcard $(ignition_config)users/*)
+
+ignition_units_names := $(foreach f,$(wildcard $(ignition_config)units/*),$(notdir $(f)))
+ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)dropins/*),$(notdir $(f)))
 
 ## some utility macros
 DOWNLOAD := curl -L -k --progress-bar
@@ -92,11 +121,6 @@ GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
 else
 GH_FETCH := ${FETCH}
 endif
-
-## ignition variables
-ignition_config=$(MAKEDIR)ignition/
-ignition_units_names=$(foreach f,$(wildcard $(ignition_config)units/*),$(notdir $(f)))
-ignition_dropins_names=$(foreach f,$(wildcard $(ignition_config)dropins/*),$(notdir $(f)))
 
 ### definitions for generating rules
 
@@ -120,13 +144,11 @@ $$(workdir)/$$(notdir $(1)):
 	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(1)'
 endef
 
-## rules for copying tools into staging directory
-
 # coreos_tool '$target' '$source'
 define coreos_tool
 $(2): $(1)
 	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
-	$$(info [!] Copying file from $(1) to $(2))
+	$$(info [!] Staging file $(1) in $(2))
 	cp -f '$(1)' '$(2)'
 endef
 
@@ -164,7 +186,7 @@ endef
 # ignition_unit '$target.json' '$unit.json' '$dropins.json'
 define ignition_unit
 $(1): $(2) $(3)
-	$$(info [!] Building ignition unit $(1) : $(2) $(3))
+	$$(info [!] Combining ignition unit $(1) : $(2) $(3))
 	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(2))'
 	@jq '.dropins = (inputs // .dropins)' $$^ >| '$(1)'
 endef
@@ -172,34 +194,18 @@ endef
 # ignition_unit_missing '$unit.service' '$target.json' '$dropins.json'
 define ignition_unit_missing
 $(2): $(3)
-	$$(info [!] Building (missing) ignition unit $(2) : $(3))
+	$$(info [!] Combining (missing) ignition unit $(2) : $(3))
 	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
 	@jq -n --slurpfile dropins '$(3)' '{ name: "$(1)", dropins: $$$$dropins[0] }' >| '$(2)'
 endef
 
-### assign some variables containing the different files we need
-
-## all files that are needed to install coreos
-installer_files := $(foreach f,$(file <$(in_coreos_files)),$(workdir)/$(f))
-
-## required files for acbuild
-acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | python $(tools)json-query.py -d - '$$.assets.name'),$(workdir)/files/$(f))
-
-## files for kelseyhightower's setup-network-environment
-setup_network_environment_files := $(foreach f,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | python $(tools)json-query.py -d - '$$.assets.name'),$(workdir)/tools/bin/$(f))
-
-## extra tools
-extra_tools_files := $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(workdir)/tools/bin/$(notdir $(f)))
-
-## salt-bootstrap.sh files
-salt_bootstrap_file := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python $(tools)json-query.py -d - '$$.name')
-salt_bootstrap_file_url := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python $(tools)json-query.py -d - '$$.download_url')
-
-## all important files that are copied to output
-output_files := $(boxname).key $(boxname).key.pub $(boxname_config)
-
-# ignition sysctl
-ignition_sysctl_files := $(wildcard $(ignition_config)sysctl/*.conf)
+# ignition_user '$target.json' '$source.json' '$list-of-json-files'
+define ignition_user
+$(1): $(2) $(3)
+	$$(info [!] Combining files for user into $(1) : $$^)
+	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
+	@jq -n 'reduce inputs as $$$$item ({}; . * $$$$item)' '$(2)' $(3)
+endef
 
 ### general utility rules
 .PHONY: master-image
@@ -207,7 +213,7 @@ master-image: $(boxname_out)
 	$(info [!] Wrote output image to $(boxname_out))
 
 .PHONY: download-installer
-download-installer: $(installer_files)
+download-installer: $(coreos_installer_files)
 	$(info [*] Successfully downloaded CoreOS installer files)
 
 .PHONY: download-tools
@@ -232,7 +238,7 @@ clean-image:
 .PHONY: clean-installer
 clean-installer:
 	$(info [!] Removing CoreOS installer files)
-	rm -f $(installer_files)
+	rm -f $(coreos_installer_files)
 
 .PHONY: clean-output
 clean-output:
@@ -282,7 +288,7 @@ $(foreach f,$(output_files),$(outdir)/$(f)): $(foreach f,$(output_files),$(workd
 	cp $(foreach f,$^,'$(f)') '$(outdir)'
 
 ### rules that actually build the box
-$(boxname_template): $(installer_files) $(boxname_work)/$(boxname).json $(boxname_work)/$(boxname)-vars.json $(workdir)/$(boxname_config)
+$(boxname_template): $(coreos_installer_files) $(boxname_work)/$(boxname).json $(boxname_work)/$(boxname)-vars.json $(workdir)/$(boxname_config)
 	$(info [!] Building template : $(MAKEDIR))
 	packer build --only=vmware-iso -var-file '$(boxname_work)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' '$(boxname_work)/$(boxname).json'
 
@@ -368,15 +374,19 @@ $(boxname_work)/$(boxname).ignition-sysctl.json: $(foreach f,$(ignition_sysctl_f
 	$(info [-] Aggregating all sysctl files into $@ : $^)
 	jq '[., inputs]' $^ >| $@
 
-# XXX: add ignition stuff here
+# bootstrap for ignition/units and ignition/dropins
+$(boxname_work)/$(boxname).ignition-units.json: $(foreach name,$(ignition_units_names),$(boxname_work)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_work)/ignition-unit.json-$(name))
+	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
+	$(info [-] Aggregating all unit files into $@ : $^)
+	jq '[., inputs]' $^ >| $@
 
 ### rules for saltstack prep
-$(boxname_work)/salt $(boxname_work)/pillar: $(MAKEDIR)salt $(MAKEDIR)pillar $(acbuild_files) $(boxname_work)/pillar/acbuild.sls
+$(boxname_work)/salt $(boxname_work)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files) $(boxname_work)/pillar/acbuild.sls
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Copying states for bootstrapping $(boxname) to $(boxname_work)/salt.)
-	cp -r '$(MAKEDIR)salt' '$(boxname_work)'/
+	cp -r '$(salt_config)' '$(boxname_work)'/
 	$(info [*] Copying bootstrap pillar to $(boxname_work)/pillar.)
-	cp -r '$(MAKEDIR)pillar' '$(boxname_work)'/
+	cp -r '$(salt_pillar)' '$(boxname_work)'/
 	$(info [*] Copying extra files from $(workdir)/files into states at $(boxname_work)/salt.)
 	cp -r '$(workdir)/files' '$(boxname_work)/salt'/
 
