@@ -345,8 +345,8 @@ $(workdir)/$(boxname).key $(workdir)/$(boxname).key.pub:
 ### rules for building bootstrap config
 
 # combine the result ignition json with any other configurations
-$(boxname_work)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
-	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
+$(workdir)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
+	@test -d '$(workdir)' || mkdir -p '$(workdir)'
 	$(info [-] Merging the ignition configuration $@ using the result json and extra configurations: $^)
 	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
 	$(info [!] Validating ignition configuration $@ : $(coreos_validate_url))
