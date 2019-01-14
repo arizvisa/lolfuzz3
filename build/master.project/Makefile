@@ -99,19 +99,19 @@ in_salt_bootstrap_metaurl=$(MAKEDIR)salt-bootstrap.url
 acbuild_metaurl := $(shell printf -- '$(file <$(in_github))' '$(file <$(in_acbuild_repo))')
 
 # required files for acbuild
-acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | python $(tools)json-query.py -d - '$$.assets.name'),$(workdir)/files/$(f))
+acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].name'),$(workdir)/files/$(f))
 
 ## variables for kelseyhightower's setup-network-environment
 setup_network_environment_metaurl := $(shell printf -- '$(file <$(in_github))' '$(file <$(in_setup_network_environment_repo))')
-setup_network_environment_files := $(foreach f,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | python $(tools)json-query.py -d - '$$.assets.name'),$(workdir)/tools/bin/$(f))
+setup_network_environment_files := $(foreach f,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name'),$(workdir)/tools/bin/$(f))
 
 ## extra tools
 extra_tools_files := $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(workdir)/tools/bin/$(notdir $(f)))
 
 ## salt-bootstrap.sh variables
 salt_bootstrap_metaurl := '$(file <$(in_salt_bootstrap_metaurl))'
-salt_bootstrap_file := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python $(tools)json-query.py -d - '$$.name')
-salt_bootstrap_file_url := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python $(tools)json-query.py -d - '$$.download_url')
+salt_bootstrap_file := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.name | @sh')
+salt_bootstrap_file_url := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.download_url | @sh')
 
 ## ignition related variables
 ignition_template := $(MAKEDIR)ignition.json
@@ -303,19 +303,19 @@ $(boxname_work)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso)
 	$(info [-] Calculating $(checksum_type) checksum for $<)
 	$(eval iso_checksum := $(shell openssl dgst -r -$(checksum_type) '$<' | cut -d' ' -f 1))
 	$(info [*] Generating ISO variables for $@ : $^)
-	python $(tools)json-generate.py 'iso-checksum-type=$(checksum_type)' 'iso-url=file://$<' 'iso-checksum=$(iso_checksum)' >| '$@'
+	jq -n '{ "iso-checksum-type": "$(checksum_type)", "iso-url": "file://$<", "iso-checksum": "$(iso_checksum)" }' >| '$@'
 
 ### build json file containing all information for ssh'ing to the box
 $(boxname_work)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).key
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Generating SSH variables $@ : $^)
-	python $(tools)json-generate.py 'provision-key=$(workdir)/$(boxname).key' >| '$@'
+	jq -n '{ "provision-key": "$(workdir)/$(boxname).key" }' >| '$@'
 
 ### build json file containing build-specific variables
 $(boxname_work)/$(boxname)-vars.json.base:
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Generating build variables : $@)
-	python $(tools)json-generate.py 'guest-name=$(boxname)' 'install-input=$(workdir)' 'install-output=$(boxname_template)' >| '$@'
+	jq -n '{ "guest-name": "$(boxname)", "install-input": "$(workdir)", "install-output": "$(boxname_template)" }' >| '$@'
 
 ### concatenate entire template config into a single .json file
 $(boxname_work)/$(boxname)-vars.json: $(MAKEDIR)default.json $(boxname_work)/$(boxname)-vars.json.iso $(boxname_work)/$(boxname)-vars.json.ssh $(boxname_work)/$(boxname)-vars.json.salt $(boxname_work)/$(boxname)-vars.json.tools $(boxname_work)/$(boxname)-vars.json.base
@@ -326,13 +326,13 @@ $(boxname_work)/$(boxname)-vars.json: $(MAKEDIR)default.json $(boxname_work)/$(b
 $(boxname_work)/$(boxname)-vars.json.tools: $(extra_tools_files) $(setup_network_environment_files)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Generating variables for miscellaneous CoreOS tools)
-	python $(tools)json-generate.py 'tools-directory=$(workdir)/tools' >| '$@'
+	jq -n '{ "tools-directory": "$(workdir)/tools" }' >| '$@'
 
 ## generate necessary configuration variables for salt-stack
 $(boxname_work)/$(boxname)-vars.json.salt: $(boxname_work)/salt $(boxname_work)/pillar $(boxname_work)/salt-minion.conf $(workdir)/$(salt_bootstrap_file)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Generating bootstrap variables for salt-bootstrap : : $^)
-	python $(tools)json-generate.py 'salt-bootstrap-config=$(boxname_work)/salt-minion.conf' 'salt-bootstrap-installer=$(workdir)/$(salt_bootstrap_file)' 'salt-bootstrap-files=$(boxname_work)/salt' 'salt-bootstrap-pillar=$(boxname_work)/pillar' >| '$@'
+	jq -n '{ "salt-bootstrap-config": "$(boxname_work)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_work)/salt", "salt-bootstrap-pillar": "$(boxname_work)/pillar" }' >| '$@'
 
 ## concatenate json template into a single .json file together with plugins
 $(boxname_work)/$(boxname).json: $(MAKEDIR)box.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)
@@ -434,10 +434,10 @@ $(boxname_work)/pillar/acbuild.sls: $(acbuild_files) $(boxname_work)/pillar
 $(foreach f,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(f))))
 
 ## generate rules for fetching acbuild
-$(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | python $(tools)json-query.py -d - '$$.assets.browser_download_url'),$(eval $(call gh_download,$(workdir)/files/$(notdir $(u)),$(u))))
+$(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(workdir)/files/$(notdir $(u)),$(u))))
 
 ## generate rules for fetching setup-network-environment
-$(foreach u,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | python $(tools)json-query.py -d - '$$.assets.browser_download_url'),$(eval $(call gh_download,$(workdir)/tools/bin/$(notdir $(u)),$(u))))
+$(foreach u,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(workdir)/tools/bin/$(notdir $(u)),$(u))))
 
 ## generate rules for downloading saltstack-bootstrap
 $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_file_url)))
