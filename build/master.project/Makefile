@@ -160,7 +160,7 @@ define ignition_file
 $(2): $(1)
 	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
 	$$(info [!] Building ignition file $(2) from contents at $(1))
-	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ filesystem: "root", path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: $$$$contents[0] }' >| '$(2)'
+	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ filesystem: "root", path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
 
 # ignition_unit_file '$unit.service' '$source.service' '$output.json'
@@ -373,7 +373,8 @@ $(boxname_work)/$(boxname_config).pubkey: $(workdir)/$(boxname).key.pub
 $(boxname_work)/$(boxname_config).ignition-hostname.json:
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Building the ignition configuration for hostname : $(boxname) )
-	jq -n '{ filesystem: "root", path: "/etc/hostname", mode: 420, contents: "$(boxname)" }' >| '$@'
+	# mode 0644 == 420
+	jq -n '{ filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ("$(boxname)" | @uri)) } }' >| '$@'
 
 # bootstrap for ignition/sysctl directory
 $(boxname_work)/$(boxname_config).ignition-sysctl.json: $(foreach f,$(ignition_sysctl_files),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)))
@@ -436,7 +437,7 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 ## generate rules for transferring miscellaneous tools
 $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(eval $(call coreos_tool,$(f),$(workdir)/tools/bin/$(notdir $(f)))))
 
-## generate rules for making the ignition sysctl list (0644)
+## generate rules for making the ignition sysctl list (0644 == 420)
 $(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(f),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)),420)))
 
 ## generate rules for making the ignition units list
