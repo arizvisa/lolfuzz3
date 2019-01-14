@@ -259,11 +259,11 @@ clean-tools:
 	$(info [!] Erasing $(setup_network_environment_files))
 	rm -f '$(setup_network_environment_files)'
 
-.PHONY: clean-yaml
-clean-yaml:
-	$(info [!] Erasing temporary files for building cloudinit : $(boxname_config).*)
+.PHONY: clean-ignition
+clean-ignition:
+	$(info [!] Erasing temporary files for building ignition : $(boxname_config).*)
 	rm -f '$(workdir)/$(boxname_config)'
-	rm -rf '$(boxname_work)/$(boxname_config).'{header,hostname,merged,pubkey}
+	rm -rf '$(boxname_work)/$(boxname_config).'{original,files,units,users,hostname,sysctl,pubkey,validated}
 
 .PHONY: clean-json
 clean-json:
@@ -274,7 +274,7 @@ clean-json:
 .PHONY: all
 all: download-installer master-image master-output
 .PHONY: clean
-clean: clean-output clean-yaml clean-json clean-image
+clean: clean-output clean-ignition clean-json clean-image
 	test -d '$(boxname_work)' && rmdir '$(boxname_work)' || exit 0
 
 ### rules for actual output of template and related files
