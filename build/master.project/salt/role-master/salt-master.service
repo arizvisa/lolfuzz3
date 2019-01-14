@@ -2,8 +2,8 @@
 Description=Salt-Master Service
 ConditionPathExists={{ container_path }}/image/salt-master:{{ version }}.aci
 ConditionPathExists=/etc/salt/master
-Requires=etcd2.service
-After=etcd2.service
+Requires=etcd.service
+After=etcd.service
 
 [Service]
 LimitNOFILE=16384 

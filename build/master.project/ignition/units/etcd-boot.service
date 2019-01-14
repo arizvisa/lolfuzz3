@@ -1,16 +1,16 @@
 [Unit]
-Description=etcd2 bootstrap - initialize
-Conflicts=etcd2.service etcd2-reboot.service
+Description=etcd bootstrap - initialize
+Conflicts=etcd.service etcd-reboot.service
 Before=flanneld.service fleet.service
 
 [Service]
 User=etcd
 Type=notify
 
-Environment=ETCD_DATA_DIR=/var/lib/etcd2
+Environment=ETCD_DATA_DIR=/var/lib/etcd
 Environment=ETCD_NAME=%m
 
-ExecStart=/bin/sh -c 'exec /usr/bin/etcd2 \
+ExecStart=/bin/sh -c 'exec /usr/lib/coreos/etcd-wrapper \
             --name=$(cat /etc/machine-id) \
             --listen-peer-urls="http://0.0.0.0:2380" \
             --initial-advertise-peer-urls="http://127.0.0.1:2380" \

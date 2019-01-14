@@ -13,7 +13,7 @@ base:
                             # systemd-machine-id-commit.service or call
                             # systemd-machine-id-setup --root=/media/root --commit
 #        - container         # create container-directory and build-scripts
-#        - join-master       # register master cluster with etcd2
+#        - join-master       # register master cluster with etcd
 
     'G@minion-role:service':
         - role-service
