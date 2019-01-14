@@ -1,5 +1,3 @@
-SHELL=/usr/bin/bash
-
 MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ROOTDIR := $(realpath $(MAKEDIR)../..)
 
@@ -155,19 +153,25 @@ endef
 
 ## because fuck CoreOS for breaking cloud-init right before deprecating it
 
-# ignition_file '$target.json' '$infile' '$decimal-mode'
+# raw_file '$source.raw' '$target.json'
+define raw_file
+$(2): $(1)
+	@jq -Rs . '$(1)' >| '$(2)'
+endef
+
+# ignition_file '$infile.json' '$target.json' '$decimal-mode'
 define ignition_file
 $(2): $(1)
 	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
 	$$(info [!] Building ignition file $(2) from contents at $(1))
-	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ filesystem: "root", path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
+	@jq -n --slurpfile contents '$(1)' '{ filesystem: "root", path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
 
-# ignition_unit_file '$unit.service' '$source.service' '$output.json'
+# ignition_unit_file '$unit.service' '$source.service.raw' '$output.json'
 define ignition_unit_file
 $(3): $(2)
 	$$(info [!] Creating ignition unit file $(3) : $(2))
-	@jq -n --slurpfile contents <(jq -Rs . '$(2)') '{ name: "$(1)", enabled: true, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
+	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", enabled: true, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
 endef
 
 # ignition_unit_dropins '$target.json' '$space-separated-dropins'
@@ -177,11 +181,11 @@ $(1): $(2)
 	@jq '[., inputs]' $(2) >| '$(1)'
 endef
 
-# ignition_unit_dropin_file '$dropin.conf' '$target.json'
+# ignition_unit_dropin_file '$filename.conf' '$dropin.conf' '$target.json'
 define ignition_unit_dropins_file
-$(2): $(1)
-	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
-	@jq -n --slurpfile contents <(jq -Rs . '$(1)') '{ name: "$(notdir $(1))", contents: $$$$contents[0] }' >| '$(2)'
+$(3): $(2)
+	@test -d '$$(dir $(3))' || mkdir -p '$$(dir $(3))'
+	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", contents: $$$$contents[0] }' >| '$(3)'
 endef
 
 # ignition_unit '$target.json' '$unit.json' '$dropins.json'
@@ -347,10 +351,10 @@ $(workdir)/$(boxname).key $(workdir)/$(boxname).key.pub:
 # combine the result ignition json with any other configurations
 $(workdir)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
 	@test -d '$(workdir)' || mkdir -p '$(workdir)'
-	$(info [-] Merging the ignition configuration $@ using the result json and extra configurations: $^)
-	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
-	$(info [!] Validating ignition configuration $@ : $(coreos_validate_url))
-	@${PUT} '@$@' '$(coreos_validate_url)' >| '$(boxname_work)/$(boxname_config).validated'
+	$(info [-] Merging the ignition configuration $(boxname_work)/$(boxname_config) using the result json and extra configurations: $^)
+	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$(boxname_work)/$(boxname_config)'
+	$(info [!] Validating ignition configuration $(boxname_work)/$(boxname_config) : $(coreos_validate_url))
+	${PUT} '@$(boxname_work)/$(boxname_config)' '$(coreos_validate_url)' >| '$(boxname_work)/$(boxname_config).validated'
 	@jq '.result[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$(boxname_work)/$(boxname_config).validated' | while read y x message; do \
 		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
 	done
@@ -359,6 +363,7 @@ $(workdir)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(if $(
 		rm -f '$@'; \
 		exit 1; \
 	done
+	cp -f '$(boxname_work)/$(boxname_config)' '$@'
 
 # combine all ignition jsons into the template
 $(boxname_work)/$(boxname_config)-original: $(ignition_template) $(boxname_work)/$(boxname_config)-files $(boxname_work)/$(boxname_config)-units $(boxname_work)/$(boxname_config)-users
@@ -392,10 +397,10 @@ $(boxname_work)/$(boxname_config)-units: $(foreach name,$(ignition_units_names),
 	@jq '[., inputs]' $^ >| '$@'
 
 # generate a json containing the sshAuthorizedKeys field in an object
-$(boxname_work)/$(boxname_config)-pubkey: $(workdir)/$(boxname).key.pub
+$(boxname_work)/$(boxname_config)-pubkey: $(boxname_work)/$(boxname).key.pub.raw
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Generating a json with the public key in $@ : $^)
-	jq -n --slurpfile pubkey <( jq -Rs . '$<' ) '{ sshAuthorizedKeys: [$$pubkey[0]] }' >| '$@'
+	jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0]] }' >| '$@'
 
 # combine all joined user objects into a single list
 $(boxname_work)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(boxname_work)/ignition-user.json-$(notdir $(f)))
@@ -441,13 +446,13 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(eval $(call coreos_tool,$(f),$(workdir)/tools/bin/$(notdir $(f)))))
 
 ## generate rules for making the ignition sysctl list (0644 == 420)
-$(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(f),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)),420)))
+$(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(boxname_work)/ignition-sysctl.json-$(notdir $(f)).raw,$(boxname_work)/ignition-sysctl.json-$(notdir $(f)),420)))
 
 ## generate rules for making the ignition units list
-$(foreach name,$(ignition_units_names),$(eval $(call ignition_unit_file,$(name),$(ignition_config)units/$(name),$(boxname_work)/ignition-units.json-$(name))))
+$(foreach name,$(ignition_units_names),$(eval $(call ignition_unit_file,$(name),$(boxname_work)/ignition-units.json-$(name).raw,$(boxname_work)/ignition-units.json-$(name))))
 
 ## generate rules for making the ignition unit dropins files
-$(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(eval $(call ignition_unit_dropins_file,$(f),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f))))))
+$(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(eval $(call ignition_unit_dropins_file,$(notdir $(f)),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f)).raw,$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f))))))
 
 ## generate rules for making the ignition unit dropins list
 $(foreach name,$(ignition_dropins_names),$(eval $(call ignition_unit_dropins,$(boxname_work)/ignition-dropins.json-$(name),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f))))))
@@ -465,3 +470,17 @@ $(foreach name,$(filter-out $(ignition_units_names),$(ignition_dropins_names)),$
 
 ## generate rules for combining each user with the sshAuthorizedKeys
 $(foreach f,$(ignition_users_files),$(eval $(call ignition_user,$(boxname_work)/ignition-user.json-$(notdir $(f)),$(f),$(boxname_work)/$(boxname_config)-pubkey)))
+
+## generate raw files that are needed for bash workaround
+
+# ignition_sysctl_files contents
+$(foreach f,$(ignition_sysctl_files),$(eval $(call raw_file,$(f),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)).raw)))
+
+# ignition_unit_files contents
+$(foreach name,$(ignition_units_names),$(eval $(call raw_file,$(ignition_config)units/$(name),$(boxname_work)/ignition-units.json-$(name).raw)))
+
+# ignition_dropins_names contents
+$(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(eval $(call raw_file,$(f),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f)).raw))))
+
+# ssh pubkey contents
+$(eval $(call raw_file,$(workdir)/$(boxname).key.pub,$(boxname_work)/$(boxname).key.pub.raw))
