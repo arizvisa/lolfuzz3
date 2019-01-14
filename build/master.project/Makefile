@@ -45,7 +45,7 @@ boxname_out=$(outdir)/$(boxname)
 boxname_work=$(workdir)/$(boxname)
 boxname_template=$(workdir)/$(boxname)/template
 
-boxname_config=$(boxname).yml
+boxname_config=$(boxname).ignition.json
 
 ### Check output directory
 outdir=${OUTPUT}
@@ -105,7 +105,7 @@ salt_bootstrap_file := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python 
 salt_bootstrap_file_url := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | python $(tools)json-query.py -d - '$$.download_url')
 
 ## ignition related variables
-ignition_template := $(MAKEDIR)/ignition.json
+ignition_template := $(MAKEDIR)ignition.json
 ignition_sysctl_files := $(wildcard $(ignition_config)sysctl/*.conf)
 ignition_users_files := $(wildcard $(ignition_config)users/*)
 
@@ -369,36 +369,48 @@ $(boxname_work)/$(boxname_config).pubkey: $(workdir)/$(boxname).key.pub
 	$(info [-] Generating YAML configuration $@ with public key : $^)
 	python $(tools)yaml-generate.py -p ssh_authorized_keys '$(strip $(file < $<))' >| '$@'
 
+# combine all ignition jsons into the template
+$(boxname_work)/$(boxname_config): $(ignition_template) $(foreach name,ignition-files.json ignition-units.json ignition-users.json,$(boxname_work)/$(boxname_config).$(name))
+	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
+	$(info [-] Making the ignition configuration $@ from the template $(ignition_template))
+	jq --slurpfile files '$(boxname_work)/$(boxname_config).ignition-files.json' --slurpfile units '$(boxname_work)/$(boxname_config).ignition-units.json' --slurpfile users '$(boxname_work)/$(boxname_config).ignition-users.json' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0]' '$(ignition_template)' >| '$@'
+
 # set the hostname using $(boxname)
 $(boxname_work)/$(boxname_config).ignition-hostname.json:
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Building the ignition configuration for hostname : $(boxname) )
+	$(info [-] Building the ignition configuration file for the hostname : $(boxname) )
 	# mode 0644 == 420
-	jq -n '{ filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ("$(boxname)" | @uri)) } }' >| '$@'
+	jq -n '[ { filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ("$(boxname)" | @uri)) } } ]' >| '$@'
 
 # bootstrap for ignition/sysctl directory
 $(boxname_work)/$(boxname_config).ignition-sysctl.json: $(foreach f,$(ignition_sysctl_files),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Aggregating all sysctl files into $@ : $^)
-	jq '[., inputs]' $^ >| '$@'
+	$(info [-] Aggregating all ignition sysctl files into $@ : $^)
+	@jq '[., inputs]' $^ >| '$@'
 
-# bootstrap for ignition/units and ignition/dropins
+# combine all ignition file jsons into a single one
+$(boxname_work)/$(boxname_config).ignition-files.json: $(boxname_work)/$(boxname_config).ignition-hostname.json $(boxname_work)/$(boxname_config).ignition-sysctl.json
+	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
+	$(info [-] Joining the ignition file section into $@ : $^)
+	@jq '. + inputs' $^ >| '$@'
+
+# combining for ignition/units and ignition/dropins
 $(boxname_work)/$(boxname_config).ignition-units.json: $(foreach name,$(ignition_units_names),$(boxname_work)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_work)/ignition-unit.json-$(name))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Aggregating all unit files into $@ : $^)
-	jq '[., inputs]' $^ >| '$@'
+	$(info [-] Joining the ignition unit section into $@ : $^)
+	@jq '[., inputs]' $^ >| '$@'
 
 # generate a json containing the sshAuthorizedKeys field in an object
 $(boxname_work)/$(boxname_config).ignition-pubkey.json: $(workdir)/$(boxname).key.pub
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Generating ignition json $@ with public key : $^)
+	$(info [-] Generating a json with the public key in $@ : $^)
 	jq -n --slurpfile pubkey <( jq -Rs . '$<' ) '{ sshAuthorizedKeys: [$$pubkey[0]] }' >| '$@'
 
 # combine all joined user objects into a single list
 $(boxname_work)/$(boxname_config).ignition-users.json: $(foreach f,$(ignition_users_files),$(boxname_work)/ignition-user.json-$(notdir $(f)))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Aggregating all the user files into $@: $^)
-	jq '[., inputs]' $^ >| '$@'
+	$(info [-] Joining the ignition user section into $@: $^)
+	@jq '[., inputs]' $^ >| '$@'
 
 ### rules for saltstack prep
 $(boxname_work)/salt $(boxname_work)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files) $(boxname_work)/pillar/acbuild.sls
