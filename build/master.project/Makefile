@@ -204,7 +204,7 @@ define ignition_user
 $(1): $(2) $(3)
 	$$(info [!] Combining files for user into $(1) : $$^)
 	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
-	@jq -n 'reduce inputs as $$$$item ({}; . * $$$$item)' '$(2)' $(3)
+	@jq -n 'reduce inputs as $$$$item ({}; . * $$$$item)' '$(2)' $(3) >| '$(1)'
 endef
 
 ### general utility rules
@@ -372,13 +372,25 @@ $(boxname_work)/$(boxname_config).pubkey: $(workdir)/$(boxname).key.pub
 $(boxname_work)/$(boxname).ignition-sysctl.json: $(foreach f,$(ignition_sysctl_files),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Aggregating all sysctl files into $@ : $^)
-	jq '[., inputs]' $^ >| $@
+	jq '[., inputs]' $^ >| '$@'
 
 # bootstrap for ignition/units and ignition/dropins
 $(boxname_work)/$(boxname).ignition-units.json: $(foreach name,$(ignition_units_names),$(boxname_work)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_work)/ignition-unit.json-$(name))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Aggregating all unit files into $@ : $^)
-	jq '[., inputs]' $^ >| $@
+	jq '[., inputs]' $^ >| '$@'
+
+# generate a json containing the sshAuthorizedKeys field in an object
+$(boxname_work)/$(boxname_config).ignition-pubkey.json: $(workdir)/$(boxname).key.pub
+	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
+	$(info [-] Generating ignition json $@ with public key : $^)
+	jq -n --slurpfile pubkey <( jq -Rs . '$<' ) '{ sshAuthorizedKeys: [$$pubkey[0]] }' >| '$@'
+
+# combine all joined user objects into a single list
+$(boxname_work)/$(boxname).ignition-users.json: $(foreach f,$(ignition_users_files),$(boxname_work)/ignition-user.json-$(notdir $(f)))
+	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
+	$(info [-] Aggregating all the user files into $@: $^)
+	jq '[., inputs]' $^ >| '$@'
 
 ### rules for saltstack prep
 $(boxname_work)/salt $(boxname_work)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files) $(boxname_work)/pillar/acbuild.sls
@@ -439,3 +451,6 @@ $(foreach name,$(filter-out $(ignition_dropins_names),$(ignition_units_names)),$
 
 # rules that compose a missing unit with all dropins
 $(foreach name,$(filter-out $(ignition_units_names),$(ignition_dropins_names)),$(eval $(call ignition_unit_missing,$(name),$(boxname_work)/ignition-unit.json-$(name),$(boxname_work)/ignition-dropins.json-$(name))))
+
+## generate rules for combining each user with the sshAuthorizedKeys
+$(foreach f,$(ignition_users_files),$(eval $(call ignition_user,$(boxname_work)/ignition-user.json-$(notdir $(f)),$(f),$(boxname_work)/$(boxname_config).ignition-pubkey.json)))

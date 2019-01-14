@@ -1,0 +1,7 @@
+{
+    "name": "core",
+    "noUserGroup": false,
+    "noLogInit": true,
+    "noCreateHome": false,
+    "sshAuthorizedKeys": ""
+}
