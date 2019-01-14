@@ -205,7 +205,7 @@ define ignition_user
 $(1): $(2) $(3)
 	$$(info [!] Combining files for user into $(1) : $$^)
 	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
-	@jq -n 'reduce inputs as $$$$item ({}; . * $$$$item)' '$(2)' $(3) >| '$(1)'
+	jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
 endef
 
 ### general utility rules
@@ -369,8 +369,14 @@ $(boxname_work)/$(boxname_config).pubkey: $(workdir)/$(boxname).key.pub
 	$(info [-] Generating YAML configuration $@ with public key : $^)
 	python $(tools)yaml-generate.py -p ssh_authorized_keys '$(strip $(file < $<))' >| '$@'
 
+# combine the result ignition json with any other configurations
+$(boxname_work)/$(boxname_config): $(boxname_work)/$(boxname_config).ignition-combined.json $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
+	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
+	$(info [-] Merging the ignition configuration $@ using the result json and extra configurations: $^)
+	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
+
 # combine all ignition jsons into the template
-$(boxname_work)/$(boxname_config): $(ignition_template) $(foreach name,ignition-files.json ignition-units.json ignition-users.json,$(boxname_work)/$(boxname_config).$(name))
+$(boxname_work)/$(boxname_config).ignition-combined.json: $(ignition_template) $(foreach name,ignition-files.json ignition-units.json ignition-users.json,$(boxname_work)/$(boxname_config).$(name))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Making the ignition configuration $@ from the template $(ignition_template))
 	jq --slurpfile files '$(boxname_work)/$(boxname_config).ignition-files.json' --slurpfile units '$(boxname_work)/$(boxname_config).ignition-units.json' --slurpfile users '$(boxname_work)/$(boxname_config).ignition-users.json' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0]' '$(ignition_template)' >| '$@'
