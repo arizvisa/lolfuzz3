@@ -313,7 +313,7 @@ $(boxname_work)/$(boxname)-vars.json.base:
 	$(info [*] Generating build variables : $@)
 	python $(tools)json-generate.py 'guest-name=$(boxname)' 'install-input=$(workdir)' 'install-output=$(boxname_template)' >| '$@'
 
-### concatenate entire config into a single .json file
+### concatenate entire template config into a single .json file
 $(boxname_work)/$(boxname)-vars.json: $(MAKEDIR)default.json $(boxname_work)/$(boxname)-vars.json.iso $(boxname_work)/$(boxname)-vars.json.ssh $(boxname_work)/$(boxname)-vars.json.salt $(boxname_work)/$(boxname)-vars.json.tools $(boxname_work)/$(boxname)-vars.json.base
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Merging build variables together into $@ : $^)
@@ -342,78 +342,63 @@ $(workdir)/$(boxname).key $(workdir)/$(boxname).key.pub:
 	$(info [*] Generating public/private keypair : $(workdir)/$(boxname).key)
 	ssh-keygen -t rsa -C 'builder-generated public key' -f '$(workdir)/$(boxname).key' -N ''
 
-## rules for building bootstrap config
-$(workdir)/$(boxname_config): $(boxname_work)/$(boxname_config).header $(boxname_work)/$(boxname_config).merged
-	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [*] Building YAML configuration $@ : $^)
-	cat $(foreach d,$^,'$(d)') >| '$@'
-	$(info [!] Validating YAML configuration $@ : $(coreos_validate_url))
-	${PUT} '@$@' '$(coreos_validate_url)' | grep -q '{"result":null}' || ( ${PUT} '@$@' '$(coreos_validate_url)'; echo ''; exit 1 )
-
-$(boxname_work)/$(boxname_config).header:
-	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	@echo '#cloud-config' >| '$@'
-
-$(boxname_work)/$(boxname_config).merged: $(MAKEDIR)box.yml $(MAKEDIR)default.yml $(boxname_work)/$(boxname_config).hostname $(boxname_work)/$(boxname_config).pubkey $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
-	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Merging YAML configuration $@ : $^)
-	python $(tools)yaml-merge.py $(foreach d,$^,'$(d)') >| '$@'
-
-$(boxname_work)/$(boxname_config).hostname:
-	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Generating YAML configuration for hostname : $(boxname) )
-	@echo "hostname: $(boxname)" >| '$@'
-
-$(boxname_work)/$(boxname_config).pubkey: $(workdir)/$(boxname).key.pub
-	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Generating YAML configuration $@ with public key : $^)
-	python $(tools)yaml-generate.py -p ssh_authorized_keys '$(strip $(file < $<))' >| '$@'
+### rules for building bootstrap config
 
 # combine the result ignition json with any other configurations
-$(boxname_work)/$(boxname_config): $(boxname_work)/$(boxname_config).ignition-combined.json $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
+$(boxname_work)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Merging the ignition configuration $@ using the result json and extra configurations: $^)
 	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
+	$(info [!] Validating ignition configuration $@ : $(coreos_validate_url))
+	@${PUT} '@$@' '$(coreos_validate_url)' >| '$(boxname_work)/$(boxname_config).validated'
+	@jq '.result[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$(boxname_work)/$(boxname_config).validated' | while read y x message; do \
+		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
+	done
+	@jq '.result[] | select(.kind == "error") | .message | @sh' '$(boxname_work)/$(boxname_config).validated' | while read message; do \
+		printf 'Validation Error: %s\n' "$$message" 1>&2; \
+		rm -f '$@'
+		exit 1; \
+	done
 
 # combine all ignition jsons into the template
-$(boxname_work)/$(boxname_config).ignition-combined.json: $(ignition_template) $(foreach name,ignition-files.json ignition-units.json ignition-users.json,$(boxname_work)/$(boxname_config).$(name))
+$(boxname_work)/$(boxname_config)-original: $(ignition_template) $(boxname_work)/$(boxname_config)-files $(boxname_work)/$(boxname_config)-units $(boxname_work)/$(boxname_config)-users
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Making the ignition configuration $@ from the template $(ignition_template))
-	jq --slurpfile files '$(boxname_work)/$(boxname_config).ignition-files.json' --slurpfile units '$(boxname_work)/$(boxname_config).ignition-units.json' --slurpfile users '$(boxname_work)/$(boxname_config).ignition-users.json' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0]' '$(ignition_template)' >| '$@'
+	jq --slurpfile files '$(boxname_work)/$(boxname_config)-files' --slurpfile units '$(boxname_work)/$(boxname_config)-units' --slurpfile users '$(boxname_work)/$(boxname_config)-users' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0]' '$(ignition_template)' >| '$@'
 
 # set the hostname using $(boxname)
-$(boxname_work)/$(boxname_config).ignition-hostname.json:
+$(boxname_work)/$(boxname_config)-hostname:
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Building the ignition configuration file for the hostname : $(boxname) )
 	# mode 0644 == 420
 	jq -n '[ { filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ("$(boxname)" | @uri)) } } ]' >| '$@'
 
 # bootstrap for ignition/sysctl directory
-$(boxname_work)/$(boxname_config).ignition-sysctl.json: $(foreach f,$(ignition_sysctl_files),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)))
+$(boxname_work)/$(boxname_config)-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Aggregating all ignition sysctl files into $@ : $^)
 	@jq '[., inputs]' $^ >| '$@'
 
 # combine all ignition file jsons into a single one
-$(boxname_work)/$(boxname_config).ignition-files.json: $(boxname_work)/$(boxname_config).ignition-hostname.json $(boxname_work)/$(boxname_config).ignition-sysctl.json
+$(boxname_work)/$(boxname_config)-files: $(boxname_work)/$(boxname_config)-hostname $(boxname_work)/$(boxname_config)-sysctl
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Joining the ignition file section into $@ : $^)
 	@jq '. + inputs' $^ >| '$@'
 
 # combining for ignition/units and ignition/dropins
-$(boxname_work)/$(boxname_config).ignition-units.json: $(foreach name,$(ignition_units_names),$(boxname_work)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_work)/ignition-unit.json-$(name))
+$(boxname_work)/$(boxname_config)-units: $(foreach name,$(ignition_units_names),$(boxname_work)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_work)/ignition-unit.json-$(name))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Joining the ignition unit section into $@ : $^)
 	@jq '[., inputs]' $^ >| '$@'
 
 # generate a json containing the sshAuthorizedKeys field in an object
-$(boxname_work)/$(boxname_config).ignition-pubkey.json: $(workdir)/$(boxname).key.pub
+$(boxname_work)/$(boxname_config)-pubkey: $(workdir)/$(boxname).key.pub
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Generating a json with the public key in $@ : $^)
 	jq -n --slurpfile pubkey <( jq -Rs . '$<' ) '{ sshAuthorizedKeys: [$$pubkey[0]] }' >| '$@'
 
 # combine all joined user objects into a single list
-$(boxname_work)/$(boxname_config).ignition-users.json: $(foreach f,$(ignition_users_files),$(boxname_work)/ignition-user.json-$(notdir $(f)))
+$(boxname_work)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(boxname_work)/ignition-user.json-$(notdir $(f)))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Joining the ignition user section into $@: $^)
 	@jq '[., inputs]' $^ >| '$@'
@@ -479,4 +464,4 @@ $(foreach name,$(filter-out $(ignition_dropins_names),$(ignition_units_names)),$
 $(foreach name,$(filter-out $(ignition_units_names),$(ignition_dropins_names)),$(eval $(call ignition_unit_missing,$(name),$(boxname_work)/ignition-unit.json-$(name),$(boxname_work)/ignition-dropins.json-$(name))))
 
 ## generate rules for combining each user with the sshAuthorizedKeys
-$(foreach f,$(ignition_users_files),$(eval $(call ignition_user,$(boxname_work)/ignition-user.json-$(notdir $(f)),$(f),$(boxname_work)/$(boxname_config).ignition-pubkey.json)))
+$(foreach f,$(ignition_users_files),$(eval $(call ignition_user,$(boxname_work)/ignition-user.json-$(notdir $(f)),$(f),$(boxname_work)/$(boxname_config)-pubkey)))
