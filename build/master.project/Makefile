@@ -400,7 +400,7 @@ $(boxname_work)/$(boxname_config)-units: $(foreach name,$(ignition_units_names),
 $(boxname_work)/$(boxname_config)-pubkey: $(boxname_work)/$(boxname).key.pub.raw
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Generating a json with the public key in $@ : $^)
-	jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0]] }' >| '$@'
+	jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0] | rtrimstr("\n") ] }' >| '$@'
 
 # combine all joined user objects into a single list
 $(boxname_work)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(boxname_work)/ignition-user.json-$(notdir $(f)))
