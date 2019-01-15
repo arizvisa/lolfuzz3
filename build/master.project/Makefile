@@ -210,6 +210,14 @@ $(1): $(2) $(3)
 	jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
 endef
 
+# output_file '$file' '$directory'
+define output_file
+$(2)/$(notdir $(1)): $(1)
+	@test -d '$(2)' || mkdir -p '$(2)'
+	$$(info [*] Copying output file to $(2) : $$<)
+	cp '$$<' '$$@'
+endef
+
 ### general utility rules
 .PHONY: master-image
 master-image: $(boxname_out)
@@ -275,6 +283,7 @@ clean-json:
 
 .PHONY: all
 all: download-installer master-image master-output
+
 .PHONY: clean
 clean: clean-output clean-ignition clean-json clean-image
 	test -d '$(boxname_work)' && rmdir '$(boxname_work)' || exit 0
@@ -285,10 +294,7 @@ $(boxname_out): $(boxname_template)
 	$(info [*] Moving output template into $(outdir) : $<)
 	mv '$<' '$@'
 
-$(foreach f,$(output_files),$(outdir)/$(f)): $(foreach f,$(output_files),$(workdir)/$(f))
-	@test -d '$(outdir)' || mkdir -p '$(outdir)'
-	$(info [*] Copying output files to $(outdir) : $^)
-	cp $(foreach f,$^,'$(f)') '$(outdir)'
+$(foreach f,$(output_files),$(eval $(call output_file,$(workdir)/$(f),$(outdir))))
 
 ### rules that actually build the box
 $(boxname_template): $(coreos_installer_files) $(boxname_work)/$(boxname).json $(boxname_work)/$(boxname)-vars.json $(workdir)/$(boxname_config)
