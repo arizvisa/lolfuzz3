@@ -115,8 +115,8 @@
             "inline" : [
                 "umask 022",
                 "chown -R root:root \"$BOOTSTRAP_DIR\"",
-                "find \"$BOOTSTRAP_DIR\" -type f -exec chmod 644 {} +",
-                "find \"$BOOTSTRAP_DIR\" -type d -exec chmod 755 {} +",
+                "find \"$BOOTSTRAP_DIR\" -type f -exec chmod 0644 {} +",
+                "find \"$BOOTSTRAP_DIR\" -type d -exec chmod 0755 {} +",
                 "tar -C \"$BOOTSTRAP_DIR\" -cpf- . | tar -xpf- -C \"$ROOT\"",
                 "rm -rf \"$BOOTSTRAP_DIR\""
             ]
