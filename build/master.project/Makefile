@@ -353,10 +353,10 @@ $(workdir)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(if $(
 	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$(boxname_work)/$(boxname_config)'
 	$(info [!] Validating ignition configuration $(boxname_work)/$(boxname_config) : $(coreos_validate_url))
 	${PUT} '@$(boxname_work)/$(boxname_config)' '$(coreos_validate_url)' >| '$(boxname_work)/$(boxname_config).validated'
-	@jq '.result[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$(boxname_work)/$(boxname_config).validated' | while read y x message; do \
+	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$(boxname_work)/$(boxname_config).validated' | while read y x message; do \
 		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
 	done
-	@jq '.result[] | select(.kind == "error") | .message | @sh' '$(boxname_work)/$(boxname_config).validated' | while read message; do \
+	@jq '(.result // []) | .[] | select(.kind == "error") | .message | @sh' '$(boxname_work)/$(boxname_config).validated' | while read message; do \
 		printf 'Validation Error: %s\n' "$$message" 1>&2; \
 		rm -f '$@'; \
 		exit 1; \
