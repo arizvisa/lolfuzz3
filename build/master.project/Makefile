@@ -316,7 +316,7 @@ $(boxname_work)/$(boxname)-vars.json.base:
 	jq -n '{ "guest-name": "$(boxname)", "install-input": "$(workdir)", "install-output": "$(boxname_template)" }' >| '$@'
 
 ### concatenate entire template config into a single .json file
-$(boxname_work)/$(boxname)-vars.json: $(MAKEDIR)default.json $(boxname_work)/$(boxname)-vars.json.iso $(boxname_work)/$(boxname)-vars.json.ssh $(boxname_work)/$(boxname)-vars.json.salt $(boxname_work)/$(boxname)-vars.json.tools $(boxname_work)/$(boxname)-vars.json.base
+$(boxname_work)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_work)/$(boxname)-vars.json.iso $(boxname_work)/$(boxname)-vars.json.ssh $(boxname_work)/$(boxname)-vars.json.salt $(boxname_work)/$(boxname)-vars.json.tools $(boxname_work)/$(boxname)-vars.json.base
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Merging build variables together into $@ : $^)
 	jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
@@ -333,7 +333,7 @@ $(boxname_work)/$(boxname)-vars.json.salt: $(boxname_work)/salt $(boxname_work)/
 	jq -n '{ "salt-bootstrap-config": "$(boxname_work)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_work)/salt", "salt-bootstrap-pillar": "$(boxname_work)/pillar" }' >| '$@'
 
 ## concatenate json template into a single .json file together with plugins
-$(boxname_work)/$(boxname).json: $(MAKEDIR)box.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)
+$(boxname_work)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Merging box with enabled plugins into $@ : $^)
 	jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
