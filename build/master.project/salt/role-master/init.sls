@@ -105,7 +105,7 @@ Install salt-master.service:
             version: {{ container_version }}
             container_path: {{ container_path }}
             image_uuid_path: {{ container_path }}/image/salt-master:{{ container_version }}.aci.id
-            run_uuid_path: /var/run/salt-master.run.id
+            run_uuid_path: /var/lib/coreos/salt-master.uuid
             services:
                 - host: 127.0.0.1
                   port: 4001
@@ -122,6 +122,58 @@ Enable systemd multi-user.target wants salt-master.service:
         - require:
             - file: Install salt-master.service
             - sls: seed-etcd
+
+Create the script for interacting with salt:
+    file.managed:
+        - source: salt://role-master/salt.command
+        - name: /opt/bin/salt
+        - makedirs: true
+        - mode: 0755
+        - template: jinja
+        - defaults:
+            run_uuid_path: /var/lib/coreos/salt-master.uuid
+        - require:
+            - file: Install salt-master.service
+
+Create the script for calling salt-run:
+    file.symlink:
+        - name: /opt/bin/salt
+        - target: /opt/bin/salt-run
+        - makedirs: true
+        - require:
+            - file: Create the script for interacting with salt
+
+Create the script for calling salt-cp:
+    file.symlink:
+        - name: /opt/bin/salt
+        - target: /opt/bin/salt-cp
+        - makedirs: true
+        - require:
+            - file: Create the script for interacting with salt
+
+Create the script for calling salt-key:
+    file.symlink:
+        - name: /opt/bin/salt
+        - target: /opt/bin/salt-key
+        - makedirs: true
+        - require:
+            - file: Create the script for interacting with salt
+
+Create the script for calling salt-unity:
+    file.symlink:
+        - name: /opt/bin/salt
+        - target: /opt/bin/salt-unity
+        - makedirs: true
+        - require:
+            - file: Create the script for interacting with salt
+
+Create the script for calling salt-cloud:
+    file.symlink:
+        - name: /opt/bin/salt
+        - target: /opt/bin/salt-cloud
+        - makedirs: true
+        - require:
+            - file: Create the script for interacting with salt
 
 ### Enable the service (note: this is dead because we're just updating the symbolic link, not actually starting anything.)
 #salt-master.service:
