@@ -34,12 +34,9 @@ Make salt-run directory:
 
 Install salt-master configuration:
     file.managed:
+        - template: jinja
         - source: salt://role-master/salt-master.conf
         - name: /etc/salt/master
-        - user: root
-        - group: root
-        - mode: 0664
-        - template: jinja
         - defaults:
             etcd_root_path:
                 - "/project/role/master"
@@ -49,21 +46,24 @@ Install salt-master configuration:
                 port: 4001
         - require:
             - file: Make salt-configuration directory
+        - user: root
+        - group: root
+        - mode: 0664
 
 Transfer salt-master build rules:
     # FIXME: this file source should be versioned so that container_version can choose which one
     file.managed:
+        - template: jinja
         - source: salt://role-master/salt-master.acb
         - name: "{{ container_path }}/build/salt-master:{{ container_version }}.acb"
-        - user: root
-        - group: root
-        - mode: 0664
-        - template: jinja
         - defaults:
             version: {{ container_version }}
         - require:
             - file: Make container-root build directory
             - file: Install container-build.service
+        - user: root
+        - group: root
+        - mode: 0664
 
 Install openssh-clients in toolbox:
     pkg.installed:
@@ -92,15 +92,15 @@ Build salt-master image:
             - file: Install container build script
     file.managed:
         - name: "{{ container_path }}/image/salt-master:{{ container_version }}.aci"
-        - mode: 0664
         - user: root
         - group: root
+        - mode: 0664
 
 Install salt-master.service:
     file.managed:
+        - template: jinja
         - source: salt://role-master/salt-master.service
         - name: /etc/systemd/system/salt-master.service
-        - template: jinja
         - defaults:
             version: {{ container_version }}
             container_path: {{ container_path }}
@@ -112,68 +112,91 @@ Install salt-master.service:
         - require:
             - file: Build salt-master image
             - file: Install salt-master configuration
+        - user: root
+        - group: root
+        - mode: 0664
 
 ### symbolic link for service
 Enable systemd multi-user.target wants salt-master.service:
     file.symlink:
         - name: /etc/systemd/system/multi-user.target.wants/salt-master.service
         - target: /etc/systemd/system/salt-master.service
-        - makedirs: true
         - require:
             - file: Install salt-master.service
             - sls: seed-etcd
+        - makedirs: true
+
+### Scripts for interacting with the salt-master
+Install the toolbox script for managing the master:
+    file.managed:
+        - template: jinja
+        - source: salt://role-master/salt-toolbox.command
+        - name: /opt/bin/salt-toolbox
+        - defaults:
+            mounts:
+                - "/var/run/dbus"
+                - "/etc/systemd"
+                - "/etc/salt"
+                - "/srv"
+                - "/opt"
+        - makedirs: true
+        - user: root
+        - group: root
+        - mode: 0755
 
 Create the script for interacting with salt:
     file.managed:
+        - template: jinja
         - source: salt://role-master/salt.command
         - name: /opt/bin/salt
-        - makedirs: true
-        - mode: 0755
-        - template: jinja
         - defaults:
             run_uuid_path: /var/lib/coreos/salt-master.uuid
         - require:
             - file: Install salt-master.service
+        - makedirs: true
+        - user: root
+        - group: root
+        - mode: 0755
 
 Create the script for calling salt-run:
     file.symlink:
         - name: /opt/bin/salt-run
-        - target: /opt/bin/salt
-        - makedirs: true
+        - target: salt
         - require:
             - file: Create the script for interacting with salt
+        - makedirs: true
 
 Create the script for calling salt-cp:
     file.symlink:
         - name: /opt/bin/salt-cp
-        - target: /opt/bin/salt
-        - makedirs: true
+        - target: salt
         - require:
             - file: Create the script for interacting with salt
+        - makedirs: true
 
 Create the script for calling salt-key:
     file.symlink:
         - name: /opt/bin/salt-key
-        - target: /opt/bin/salt
-        - makedirs: true
+        - target: salt
         - require:
             - file: Create the script for interacting with salt
+        - makedirs: true
 
 Create the script for calling salt-unity:
     file.symlink:
         - name: /opt/bin/salt-unity
-        - target: /opt/bin/salt
-        - makedirs: true
+        - target: salt
         - require:
             - file: Create the script for interacting with salt
+        - makedirs: true
 
 Create the script for calling salt-cloud:
     file.symlink:
         - name: /opt/bin/salt-cloud
-        - target: /opt/bin/salt
-        - makedirs: true
+        - target: salt
         - require:
             - file: Create the script for interacting with salt
+        - makedirs: true
 
 ### Enable the service (note: this is dead because we're just updating the symbolic link, not actually starting anything.)
 #salt-master.service:
