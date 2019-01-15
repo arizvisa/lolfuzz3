@@ -4,7 +4,7 @@
 Make container-root directory:
     file.directory:
         - name: {{ container['path'] }}
-        - dir_mode: 0755
+        - dir_mode: 1755
         - file_mode: 0664
         - makedirs: True
 Make container-root build directory:
@@ -14,7 +14,7 @@ Make container-root build directory:
             - file: Make container-root directory
         - require:
             - file: Make container-root directory
-        - dir_mode: 0755
+        - dir_mode: 1755
         - file_mode: 0664
 Make container-root image directory:
     file.directory:
@@ -23,7 +23,7 @@ Make container-root image directory:
             - file: Make container-root directory
         - require:
             - file: Make container-root directory
-        - dir_mode: 0755
+        - dir_mode: 1755
         - file_mode: 0664
 Make container-root tools directory:
     file.directory:
