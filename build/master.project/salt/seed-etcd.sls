@@ -19,7 +19,7 @@ with Firewall.check(root_etcd['host'], port=root_etcd['port'], proto='tcp'):
         Etcd.directory("/project/pod", profile='root_etcd')
         Etcd.directory("/project/service", profile='root_etcd')
         Etcd.directory("/project/node", profile='root_etcd')
-        Etcd.directory("/project/roles", profile='root_etcd')
+        Etcd.directory("/project/role", profile='root_etcd')
         Etcd.directory("/project/role/master", profile='root_etcd')
         Etcd.directory("/project/role/service", profile='root_etcd')
         Etcd.directory("/project/role/node", profile='root_etcd')
