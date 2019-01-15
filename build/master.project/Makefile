@@ -69,7 +69,7 @@ salt_config := $(MAKEDIR)salt
 salt_pillar := $(MAKEDIR)pillar
 
 ## all important files that are copied to output
-output_files := $(boxname).key $(boxname).key.pub $(boxname_config)
+output_files := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
 
 ## coreos configuration
 in_coreos=$(MAKEDIR)coreos.url
@@ -310,10 +310,10 @@ $(boxname_work)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso)
 	@jq -n '{ "iso-checksum-type": "$(checksum_type)", "iso-url": "file://$<", "iso-checksum": "$(iso_checksum)" }' >| '$@'
 
 ### build json file containing all information for ssh'ing to the box
-$(boxname_work)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).key
+$(boxname_work)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Generating SSH variables $@ : $^)
-	@jq -n '{ "provision-key": "$(workdir)/$(boxname).key" }' >| '$@'
+	@jq -n '{ "provision-key": "$(workdir)/$(boxname).id_rsa" }' >| '$@'
 
 ### build json file containing build-specific variables
 $(boxname_work)/$(boxname)-vars.json.base:
@@ -345,10 +345,10 @@ $(boxname_work)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(i
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
 
 ## generate ssh public/private key
-$(workdir)/$(boxname).key $(workdir)/$(boxname).key.pub:
+$(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [*] Generating public/private keypair : $(workdir)/$(boxname).key)
-	ssh-keygen -t rsa -C 'builder-generated public key' -f '$(workdir)/$(boxname).key' -N ''
+	$(info [*] Generating public/private keypair : $@)
+	ssh-keygen -t rsa -C 'builder-generated public key' -f '$@' -N ''
 
 ### rules for building bootstrap config
 
@@ -401,7 +401,7 @@ $(boxname_work)/$(boxname_config)-units: $(foreach name,$(ignition_units_names),
 	@jq '[., inputs]' $^ >| '$@'
 
 # generate a json containing the sshAuthorizedKeys field in an object
-$(boxname_work)/$(boxname_config)-pubkey: $(boxname_work)/$(boxname).key.pub.json-raw
+$(boxname_work)/$(boxname_config)-pubkey: $(boxname_work)/$(boxname).id_rsa.pub.json-raw
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Generating a json with the public key in $@ : $^)
 	@jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0] | rtrimstr("\n") ] }' >| '$@'
@@ -487,4 +487,4 @@ $(foreach name,$(ignition_units_names),$(eval $(call raw_file,$(ignition_config)
 $(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)dropins/$(name)/*.conf),$(eval $(call raw_file,$(f),$(boxname_work)/ignition-dropins.json-$(name)-$(notdir $(f)).json-raw))))
 
 # ssh pubkey contents
-$(eval $(call raw_file,$(workdir)/$(boxname).key.pub,$(boxname_work)/$(boxname).key.pub.json-raw))
+$(eval $(call raw_file,$(workdir)/$(boxname).id_rsa.pub,$(boxname_work)/$(boxname).id_rsa.pub.json-raw))
