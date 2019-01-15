@@ -79,7 +79,7 @@ Install openssh-clients in toolbox:
 
 Build salt-master image:
     cmd.run:
-        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['bootstrap']['remote']['host'] }}" -- sudo -H -E "CONTAINER_DIR={{ container_path }}" -- "{{ container_path }}/build.sh" "{{ container_path }}/build/salt-master:{{ container_version }}.acb"
+        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['bootstrap']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ container_path }}" -- "{{ container_path }}/build.sh" "{{ container_path }}/build/salt-master:{{ container_version }}.acb"
         - cwd: {{ container_path }}
         - use_vt: true
         - output_loglevel: debug
