@@ -41,7 +41,7 @@ boxname_out=$(outdir)/$(boxname)
 boxname_work=$(workdir)/$(boxname)
 boxname_template=$(workdir)/$(boxname)/template
 
-boxname_config=$(boxname).ignition.json
+boxname_config=$(boxname).config
 
 ### Check output directory
 outdir=${OUTPUT}
@@ -112,7 +112,7 @@ salt_bootstrap_file := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '
 salt_bootstrap_file_url := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.download_url | @sh')
 
 ## ignition related variables
-ignition_template := $(MAKEDIR)ignition.json
+ignition_template := $(MAKEDIR)default.json
 ignition_sysctl_files := $(wildcard $(ignition_config)sysctl/*.conf)
 ignition_users_files := $(wildcard $(ignition_config)users/*)
 
