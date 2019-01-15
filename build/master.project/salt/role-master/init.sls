@@ -8,23 +8,17 @@ include:
 Make salt-configuration directory:
     file.directory:
         - name: /etc/salt
-        - user: root
-        - group: root
         - mode: 0770
         - makedirs: True
 Make salt-log directory:
     file.directory:
         - name: /var/log/salt
-        - user: root
-        - group: root
         - mode: 0770
         - makedirs: True
 Make salt-cache directory:
     file.directory:
         - name: /var/cache/salt
         - makedirs: True
-        - user: root
-        - group: root
         - mode: 0775
 Make salt-run directory:
     file.directory:
@@ -46,8 +40,6 @@ Install salt-master configuration:
                 port: 4001
         - require:
             - file: Make salt-configuration directory
-        - user: root
-        - group: root
         - mode: 0664
 
 Transfer salt-master build rules:
@@ -61,8 +53,6 @@ Transfer salt-master build rules:
         - require:
             - file: Make container-root build directory
             - file: Install container-build.service
-        - user: root
-        - group: root
         - mode: 0664
 
 Install openssh-clients in toolbox:
@@ -74,8 +64,8 @@ Install openssh-clients in toolbox:
         - name: {{ salt['user.info'](grains['username']).home }}/.ssh/id_rsa
         - target: {{ pillar['bootstrap']['root'] }}{{ pillar['bootstrap']['remote']['key'] }}
         - force: true
-        - makedirs : true
         - mode: 0400
+        - makedirs : true
 
 Build salt-master image:
     cmd.run:
@@ -92,8 +82,6 @@ Build salt-master image:
             - file: Install container build script
     file.managed:
         - name: "{{ container_path }}/image/salt-master:{{ container_version }}.aci"
-        - user: root
-        - group: root
         - mode: 0664
 
 Install salt-master.service:
@@ -112,8 +100,6 @@ Install salt-master.service:
         - require:
             - file: Build salt-master image
             - file: Install salt-master configuration
-        - user: root
-        - group: root
         - mode: 0664
 
 ### symbolic link for service
@@ -139,10 +125,8 @@ Install the toolbox script for managing the master:
                 - "/etc/salt"
                 - "/srv"
                 - "/opt"
-        - makedirs: true
-        - user: root
-        - group: root
         - mode: 0755
+        - makedirs: true
 
 Create the script for interacting with salt:
     file.managed:
@@ -153,10 +137,8 @@ Create the script for interacting with salt:
             run_uuid_path: /var/lib/coreos/salt-master.uuid
         - require:
             - file: Install salt-master.service
-        - makedirs: true
-        - user: root
-        - group: root
         - mode: 0755
+        - makedirs: true
 
 Create the script for calling salt-run:
     file.symlink:
