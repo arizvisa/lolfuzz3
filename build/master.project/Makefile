@@ -53,8 +53,8 @@ endif
 
 ## some utility macros for downloading
 DOWNLOAD := curl -L -k --progress-bar
-FETCH := curl -L -k -s
-PUT := curl -L -K -s -X PUT --data-binary
+FETCH := curl -s -S -L -k
+PUT := curl -s -S -L -k -X PUT --data-binary
 
 ifneq ("$(wildcard $(ROOTDIR)/github.token)","")
 GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
