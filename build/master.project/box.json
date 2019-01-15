@@ -291,13 +291,13 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Starting etcd-boot service"
+            "command" : "echo [*] Starting etcd-schema service"
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- /usr/bin/env -- {{.Vars}} '{{.Path}}'",
             "inline" : [
-                "systemctl start etcd-boot",
-                "systemctl status etcd-boot",
+                "systemctl start etcd-schema",
+                "systemctl status etcd-schema",
                 "until etcdctl cluster-health; do :; done",
                 "etcdctl setdir /coreos.com",
                 "etcdctl setdir /node",

@@ -1,28 +1,28 @@
+### Summary
+# This service binds to an external address and is to be used as
+# a member. It's based on the standard etcd-member.service that
+# comes with CoreOS, but uses the `setup-network-environment`
+# tool to determine the external address.
+
+### Notes
+# ExecStart is actually overwritten by the 00-instance.conf dropin
+# for the etcd.service.
+
 [Unit]
-Description=etcd (System Application Container)
+Description=etcd - member
 Documentation=https://github.com/coreos/etcd
-Wants=network-online.target network.target
-After=network-online.target
-Conflicts=etcd.service
-Conflicts=etcd2.service
 
 [Service]
 Type=notify
 Restart=on-failure
 RestartSec=10s
-TimeoutStartSec=0
 LimitNOFILE=40000
+TimeoutStartSec=0
 
-Environment="ETCD_IMAGE_TAG=v3.3.10"
-Environment="ETCD_NAME=%m"
-Environment="ETCD_USER=etcd"
 Environment="ETCD_DATA_DIR=/var/lib/etcd"
-Environment="RKT_RUN_ARGS=--uid-file-save=/var/lib/coreos/etcd-wrapper.uuid"
+Environment="RKT_RUN_ARGS=--uid-file-save=/var/lib/coreos/etcd-member.uuid"
 
 ExecStartPre=/usr/bin/mkdir --parents /var/lib/coreos
-ExecStartPre=-/usr/bin/rkt rm --uid-file=/var/lib/coreos/etcd-wrapper.uuid
+ExecStartPre=-/usr/bin/rkt rm --uid-file=/var/lib/coreos/etcd-member.uuid
 ExecStart=/usr/lib/coreos/etcd-wrapper $ETCD_OPTS
-ExecStop=-/usr/bin/rkt stop --uuid-file=/var/lib/coreos/etcd-wrapper.uuid
-
-[Install]
-WantedBy=multi-user.target
+ExecStop=-/usr/bin/rkt stop --uuid-file=/var/lib/coreos/etcd-member.uuid

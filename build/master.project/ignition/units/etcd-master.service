@@ -1,0 +1,32 @@
+### Summary
+# This service binds to an external address and is to be used as
+# the master. It will announce itself to any peers using the
+# current database.
+
+### Variables
+# DEFAULT_IPV4 comes from /etc/network-environment
+
+[Unit]
+Description=etcd - master
+Documentation=https://github.com/coreos/etcd
+
+[Service]
+Type=notify
+Restart=always
+RestartSec=10s
+LimitNOFILE=40000
+TimeoutStartSec=0
+
+Environment="ETCD_DATA_DIR=/var/lib/etcd"
+Environment="RKT_RUN_ARGS=--uid-file-save=/var/lib/coreos/etcd-master.uuid"
+
+ExecStartPre=/usr/bin/mkdir --parents /var/lib/coreos
+ExecStartPre=-/usr/bin/rkt rm --uid-file=/var/lib/coreos/etcd-master.uuid
+ExecStart=/bin/sh -c 'exec /usr/lib/coreos/etcd-wrapper \
+            --name=$(cat /etc/machine-id) \
+            --listen-peer-urls="http://0.0.0.0:2380" \
+            --initial-advertise-peer-urls="http://${DEFAULT_IPV4}:2380" \
+            --listen-client-urls="http://0.0.0.0:4001" \
+            --advertise-client-urls="http://${DEFAULT_IPV4}:4001" \
+            --initial-cluster=$(cat /etc/machine-id)="http://${DEFAULT_IPV4}:2380" \
+ExecStop=-/usr/bin/rkt stop --uuid-file=/var/lib/coreos/etcd-master.uuid

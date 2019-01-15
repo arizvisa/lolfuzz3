@@ -1,0 +1,29 @@
+### Summary
+# This service binds locally and is intended to be used only during
+# provisioning. This will then allow you to initialize the current
+# etcd database and then stop the service.
+
+[Unit]
+Description=etcd bootstrap - initialize schema
+Documentation=https://github.com/coreos/etcd
+
+[Service]
+Type=notify
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=40000
+TimeoutStartSec=0
+
+Environment="ETCD_DATA_DIR=/var/lib/etcd"
+Environment="RKT_RUN_ARGS=--uid-file-save=/var/lib/coreos/etcd-schema.uuid"
+
+ExecStartPre=/usr/bin/mkdir --parents /var/lib/coreos
+ExecStartPre=-/usr/bin/rkt rm --uid-file=/var/lib/coreos/etcd-schema.uuid
+ExecStart=/bin/sh -c 'exec /usr/lib/coreos/etcd-wrapper \
+            --name=$(cat /etc/machine-id) \
+            --listen-peer-urls="http://0.0.0.0:2380" \
+            --initial-advertise-peer-urls="http://127.0.0.1:2380" \
+            --listen-client-urls="http://0.0.0.0:4001" \
+            --advertise-client-urls="http://127.0.0.1:4001" \
+            --initial-cluster=$(cat /etc/machine-id)="http://127.0.0.1:2380" \
+ExecStop=-/usr/bin/rkt stop --uuid-file=/var/lib/coreos/etcd-schema.uuid
