@@ -161,21 +161,21 @@ endef
 define ignition_file
 $(2): $(1)
 	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
-	$$(info [!] Building ignition file $(2) from contents at $(1))
+	$$(info [-] Building ignition file $(2) from contents at $(1))
 	@jq -n --slurpfile contents '$(1)' '{ filesystem: "root", path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
 
 # ignition_unit_file '$unit.service' '$source.service.json-raw' '$output.json'
 define ignition_unit_file
 $(3): $(2)
-	$$(info [!] Creating ignition unit file $(3) : $(2))
+	$$(info [-] Creating ignition unit file $(3) : $(2))
 	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", enable: false, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
 endef
 
 # ignition_unit_dropins '$target.json' '$space-separated-dropins'
 define ignition_unit_dropins
 $(1): $(2)
-	$$(info [!] Creating ignition unit dropins $(1) : $(2))
+	$$(info [-] Creating ignition unit dropins $(1) : $(2))
 	@jq '[., inputs]' $(2) >| '$(1)'
 endef
 
@@ -189,7 +189,7 @@ endef
 # ignition_unit '$target.json' '$unit.json' '$dropins.json'
 define ignition_unit
 $(1): $(2) $(3)
-	$$(info [!] Combining ignition unit $(1) : $(2) $(3))
+	$$(info [*] Combining ignition unit $(1) : $(2) $(3))
 	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(2))'
 	@jq '.dropins = (inputs // .dropins)' $$^ >| '$(1)'
 endef
@@ -197,7 +197,7 @@ endef
 # ignition_unit_missing '$unit.service' '$target.json' '$dropins.json'
 define ignition_unit_missing
 $(2): $(3)
-	$$(info [!] Combining (missing) ignition unit $(2) : $(3))
+	$$(info [*] Combining (missing) ignition unit $(2) : $(3))
 	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
 	@jq -n --slurpfile dropins '$(3)' '{ name: "$(1)", dropins: $$$$dropins[0] }' >| '$(2)'
 endef
@@ -205,7 +205,7 @@ endef
 # ignition_user '$target.json' '$source.json' '$list-of-json-files'
 define ignition_user
 $(1): $(2) $(3)
-	$$(info [!] Combining files for user into $(1) : $$^)
+	$$(info [*] Combining files for user into $(1) : $$^)
 	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
 	@jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
 endef
@@ -283,6 +283,7 @@ clean-json:
 
 .PHONY: all
 all: download-installer master-image master-output
+	$(info [!] Successfully built image and deployed files)
 
 .PHONY: clean
 clean: clean-output clean-ignition clean-json clean-image
@@ -306,25 +307,25 @@ $(boxname_work)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Calculating $(checksum_type) checksum for $<)
 	$(eval iso_checksum := $(shell openssl dgst -r -$(checksum_type) '$<' | cut -d' ' -f 1))
-	$(info [*] Generating ISO variables for $@ : $^)
+	$(info [-] Generating ISO variables for $@ : $^)
 	@jq -n '{ "iso-checksum-type": "$(checksum_type)", "iso-url": "file://$<", "iso-checksum": "$(iso_checksum)" }' >| '$@'
 
 ### build json file containing all information for ssh'ing to the box
 $(boxname_work)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [*] Generating SSH variables $@ : $^)
+	$(info [-] Generating SSH variables $@ : $^)
 	@jq -n '{ "provision-key": "$(workdir)/$(boxname).id_rsa" }' >| '$@'
 
 ### build json file containing build-specific variables
 $(boxname_work)/$(boxname)-vars.json.base:
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [*] Generating build variables : $@)
+	$(info [-] Generating build variables : $@)
 	@jq -n '{ "guest-name": "$(boxname)", "install-input": "$(workdir)", "install-output": "$(boxname_template)" }' >| '$@'
 
 ### concatenate entire template config into a single .json file
 $(boxname_work)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_work)/$(boxname)-vars.json.iso $(boxname_work)/$(boxname)-vars.json.ssh $(boxname_work)/$(boxname)-vars.json.salt $(boxname_work)/$(boxname)-vars.json.tools $(boxname_work)/$(boxname)-vars.json.base
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Merging build variables together into $@ : $^)
+	$(info [*] Merging build variables together into $@ : $^)
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
 
 $(boxname_work)/$(boxname)-vars.json.tools: $(extra_tools_files) $(setup_network_environment_files)
@@ -341,13 +342,13 @@ $(boxname_work)/$(boxname)-vars.json.salt: $(boxname_work)/salt $(boxname_work)/
 ## concatenate json template into a single .json file together with plugins
 $(boxname_work)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Merging box with enabled plugins into $@ : $^)
+	$(info [*] Merging box with enabled plugins into $@ : $^)
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
 
 ## generate ssh public/private key
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [*] Generating public/private keypair : $@)
+	$(info [-] Generating public/private keypair : $@)
 	ssh-keygen -t rsa -C 'builder-generated public key' -f '$@' -N ''
 
 ### rules for building bootstrap config
@@ -355,7 +356,7 @@ $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:
 # combine the result ignition json with any other configurations
 $(workdir)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
 	@test -d '$(workdir)' || mkdir -p '$(workdir)'
-	$(info [-] Merging the ignition configuration $(boxname_work)/$(boxname_config) using the result json and extra configurations: $^)
+	$(info [*] Merging the ignition configuration $(boxname_work)/$(boxname_config) using the result json and extra configurations: $^)
 	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$(boxname_work)/$(boxname_config)'
 	$(info [!] Validating ignition configuration $(boxname_work)/$(boxname_config) : $(coreos_validate_url))
 	${PUT} '@$(boxname_work)/$(boxname_config)' '$(coreos_validate_url)' >| '$(boxname_work)/$(boxname_config).validated'
@@ -372,7 +373,7 @@ $(workdir)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(if $(
 # combine all ignition jsons into the template
 $(boxname_work)/$(boxname_config)-original: $(ignition_template) $(boxname_work)/$(boxname_config)-files $(boxname_work)/$(boxname_config)-units $(boxname_work)/$(boxname_config)-users
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Making the ignition configuration $@ from the template $(ignition_template))
+	$(info [*] Making the ignition configuration $@ from the template $(ignition_template))
 	@jq --slurpfile files '$(boxname_work)/$(boxname_config)-files' --slurpfile units '$(boxname_work)/$(boxname_config)-units' --slurpfile users '$(boxname_work)/$(boxname_config)-users' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0]' '$(ignition_template)' >| '$@'
 
 # set the hostname using $(boxname)
@@ -385,19 +386,19 @@ $(boxname_work)/$(boxname_config)-hostname:
 # bootstrap for ignition/sysctl directory
 $(boxname_work)/$(boxname_config)-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_work)/ignition-sysctl.json-$(notdir $(f)))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Aggregating all ignition sysctl files into $@ : $^)
+	$(info [*] Merging all ignition sysctl files into $@ : $^)
 	@jq '[., inputs]' $^ >| '$@'
 
 # combine all ignition file jsons into a single one
 $(boxname_work)/$(boxname_config)-files: $(boxname_work)/$(boxname_config)-hostname $(boxname_work)/$(boxname_config)-sysctl
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Joining the ignition file section into $@ : $^)
+	$(info [*] Merging the ignition file section into $@ : $^)
 	@jq '. + inputs' $^ >| '$@'
 
 # combining for ignition/units and ignition/dropins
 $(boxname_work)/$(boxname_config)-units: $(foreach name,$(ignition_units_names),$(boxname_work)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_work)/ignition-unit.json-$(name))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Joining the ignition unit section into $@ : $^)
+	$(info [*] Merging the ignition unit section into $@ : $^)
 	@jq '[., inputs]' $^ >| '$@'
 
 # generate a json containing the sshAuthorizedKeys field in an object
@@ -409,7 +410,7 @@ $(boxname_work)/$(boxname_config)-pubkey: $(boxname_work)/$(boxname).id_rsa.pub.
 # combine all joined user objects into a single list
 $(boxname_work)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(boxname_work)/ignition-user.json-$(notdir $(f)))
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
-	$(info [-] Joining the ignition user section into $@: $^)
+	$(info [*] Merging the ignition user section into $@: $^)
 	@jq '[., inputs]' $^ >| '$@'
 
 ### rules for saltstack prep
