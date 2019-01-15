@@ -25,7 +25,7 @@ Make salt-cache directory:
         - makedirs: True
         - user: root
         - group: root
-        - mode: 775
+        - mode: 0775
 Make salt-run directory:
     file.directory:
         - name: /var/run/salt
