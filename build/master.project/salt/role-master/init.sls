@@ -137,40 +137,40 @@ Create the script for interacting with salt:
 
 Create the script for calling salt-run:
     file.symlink:
-        - name: /opt/bin/salt
-        - target: /opt/bin/salt-run
+        - name: /opt/bin/salt-run
+        - target: /opt/bin/salt
         - makedirs: true
         - require:
             - file: Create the script for interacting with salt
 
 Create the script for calling salt-cp:
     file.symlink:
-        - name: /opt/bin/salt
-        - target: /opt/bin/salt-cp
+        - name: /opt/bin/salt-cp
+        - target: /opt/bin/salt
         - makedirs: true
         - require:
             - file: Create the script for interacting with salt
 
 Create the script for calling salt-key:
     file.symlink:
-        - name: /opt/bin/salt
-        - target: /opt/bin/salt-key
+        - name: /opt/bin/salt-key
+        - target: /opt/bin/salt
         - makedirs: true
         - require:
             - file: Create the script for interacting with salt
 
 Create the script for calling salt-unity:
     file.symlink:
-        - name: /opt/bin/salt
-        - target: /opt/bin/salt-unity
+        - name: /opt/bin/salt-unity
+        - target: /opt/bin/salt
         - makedirs: true
         - require:
             - file: Create the script for interacting with salt
 
 Create the script for calling salt-cloud:
     file.symlink:
-        - name: /opt/bin/salt
-        - target: /opt/bin/salt-cloud
+        - name: /opt/bin/salt-cloud
+        - target: /opt/bin/salt
         - makedirs: true
         - require:
             - file: Create the script for interacting with salt
