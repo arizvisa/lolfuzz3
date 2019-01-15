@@ -119,6 +119,7 @@ Install the toolbox script for managing the master:
         - source: salt://role-master/salt-toolbox.command
         - name: /opt/bin/salt-toolbox
         - defaults:
+            toolbox: /bin/toolbox
             mounts:
                 - "/var/run/dbus"
                 - "/etc/systemd"
@@ -128,12 +129,25 @@ Install the toolbox script for managing the master:
         - mode: 0755
         - makedirs: true
 
+Create the script for executing salt-call:
+    file.managed:
+        - template: jinja
+        - source: salt://role-master/salt-call.command
+        - name: /opt/bin/salt-call
+        - defaults:
+            salt_toolbox: /opt/bin/salt-toolbox
+        - require:
+            - file: Install the toolbox script for managing the master
+        - mode: 0755
+        - makedirs: true
+
 Create the script for interacting with salt:
     file.managed:
         - template: jinja
         - source: salt://role-master/salt.command
         - name: /opt/bin/salt
         - defaults:
+            rkt: /bin/rkt
             run_uuid_path: /var/lib/coreos/salt-master.uuid
         - require:
             - file: Install salt-master.service

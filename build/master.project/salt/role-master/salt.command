@@ -8,6 +8,6 @@ if [ ! -e "$uuid_file" ]; then
 fi
 
 uuid=`cat "$uuid_file"`
-rkt enter "$uuid" "$command" "$@"
+"{{ rkt }}" enter "$uuid" "$command" "$@"
 
 exit $?

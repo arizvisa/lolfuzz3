@@ -1,2 +1,2 @@
 #!/bin/sh
-toolbox {%- for path in mounts %} --bind={{ path }}{% endfor %} -- "$@"
+"{{ toolbox }}" {%- for path in mounts %} "--bind={{ path }}"{% endfor %} -- "$@"
