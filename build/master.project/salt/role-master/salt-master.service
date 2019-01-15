@@ -26,16 +26,16 @@ ExecStart=/usr/bin/rkt run \
             --volume salt-run,kind=host,source=/var/run/salt \
             --volume salt-srv,kind=host,source=/srv \
             --inherit-env=true lol/salt-master:{{ version }}
-{%- for svc in services -%}
+{% for svc in services %}
 ExecStartPost=/usr/bin/bash -c \
                 "iptables -t nat -A PREROUTING -p tcp -s "`cat {{ run_uuid_path }} | xargs /opt/coreos/bin/rkt-by-name.sh | jq '.networks[0].ip'`" --dport {{ svc.port }} -j DNAT --to-destination {{ svc.host }}:{{ svc.port }}"
-{%- endfor -%}
+{% endfor %}
 ExecStopPre=/usr/bin/bash -c \
                 "cat {{ run_uuid_path }} | xargs /opt/coreos/bin/rkt-by-name.sh | jq '.networks[0].ip' >| {{ run_uuid_path }}"
-{%- for svc in services -%}
+{% for svc in services %}
 ExecStopPost=/usr/bin/bash -c \
                 "iptables -t nat -D PREROUTING -p tcp -s "`cat {{ run_uuid_path }}`" --dport {{ svc.port }} -j DNAT --to-destination {{ svc.host }}:{{ svc.port }}"
-{%- endfor -%}
+{% endfor %}
 ExecStopPost=-/usr/bin/rm -f {{ run_uuid_path }}
 ExecStopPost=/usr/bin/rkt gc --mark-only
 
