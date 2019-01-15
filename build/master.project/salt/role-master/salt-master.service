@@ -1,5 +1,5 @@
 [Unit]
-Description=Salt-Master Service
+Description=Salt-Master
 ConditionPathExists={{ container_path }}/image/salt-master:{{ version }}.aci
 ConditionPathExists=/etc/salt/master
 Requires=etcd.service

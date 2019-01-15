@@ -1,5 +1,5 @@
 [Unit]
-Description=Image-Building Service
+Description=Container-Builder
 Requires=network-online.target
 After=network-online.target
 

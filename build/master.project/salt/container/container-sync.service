@@ -1,5 +1,5 @@
 [Unit]
-Description=Image-Synchronization Service
+Description=Container-Synchronization
 Requires=container-load.service
 After=container-load.service
 

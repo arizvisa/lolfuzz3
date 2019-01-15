@@ -1,5 +1,5 @@
 [Unit]
-Description=Image-Loading Service
+Description=Container-Loader
 Wants=container-build.service
 After=container-build.service
 
