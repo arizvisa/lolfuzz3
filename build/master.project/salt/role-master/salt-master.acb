@@ -6,13 +6,13 @@ label add arch amd64
 label add os linux
 label add distro centos
 
-run -- yum -y install epel-release
-run -- yum -y update
-run -- yum -y install yum-utils chkconfig PyYAML python-pip python-urllib3 zeromq
+run -- yum -y --setopt=retries=0 install epel-release
+run -- yum -y --setopt=retries=0 update
+run -- yum -y --setopt=retries=0 install yum-utils chkconfig PyYAML python-pip python-urllib3 zeromq
 run -- pip install --upgrade pip
 run -- pip install Jinja2 msgpack-python MarkupSafe requests tornado futures zmq python-etcd
 run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
-run -- yum -y upgrade
+run -- yum -y --setopt=retries=0 upgrade
 run -- bash /root/install-salt.sh -L -F -P -X -N -M stable
 run -- mkdir -p /var/run/dbus /etc/salt /var/cache/salt /var/log/salt /var/run/salt /srv
 
