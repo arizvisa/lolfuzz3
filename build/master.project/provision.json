@@ -38,7 +38,7 @@
             "destination" : "/home/core/coreos"
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- /usr/bin/env -- {{.Vars}} '{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "inline" : [
                 "mkdir /opt",
                 "chmod 755 /opt",
@@ -107,7 +107,7 @@
             "command" : "echo [*] Installing salt-stack directories into root"
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- /usr/bin/env -- {{.Vars}} '{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/",
                 "BOOTSTRAP_DIR={{ user `tmp-bootstrap-root` }}"
@@ -126,7 +126,7 @@
             "command" : "echo [*] Starting etcd-schema service"
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- /usr/bin/env -- {{.Vars}} '{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "inline" : [
                 "systemctl start etcd-schema",
                 "systemctl status etcd-schema",
