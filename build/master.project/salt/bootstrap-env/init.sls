@@ -10,7 +10,12 @@ if 'Generate bootstrap-environment from machine-id':
     mid = file(res, 'rt').read().strip()
 
     # build default template variables from grains
-    defaults = dict(fqdn_ip4=grains('fqdn_ip4')[0], fqdn_ip6=max(grains('fqdn_ip6'), key=len), machine_id=mid)
+    ip4, ip6 = grains('fqdn_ip4'), grains('fqdn_ip6')
+    if not ip4:
+        raise ValueError("fqdn_ip4 is unset: {!r}".format(ip4))
+    if not ip6:
+        raise ValueError("fqdn_ip6 is unset: {!r}".format(ip6))
+    defaults = dict(fqdn_ip4=ip4[0], fqdn_ip6=max(ip6, key=len), machine_id=mid)
 
     # generate bootstrap-environment to pivoted root
     File.managed(
