@@ -1,5 +1,5 @@
 #!pyobjects
-include('container', 'role-master', 'seed-etcd')
+include('container', 'master', 'seed-etcd')
 
 import os.path
 root = pillar('bootstrap:root')

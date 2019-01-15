@@ -5,6 +5,19 @@ include:
     - container
     - seed-etcd
 
+## salt states directories
+Make salt-files directory:
+    file.directory:
+        - name: /srv/salt
+        - mode: 0775
+        - makedirs: True
+Make salt-pillar directory:
+    file.directory:
+        - name: /srv/pillar
+        - mode: 0775
+        - makedirs: True
+
+## salt directories
 Make salt-configuration directory:
     file.directory:
         - name: /etc/salt
@@ -29,15 +42,39 @@ Make salt-run directory:
 Install salt-master configuration:
     file.managed:
         - template: jinja
-        - source: salt://role-master/salt-master.conf
+        - source: salt://master/salt-master.conf
         - name: /etc/salt/master
         - defaults:
-            etcd_root_path:
-                - "/project/role/master"
-                - "/node/%(minion_id)s"
-            etcd_service:
-                host: {{ grains['fqdn_ip4'] | last }} # FIXME: this host should come from network.interface xref'd with /etc/network-environment
-                port: 4001
+            root_files:
+                - name: "base"
+                  path: "/srv/salt"
+
+            root_pillars:
+                - name: "root"
+                  path: "/srv/pillar"
+
+                - name: "bootstrap"
+                  path: "/srv/bootstrap/pillar"
+
+            etcd_pillars:
+                - name: "root_etcd"
+                  host: {{ grains['fqdn_ip4'] | last }} # FIXME: this host should come from network.interface xref'd with /etc/network-environment
+                  port: 4001
+
+                - name: "minion_etcd"
+                  host: {{ grains['fqdn_ip4'] | last }}
+                  port: 4001
+
+            etcd_pillars_ext:
+                - name: "root_etcd"
+                  path: "/pillar"
+
+                - name: "minion_etcd"
+                  path: "/node/%(minion_id)s"
+
+            etcd_returners:
+                - name: "root_etcd"
+                  path: "/salt/return"
         - require:
             - file: Make salt-configuration directory
         - mode: 0664
@@ -46,7 +83,7 @@ Transfer salt-master build rules:
     # FIXME: this file source should be versioned so that container_version can choose which one
     file.managed:
         - template: jinja
-        - source: salt://role-master/salt-master.acb
+        - source: salt://master/salt-master.acb
         - name: "{{ container_path }}/build/salt-master:{{ container_version }}.acb"
         - defaults:
             version: {{ container_version }}
@@ -83,11 +120,12 @@ Build salt-master image:
     file.managed:
         - name: "{{ container_path }}/image/salt-master:{{ container_version }}.aci"
         - mode: 0664
+        - replace: true
 
 Install salt-master.service:
     file.managed:
         - template: jinja
-        - source: salt://role-master/salt-master.service
+        - source: salt://master/salt-master.service
         - name: /etc/systemd/system/salt-master.service
         - defaults:
             version: {{ container_version }}
@@ -116,7 +154,7 @@ Enable systemd multi-user.target wants salt-master.service:
 Install the toolbox script for managing the master:
     file.managed:
         - template: jinja
-        - source: salt://role-master/salt-toolbox.command
+        - source: salt://master/salt-toolbox.command
         - name: /opt/bin/salt-toolbox
         - defaults:
             toolbox: /bin/toolbox
@@ -132,7 +170,7 @@ Install the toolbox script for managing the master:
 Create the script for executing salt-call:
     file.managed:
         - template: jinja
-        - source: salt://role-master/salt-call.command
+        - source: salt://master/salt-call.command
         - name: /opt/bin/salt-call
         - defaults:
             salt_toolbox: /opt/bin/salt-toolbox
@@ -144,7 +182,7 @@ Create the script for executing salt-call:
 Create the script for interacting with salt:
     file.managed:
         - template: jinja
-        - source: salt://role-master/salt.command
+        - source: salt://master/salt.command
         - name: /opt/bin/salt
         - defaults:
             rkt: /bin/rkt

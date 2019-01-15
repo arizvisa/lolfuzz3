@@ -113,7 +113,7 @@
             "inline" : [
                 "umask 022",
                 "mkdir -p '{{user `tmp-bootstrap-root`}}/etc/salt'",
-                "mkdir -p '{{user `tmp-bootstrap-root`}}/srv/'{salt,pillar}"
+                "mkdir -p '{{user `tmp-bootstrap-root`}}/srv/bootstrap/'{salt,pillar}"
             ]
         },
         { "type" : "file",
@@ -122,11 +122,11 @@
         },
         { "type" : "file",
             "source" : "{{user `salt-bootstrap-files`}}",
-            "destination" : "{{user `tmp-bootstrap-root`}}/srv"
+            "destination" : "{{user `tmp-bootstrap-root`}}/srv/bootstrap"
         },
         { "type" : "file",
             "source" : "{{user `salt-bootstrap-pillar`}}",
-            "destination" : "{{user `tmp-bootstrap-root`}}/srv"
+            "destination" : "{{user `tmp-bootstrap-root`}}/srv/bootstrap"
         },
 
         { "type" : "shell-local",
@@ -157,17 +157,7 @@
                 "systemctl start etcd-schema",
                 "systemctl status etcd-schema",
                 "until etcdctl cluster-health; do :; done",
-                "etcdctl setdir /coreos.com",
-                "etcdctl setdir /node",
-                "etcdctl setdir /project",
-                "etcdctl setdir /project/target",
-                "etcdctl setdir /project/pod",
-                "etcdctl setdir /project/service",
-                "etcdctl setdir /project/node",
-                "etcdctl setdir /project/role",
-                "etcdctl setdir /project/role/master",
-                "etcdctl setdir /project/role/service",
-                "etcdctl setdir /project/role/node"
+                "etcdctl setdir /coreos.com"
             ]
         },
 

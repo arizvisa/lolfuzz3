@@ -9,9 +9,3 @@ base:
         - master
         - flanneld
         - container
-
-    'G@minion-role:service':
-        - service
-
-    'G@minion-role:client':
-        - node

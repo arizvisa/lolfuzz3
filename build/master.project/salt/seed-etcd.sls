@@ -14,15 +14,7 @@ with Firewall.check(root_etcd['host'], port=root_etcd['port'], proto='tcp'):
     # init the etcd root namespace
     if hasattr(Etcd, 'directory'):
         Etcd.directory("/node", profile='root_etcd')
-        Etcd.directory("/project", profile='root_etcd')
-        Etcd.directory("/project/target", profile='root_etcd')
-        Etcd.directory("/project/pod", profile='root_etcd')
-        Etcd.directory("/project/service", profile='root_etcd')
-        Etcd.directory("/project/node", profile='root_etcd')
-        Etcd.directory("/project/role", profile='root_etcd')
-        Etcd.directory("/project/role/master", profile='root_etcd')
-        Etcd.directory("/project/role/service", profile='root_etcd')
-        Etcd.directory("/project/role/node", profile='root_etcd')
+        Etcd.directory("/pillar", profile='root_etcd')
 
     # register with the discovery protocol
     res = os.path.join(pillar('bootstrap:root'), 'etc/machine-id')

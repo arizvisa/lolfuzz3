@@ -3,7 +3,7 @@ base:
     'G@minion-role:master-bootstrap':
         - container         # create container-directory and build-scripts
         - seed-etcd         # seed etcd with /etc/machine-id
-        - role-master       # create salt-master container
+        - master            # create salt-master container and services
         - bootstrap-env     # create /etc/bootstrap-env
 #        - flannel           # also for each container
 
@@ -14,9 +14,3 @@ base:
                             # systemd-machine-id-setup --root=/media/root --commit
 #        - container         # create container-directory and build-scripts
 #        - join-master       # register master cluster with etcd
-
-    'G@minion-role:service':
-        - role-service
-
-    'G@minion-role:client':
-        - role-node
