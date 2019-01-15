@@ -63,7 +63,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
-                "LOGFILE=/root/bootstrap.{{timestamp}}.install.log"
+                "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "dnf -y --setopt=retries=0 upgrade 2>&1 | tee \"$ROOT/$LOGFILE\""
@@ -77,7 +77,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
-                "LOGFILE=/root/bootstrap.{{timestamp}}.install.log"
+                "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "dnf -y --setopt=retries=0 install casync jq | tee -a \"$ROOT/LOGFILE\""
@@ -96,7 +96,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
-                "LOGFILE=/root/bootstrap.{{timestamp}}.install.log",
+                "LOGFILE=/root/bootstrap.install.log",
                 "MASTER_ID={{ user `guest-name` }}"
             ],
             "inline" : [
@@ -178,7 +178,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/etc/salt --bind=/srv --bind=/opt -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
-                "LOGFILE=/root/bootstrap.{{timestamp}}.state.log",
+                "LOGFILE=/root/bootstrap.state.log",
                 "MASTER_ID={{ user `guest-name` }}"
             ],
             "inline" : [
