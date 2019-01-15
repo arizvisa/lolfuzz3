@@ -57,6 +57,34 @@
         },
 
         { "type" : "shell-local",
+            "command" : "echo [*] Performing an upgrade of the toolbox container environment"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/media/root",
+                "LOGFILE=/root/bootstrap.{{timestamp}}.install.log"
+            ],
+            "inline" : [
+                "dnf -y --setopt=retries=0 upgrade 2>&1 | tee \"$ROOT/$LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [*] Installing miscellaneous tools into the toolbox container environment"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/media/root",
+                "LOGFILE=/root/bootstrap.{{timestamp}}.install.log"
+            ],
+            "inline" : [
+                "dnf -y --setopt=retries=0 install casync jq | tee -a \"$ROOT/LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
             "command" : "echo [-] Installing salt-minion inside toolbox"
         },
         { "type" : "file",
@@ -72,7 +100,6 @@
                 "MASTER_ID={{ user `guest-name` }}"
             ],
             "inline" : [
-                "dnf -y --setopt=retries=0 upgrade 2>&1 | tee \"$ROOT/$LOGFILE\"",
                 "dnf -y --setopt=retries=0 install systemd-container dnf-utils net-tools procps python-etcd 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --setopt=retries=0 install PyYAML libyaml python-crypto python-jinja2 python-zmq python2-msgpack python2-requests python-etcd 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "/usr/bin/bash \"$ROOT/tmp/install-salt.sh\" -X -i \"$MASTER_ID\" stable 2>&1 | tee -a \"$ROOT/$LOGFILE\""
