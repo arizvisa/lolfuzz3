@@ -5,17 +5,28 @@ include:
     - container
     - seed-etcd
 
+Make service directory:
+    file.directory:
+        - name: /srv
+        - mode: 0775
+        - makedirs: True
+
 ## salt states directories
 Make salt-files directory:
     file.directory:
         - name: /srv/salt
-        - mode: 0775
-        - makedirs: True
+        - require:
+            - Make service directory
+        - use:
+            - Make service directory
+
 Make salt-pillar directory:
     file.directory:
         - name: /srv/pillar
-        - mode: 0775
-        - makedirs: True
+        - require:
+            - Make service directory
+        - use:
+            - Make service directory
 
 ## salt directories
 Make salt-configuration directory:
@@ -76,7 +87,7 @@ Install salt-master configuration:
                 - name: "root_etcd"
                   path: "/salt/return"
         - require:
-            - file: Make salt-configuration directory
+            - Make salt-configuration directory
         - mode: 0664
 
 Transfer salt-master build rules:
@@ -88,7 +99,7 @@ Transfer salt-master build rules:
         - defaults:
             version: {{ container_version }}
         - require:
-            - file: Make container-root build directory
+            - Make container-root build directory
             - file: Install container-build.service
         - mode: 0664
 
@@ -114,9 +125,9 @@ Build salt-master image:
         - env:
             - CONTAINER_DIR: {{ container_path }}
         - require:
-            - file: Install openssh-clients in toolbox
-            - file: Transfer salt-master build rules
-            - file: Install container build script
+            - Install openssh-clients in toolbox
+            - Transfer salt-master build rules
+            - Install container build script
     file.managed:
         - name: "{{ container_path }}/image/salt-master:{{ container_version }}.aci"
         - mode: 0664
@@ -136,8 +147,8 @@ Install salt-master.service:
                 - host: 127.0.0.1
                   port: 4001
         - require:
-            - file: Build salt-master image
-            - file: Install salt-master configuration
+            - Build salt-master image
+            - Install salt-master configuration
         - mode: 0664
 
 ### symbolic link for service
@@ -146,7 +157,7 @@ Enable systemd multi-user.target wants salt-master.service:
         - name: /etc/systemd/system/multi-user.target.wants/salt-master.service
         - target: /etc/systemd/system/salt-master.service
         - require:
-            - file: Install salt-master.service
+            - Install salt-master.service
             - sls: seed-etcd
         - makedirs: true
 
@@ -175,7 +186,7 @@ Create the script for executing salt-call:
         - defaults:
             salt_toolbox: /opt/bin/salt-toolbox
         - require:
-            - file: Install the toolbox script for managing the master
+            - Install the toolbox script for managing the master
         - mode: 0755
         - makedirs: true
 
@@ -188,7 +199,7 @@ Create the script for interacting with salt:
             rkt: /bin/rkt
             run_uuid_path: /var/lib/coreos/salt-master.uuid
         - require:
-            - file: Install salt-master.service
+            - Install salt-master.service
         - mode: 0755
         - makedirs: true
 
@@ -197,7 +208,7 @@ Create the script for calling salt-run:
         - name: /opt/bin/salt-run
         - target: salt
         - require:
-            - file: Create the script for interacting with salt
+            - Create the script for interacting with salt
         - makedirs: true
 
 Create the script for calling salt-cp:
@@ -205,7 +216,7 @@ Create the script for calling salt-cp:
         - name: /opt/bin/salt-cp
         - target: salt
         - require:
-            - file: Create the script for interacting with salt
+            - Create the script for interacting with salt
         - makedirs: true
 
 Create the script for calling salt-key:
@@ -213,7 +224,7 @@ Create the script for calling salt-key:
         - name: /opt/bin/salt-key
         - target: salt
         - require:
-            - file: Create the script for interacting with salt
+            - Create the script for interacting with salt
         - makedirs: true
 
 Create the script for calling salt-unity:
@@ -221,7 +232,7 @@ Create the script for calling salt-unity:
         - name: /opt/bin/salt-unity
         - target: salt
         - require:
-            - file: Create the script for interacting with salt
+            - Create the script for interacting with salt
         - makedirs: true
 
 Create the script for calling salt-cloud:
@@ -229,7 +240,7 @@ Create the script for calling salt-cloud:
         - name: /opt/bin/salt-cloud
         - target: salt
         - require:
-            - file: Create the script for interacting with salt
+            - Create the script for interacting with salt
         - makedirs: true
 
 ### Enable the service (note: this is dead because we're just updating the symbolic link, not actually starting anything.)
