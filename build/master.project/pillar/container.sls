@@ -1,7 +1,9 @@
 {%- import_yaml 'acbuild.sls' as acbuild_files -%}
 
 master:
+    # configuration for project services
     service:
+        # service responsible for building and deploying containers
         container:
-            path: /srv/container
-            acbuild: {{ acbuild_files }}
+            Path: /srv/container
+            Tools: {{ acbuild_files }}
