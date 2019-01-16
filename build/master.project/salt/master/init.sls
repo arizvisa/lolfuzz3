@@ -1,5 +1,6 @@
-{% set container_path = pillar['master']['service']['container']['path'] %}
-{% set container_version = pillar['master']['service']['salt']['version'] %}
+{% set tools = pillar['master']['tools'] %}
+{% set container_service = pillar['master']['service']['container'] %}
+{% set salt_container = pillar['master']['service']['salt-master'] %}
 
 include:
     - container
@@ -64,9 +65,6 @@ Install salt-master configuration:
                 - name: "root"
                   path: "/srv/pillar"
 
-                - name: "bootstrap"
-                  path: "/srv/bootstrap/pillar"
-
             etcd_pillars:
                 - name: "root_etcd"
                   host: {{ grains['fqdn_ip4'] | last }} # FIXME: this host should come from network.interface xref'd with /etc/network-environment
@@ -78,14 +76,14 @@ Install salt-master configuration:
 
             etcd_pillars_ext:
                 - name: "root_etcd"
-                  path: "/pillar"
+                  path: "/config"
 
                 - name: "minion_etcd"
                   path: "/node/%(minion_id)s"
 
             etcd_returners:
                 - name: "root_etcd"
-                  path: "/salt/return"
+                  path: "{{ salt_container.Namespace }}"
         - require:
             - Make salt-configuration directory
         - mode: 0664
@@ -95,10 +93,9 @@ Transfer salt-master build rules:
     file.managed:
         - template: jinja
         - source: salt://master/salt-master.acb
-        - name: "{{ container_path }}/build/salt-master:{{ container_version }}.acb"
+        - name: "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
         - defaults:
-            version: {{ container_version }}
-        - require:
+            version: {{ salt_container.Version }} - require:
             - Make container-root build directory
             - file: Install container-build.service
         - mode: 0664
@@ -117,19 +114,19 @@ Install openssh-clients in toolbox:
 
 Build salt-master image:
     cmd.run:
-        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['bootstrap']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ container_path }}" -- "{{ container_path }}/build.sh" "{{ container_path }}/build/salt-master:{{ container_version }}.acb"
-        - cwd: {{ container_path }}
+        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['bootstrap']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ container_service.Path }}" -- "{{ container_service.Path }}/build.sh" "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
+        - cwd: {{ container_service.Path }}
         - use_vt: true
         - output_loglevel: debug
-        - creates: "{{ container_path }}/image/salt-master:{{ container_version }}.aci"
+        - creates: "{{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci"
         - env:
-            - CONTAINER_DIR: {{ container_path }}
+            - CONTAINER_DIR: {{ container_service.Path }}
         - require:
             - Install openssh-clients in toolbox
             - Transfer salt-master build rules
             - Install container build script
     file.managed:
-        - name: "{{ container_path }}/image/salt-master:{{ container_version }}.aci"
+        - name: "{{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci"
         - mode: 0664
         - replace: true
 
@@ -139,10 +136,10 @@ Install salt-master.service:
         - source: salt://master/salt-master.service
         - name: /etc/systemd/system/salt-master.service
         - defaults:
-            version: {{ container_version }}
-            container_path: {{ container_path }}
-            image_uuid_path: {{ container_path }}/image/salt-master:{{ container_version }}.aci.id
-            run_uuid_path: /var/lib/coreos/salt-master.uuid
+            version: {{ salt_container.Version }}
+            container_path: {{ container_service.Path }}
+            image_uuid_path: {{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci.id
+            run_uuid_path: {{ salt_container.UUID }}
             services:
                 - host: 127.0.0.1
                   port: 4001
@@ -166,7 +163,7 @@ Install the toolbox script for managing the master:
     file.managed:
         - template: jinja
         - source: salt://master/salt-toolbox.command
-        - name: /opt/bin/salt-toolbox
+        - name: {{ tools.prefix }}/bin/salt-toolbox
         - defaults:
             toolbox: /bin/toolbox
             mounts:
@@ -174,7 +171,7 @@ Install the toolbox script for managing the master:
                 - "/etc/systemd"
                 - "/etc/salt"
                 - "/srv"
-                - "/opt"
+                - "{{ tools.prefix }}"
         - mode: 0755
         - makedirs: true
 
@@ -182,9 +179,9 @@ Create the script for executing salt-call:
     file.managed:
         - template: jinja
         - source: salt://master/salt-call.command
-        - name: /opt/bin/salt-call
+        - name: {{ tools.prefix }}/bin/salt-call
         - defaults:
-            salt_toolbox: /opt/bin/salt-toolbox
+            salt_toolbox: {{ tools.prefix }}/bin/salt-toolbox
         - require:
             - Install the toolbox script for managing the master
         - mode: 0755
@@ -194,10 +191,10 @@ Create the script for interacting with salt:
     file.managed:
         - template: jinja
         - source: salt://master/salt.command
-        - name: /opt/bin/salt
+        - name: {{ tools.prefix }}/bin/salt
         - defaults:
             rkt: /bin/rkt
-            run_uuid_path: /var/lib/coreos/salt-master.uuid
+            run_uuid_path: {{ salt_container.UUID }}
         - require:
             - Install salt-master.service
         - mode: 0755
@@ -205,7 +202,7 @@ Create the script for interacting with salt:
 
 Create the script for calling salt-run:
     file.symlink:
-        - name: /opt/bin/salt-run
+        - name: {{ tools.prefix }}/bin/salt-run
         - target: salt
         - require:
             - Create the script for interacting with salt
@@ -213,7 +210,7 @@ Create the script for calling salt-run:
 
 Create the script for calling salt-cp:
     file.symlink:
-        - name: /opt/bin/salt-cp
+        - name: {{ tools.prefix }}/bin/salt-cp
         - target: salt
         - require:
             - Create the script for interacting with salt
@@ -221,7 +218,7 @@ Create the script for calling salt-cp:
 
 Create the script for calling salt-key:
     file.symlink:
-        - name: /opt/bin/salt-key
+        - name: {{ tools.prefix }}/bin/salt-key
         - target: salt
         - require:
             - Create the script for interacting with salt
@@ -229,7 +226,7 @@ Create the script for calling salt-key:
 
 Create the script for calling salt-unity:
     file.symlink:
-        - name: /opt/bin/salt-unity
+        - name: {{ tools.prefix }}/bin/salt-unity
         - target: salt
         - require:
             - Create the script for interacting with salt
@@ -237,13 +234,8 @@ Create the script for calling salt-unity:
 
 Create the script for calling salt-cloud:
     file.symlink:
-        - name: /opt/bin/salt-cloud
+        - name: {{ tools.prefix }}/bin/salt-cloud
         - target: salt
         - require:
             - Create the script for interacting with salt
         - makedirs: true
-
-### Enable the service (note: this is dead because we're just updating the symbolic link, not actually starting anything.)
-#salt-master.service:
-#    service.dead:
-#        - enable: true
