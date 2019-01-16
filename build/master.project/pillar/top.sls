@@ -3,11 +3,11 @@ base:
     'G@minion-role:master-bootstrap':
         - bootstrap
         - master
-        - flanneld
         - container
+        - flannel
 
     # master that has joined the project
     'G@minion-role:master':
         - master
-        - flanneld
         - container
+        - flannel

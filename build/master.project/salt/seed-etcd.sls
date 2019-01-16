@@ -45,8 +45,8 @@ with Firewall.check(Server['host'], port=Server['port'], proto='tcp'):
     if hasattr(Etcd, 'directory'):
         Etcd.directory(res['Namespace'], profile='root_etcd')
 
-    ## register the network config (flanneld)
-    res = pillar('master:service:flanneld')
+    ## register the network config (flannel)
+    res = pillar('master:service:flannel')
     if hasattr(Etcd, 'directory'):
         Etcd.directory(res['Namespace'], profile='root_etcd')
 
