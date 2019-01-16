@@ -20,9 +20,9 @@ if 'Generate bootstrap-environment from machine-id':
     # generate bootstrap-environment to pivoted root
     File.managed(
         os.path.join(root, "etc/bootstrap-environment"),
-        mode='0664',
-        source='salt://bootstrap-env/bootstrap.env',
         template='jinja',
+        source='salt://bootstrap/bootstrap.env',
         defaults=defaults,
+        mode='0664',
         require=[File("Install salt-master.service")]
     )
