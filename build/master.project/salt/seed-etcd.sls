@@ -3,12 +3,12 @@ import os.path
 import salt
 from salt.serializers import json
 
+# extract host and port number from config('root_etcd:etcd.host') and config('root_etcd:etcd.port') configuration.
 root_etcd = dict(
     host=config('root_etcd:etcd.host'),
     port=config('root_etcd:etcd.port')
 )
 
-# FIXME: extract host and port number from config('root_etcd:etcd.host') and config('root_etcd:etcd.port') configuration.
 with Firewall.check(root_etcd['host'], port=root_etcd['port'], proto='tcp'):
 
     # init the etcd root namespace
@@ -31,6 +31,10 @@ with Firewall.check(root_etcd['host'], port=root_etcd['port'], proto='tcp'):
                 status=201
             )
         continue
+
+    # register the project name
+    res = pillar('master:project:name')
+    Etcd.set("/pillar/project", value=json.serialize(res), profile="root_etcd")
 
     # register the network config (flanneld)
     res = pillar('master:service:flanneld')

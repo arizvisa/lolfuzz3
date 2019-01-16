@@ -414,7 +414,7 @@ $(boxname_work)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(b
 	@jq '[., inputs]' $^ >| '$@'
 
 ### rules for saltstack prep
-$(boxname_work)/salt $(boxname_work)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files) $(boxname_work)/pillar/acbuild.sls
+$(boxname_work)/salt $(boxname_work)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files) $(boxname_work)/pillar/acbuild.sls $(boxname_work)/pillar/project.sls
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [*] Copying states for bootstrapping $(boxname) to $(boxname_work)/salt.)
 	cp -r '$(salt_config)' '$(boxname_work)'/
@@ -432,6 +432,11 @@ $(boxname_work)/pillar/acbuild.sls: $(acbuild_files) $(boxname_work)/pillar
 	@test -d '$(dir $@)' || mkdir -p '$(dir $@)'
 	$(info [-] Generating default pillar configuration for acbuild.)
 	@printf -- '- source: %s\n  algo: %s\n  hash: %s\n\n' $(foreach f,$(acbuild_files),'$(shell basename $(f))' '$(checksum_type)' "$(shell openssl dgst -r -$(checksum_type) '$(f)' | cut -d' ' -f1)") >| '$@'
+
+$(boxname_work)/pillar/project.sls: $(boxname_work)/pillar
+	@test -d '$(dir $@)' || mkdir -p '$(dir $@)'
+	$(info [-] Generating default pillar configuration for project.)
+	@printf -- 'name: %s\n' '$(PROJECT)' >| '$@'
 
 ### generated rules
 
