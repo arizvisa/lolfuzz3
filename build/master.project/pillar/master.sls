@@ -1,8 +1,18 @@
-{%- import_yaml 'project.sls' as project_config -%}
+{%- import_yaml 'project-name.sls' as project_name -%}
 
 master:
+    # configuration for project services
     service:
-        salt:
-            version: 0.0.1
+        # manages all the hosts in a project
+        salt-master:
+            Namespace: "/coreos.com/salt"
+            Version: 0.0.1
+            UUID: /var/lib/coreos/salt-master.uuid
+
+    # configuration for any extra scripts/tools
+    tools:
+        prefix: /opt
     
-    project: {{ project_config }}
+    # project-specific configuration
+    configuration:
+        project: {{ project_name }}

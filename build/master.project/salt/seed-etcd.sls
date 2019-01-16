@@ -3,23 +3,18 @@ import os.path
 import salt
 from salt.serializers import json
 
-# extract host and port number from config('root_etcd:etcd.host') and config('root_etcd:etcd.port') configuration.
-root_etcd = dict(
+## extract host and port number from config('root_etcd:etcd.host') and config('root_etcd:etcd.port') configuration.
+Server = dict(
     host=config('root_etcd:etcd.host'),
     port=config('root_etcd:etcd.port')
 )
 
-with Firewall.check(root_etcd['host'], port=root_etcd['port'], proto='tcp'):
+with Firewall.check(Server['host'], port=Server['port'], proto='tcp'):
 
-    # init the etcd root namespace
-    if hasattr(Etcd, 'directory'):
-        Etcd.directory("/node", profile='root_etcd')
-        Etcd.directory("/pillar", profile='root_etcd')
-
-    # register with the discovery protocol
+    ## register machine-id with the discovery protocol
     res = os.path.join(pillar('bootstrap:root'), 'etc/machine-id')
     mid = file(res, 'rt').read().strip()
-    uri = "http://{:s}:{:d}/v2/keys/discovery/{:s}/_config/{:s}".format(root_etcd['host'], root_etcd['port'], mid, '{:s}')
+    uri = "http://{:s}:{:d}/v2/keys/discovery/{:s}/_config/{:s}".format(Server['host'], Server['port'], mid, '{:s}')
 
     for item, dictionary in pillar('bootstrap:etcd').iteritems():
         res = uri.format(item)
@@ -32,12 +27,28 @@ with Firewall.check(root_etcd['host'], port=root_etcd['port'], proto='tcp'):
             )
         continue
 
-    # register the project name
-    res = pillar('master:project:name')
-    Etcd.set("/pillar/project", value=json.serialize(res), profile="root_etcd")
+    ## init the default namespace for nodes
+    if hasattr(Etcd, 'directory'):
+        Etcd.directory("/node", profile='root_etcd')
 
-    # register the network config (flanneld)
+    ## create a namespace for project-specific configuration
+    if hasattr(Etcd, 'directory'):
+        Etcd.directory('/config', profile='root_etcd')
+
+    # populate it
+    Config = pillar('master:configuration')
+    for var in Config:
+        Etcd.set("/config/{:s}".format(var), value=json.serialize(Config[var]), profile="root_etcd")
+
+    ## register the salt-master namespace
+    res = pillar('master:service:salt-master')
+    if hasattr(Etcd, 'directory'):
+        Etcd.directory(res['Namespace'], profile='root_etcd')
+
+    ## register the network config (flanneld)
     res = pillar('master:service:flanneld')
     if hasattr(Etcd, 'directory'):
-        Etcd.directory("/coreos.com/network", profile='root_etcd')
-    Etcd.set("/coreos.com/network/config", value=json.serialize(res))
+        Etcd.directory(res['Namespace'], profile='root_etcd')
+
+    # write the settings
+    Etcd.set("{:s}/config".format(res['Namespace']), value=json.serialize(res))
