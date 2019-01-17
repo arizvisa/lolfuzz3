@@ -1,5 +1,5 @@
 {
-    "guest-name" : "unnamed.master",
+    "guest-name" : "master.unnamed",
     "guest-cpu-count" : "1",
     "guest-disk-size" : "102400",
     "guest-memory-size" : "4096",

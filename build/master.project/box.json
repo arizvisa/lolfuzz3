@@ -197,6 +197,7 @@
         "salt-bootstrap-config" : "path-to-bootstrap-config",
         "salt-bootstrap-pillars" : "path-to-bootstrap-pillar",
         "salt-bootstrap-files" : "path-to-bootstrap-files",
+        "salt-bootstrap-version": "git-version-tag-to-install",
 
         "tools-directory" : "path-to-coreos-tools"
     }

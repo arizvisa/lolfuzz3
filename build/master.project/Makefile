@@ -92,6 +92,7 @@ in_github=$(MAKEDIR)github.url
 in_acbuild_repo=$(MAKEDIR)acbuild.repo
 in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
 in_salt_bootstrap_metaurl=$(MAKEDIR)salt-bootstrap.url
+in_salt_bootstrap_version=$(MAKEDIR)salt-bootstrap.version
 
 ## acbuild variables
 acbuild_metaurl := $(shell printf -- '$(file <$(in_github))' '$(file <$(in_acbuild_repo))')
@@ -110,6 +111,7 @@ extra_tools_files := $(foreach f,$(wildcard $(MAKEDIR)/tools/*),$(workdir)/tools
 salt_bootstrap_metaurl := '$(file <$(in_salt_bootstrap_metaurl))'
 salt_bootstrap_file := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.name | @sh')
 salt_bootstrap_file_url := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.download_url | @sh')
+salt_bootstrap_version := '$(file <$(in_salt_bootstrap_version))'
 
 ## ignition related variables
 ignition_template := $(MAKEDIR)default.json
@@ -337,7 +339,7 @@ $(boxname_work)/$(boxname)-vars.json.tools: $(extra_tools_files) $(setup_network
 $(boxname_work)/$(boxname)-vars.json.salt: $(boxname_work)/salt $(boxname_work)/pillar $(boxname_work)/salt-minion.conf $(workdir)/$(salt_bootstrap_file)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Generating bootstrap variables for salt-bootstrap : : $^)
-	@jq -n '{ "salt-bootstrap-config": "$(boxname_work)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_work)/salt", "salt-bootstrap-pillar": "$(boxname_work)/pillar" }' >| '$@'
+	@jq -n '{ "salt-bootstrap-config": "$(boxname_work)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_work)/salt", "salt-bootstrap-pillar": "$(boxname_work)/pillar", "salt-bootstrap-version": "$(salt_bootstrap_version)" }' >| '$@'
 
 ## concatenate json template into a single .json file together with plugins
 $(boxname_work)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)
