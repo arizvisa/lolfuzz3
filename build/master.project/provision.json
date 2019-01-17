@@ -133,7 +133,7 @@
             "inline" : [
                 "dnf -y install patch 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "cd /usr/lib/python2*/site-packages 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "for fix in \"$ROOT/$STAGE\"/patches/*; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "for fix in \"$ROOT/$STAGE\"/*; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
