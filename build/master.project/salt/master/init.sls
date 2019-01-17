@@ -160,7 +160,8 @@ Enable systemd multi-user.target wants salt-master.service:
         - makedirs: true
 
 ### Scripts for interacting with the salt-master
-Install the toolbox script for managing the master:
+
+Install the toolbox script for bootstrapping the master:
     file.managed:
         - template: jinja
         - source: salt://master/salt-toolbox.command
@@ -176,15 +177,15 @@ Install the toolbox script for managing the master:
         - mode: 0755
         - makedirs: true
 
-Create the script for executing salt-call:
+Install the script for bootstrapping the master:
     file.managed:
         - template: jinja
-        - source: salt://master/salt-call.command
-        - name: {{ tools.prefix }}/bin/salt-call
+        - source: salt://master/salt-bootstrap.command
+        - name: {{ tools.prefix }}/bin/salt-bootstrap
         - defaults:
             salt_toolbox: {{ tools.prefix }}/bin/salt-toolbox
         - require:
-            - Install the toolbox script for managing the master
+            - Install the toolbox script for bootstrapping the master
         - mode: 0755
         - makedirs: true
 
@@ -201,15 +202,31 @@ Create the script for interacting with salt:
         - mode: 0755
         - makedirs: true
 
-Create the script for calling salt-run:
+Link the script for calling salt-api:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-run
+        - name: {{ tools.prefix }}/bin/salt-api
         - target: salt
         - require:
             - Create the script for interacting with salt
         - makedirs: true
 
-Create the script for calling salt-cp:
+Link the script for calling salt-call:
+    file.symlink:
+        - name: {{ tools.prefix }}/bin/salt-call
+        - target: salt
+        - require:
+            - Create the script for interacting with salt
+        - makedirs: true
+
+Link the script for calling salt-cloud:
+    file.symlink:
+        - name: {{ tools.prefix }}/bin/salt-cloud
+        - target: salt
+        - require:
+            - Create the script for interacting with salt
+        - makedirs: true
+
+Link the script for calling salt-cp:
     file.symlink:
         - name: {{ tools.prefix }}/bin/salt-cp
         - target: salt
@@ -217,7 +234,7 @@ Create the script for calling salt-cp:
             - Create the script for interacting with salt
         - makedirs: true
 
-Create the script for calling salt-key:
+Link the script for calling salt-key:
     file.symlink:
         - name: {{ tools.prefix }}/bin/salt-key
         - target: salt
@@ -225,17 +242,25 @@ Create the script for calling salt-key:
             - Create the script for interacting with salt
         - makedirs: true
 
-Create the script for calling salt-unity:
+Link the script for calling salt-run:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-unity
+        - name: {{ tools.prefix }}/bin/salt-run
         - target: salt
         - require:
             - Create the script for interacting with salt
         - makedirs: true
 
-Create the script for calling salt-cloud:
+Link the script for calling salt-ssh:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-cloud
+        - name: {{ tools.prefix }}/bin/salt-ssh
+        - target: salt
+        - require:
+            - Create the script for interacting with salt
+        - makedirs: true
+
+Link the script for calling salt-unity:
+    file.symlink:
+        - name: {{ tools.prefix }}/bin/salt-unity
         - target: salt
         - require:
             - Create the script for interacting with salt
