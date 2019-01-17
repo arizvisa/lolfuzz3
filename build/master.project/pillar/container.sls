@@ -6,4 +6,9 @@ master:
     service:
         container:
             Path: /srv/container
-            Tools: {{ acbuild_files }}
+            Tools:
+                {% for file in acbuild_files -%}
+                - {% for attribute in file -%}
+                  {{ attribute }}: {{ file[attribute] }}
+                  {% endfor %}
+                {% endfor %}
