@@ -6,7 +6,7 @@ master:
         # manages all the hosts in a project
         salt-master:
             Namespace: "/coreos.com/salt"
-            Version: 0.0.1
+            Version: 2019.2
             UUID: /var/lib/coreos/salt-master.uuid
 
     # configuration for any extra scripts/tools

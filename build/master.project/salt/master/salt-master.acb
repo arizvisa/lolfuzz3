@@ -1,19 +1,28 @@
-begin --insecure docker://centos
+begin --insecure docker://fedora
 set-name lol/salt-master
 
 label add version {{ version }}
 label add arch amd64
 label add os linux
-label add distro centos
+label add distro fedora
 
-run -- yum -y --setopt=retries=0 install epel-release
-run -- yum -y --setopt=retries=0 update
-run -- yum -y --setopt=retries=0 install yum-utils chkconfig PyYAML python-pip python-urllib3 zeromq
-run -- pip install --upgrade pip
-run -- pip install Jinja2 msgpack-python MarkupSafe requests tornado futures zmq python-etcd
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 update
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils chkconfig procps-ng git
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install python3 python3-devel
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install python3-pip python3-six python3-requests python3-urllib3
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 libgit2-devel libsodium libsodium-devel libyaml libyaml-devel zeromq zeromq-devel
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install python3-pycurl
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 groupinstall "Development Tools"
+run -- dnf -y clean packages
+
+run -- pip3 --retries=65536 install --upgrade pip
+run -- pip3 --retries=65536 install MarkupSafe backports_abc psutil requests
+run -- pip3 --retries=65536 install cffi python-dateutil gitdb gitpython ioflo Jinja2 libnacl Mako msgpack-python pycparser pycryptodome pygit2 smmap timelib tornado PyYAML pyzmq python-etcd
+
 run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
-run -- yum -y --setopt=retries=0 upgrade
-run -- bash /root/install-salt.sh -L -F -P -X -N -M stable
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 upgrade
+run -- bash /root/install-salt.sh -b -x python3 -L -F -P -X -N -M git {{ version }}
+
 run -- mkdir -p /var/run/dbus /etc/salt /var/cache/salt /var/log/salt /var/run/salt /srv
 
 port add salt-job tcp 4505
