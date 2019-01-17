@@ -192,12 +192,17 @@
         "install-input" : "path-to-wwwroot-files",
         "install-output" : "output-master-image",
 
-        "tmp-bootstrap-root" : "/home/core/bootstrap",
+        "coreos-tools-stage" : "/home/core/coreos",
+        "salt-bootstrap-stage" : "/home/core/bootstrap",
+        "salt-bootstrap-installer-stage" : "/home/core",
+        "site-packages-stage" : "/home/core/patches",
+
         "salt-bootstrap-installer" : "path-to-bootstrap-sh",
         "salt-bootstrap-config" : "path-to-bootstrap-config",
         "salt-bootstrap-pillars" : "path-to-bootstrap-pillar",
         "salt-bootstrap-files" : "path-to-bootstrap-files",
-        "salt-bootstrap-version": "git-version-tag-to-install",
+        "salt-bootstrap-version" : "git-version-tag-to-install",
+        "salt-bootstrap-patches" : "path-to-python-patches",
 
         "tools-directory" : "path-to-coreos-tools"
     }
