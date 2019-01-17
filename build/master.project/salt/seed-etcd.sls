@@ -1,54 +1,65 @@
-#!pyobjects
-import os.path
-import salt
-from salt.serializers import json
+{% set MachineID = salt['file.read']('/'.join([pillar['bootstrap']['root'], '/etc/machine-id'])).strip() %}
 
-## extract host and port number from config('root_etcd:etcd.host') and config('root_etcd:etcd.port') configuration.
-Server = dict(
-    host=config('root_etcd:etcd.host'),
-    port=config('root_etcd:etcd.port')
-)
+Check firewall rules:
+    firewall.check:
+        - name: {{ salt['config.get']('root_etcd')['etcd.host'] }}
+        - port: {{ salt['config.get']('root_etcd')['etcd.port'] }}
 
-with Firewall.check(Server['host'], port=Server['port'], proto='tcp'):
+Register the etcd cluster-size for the machine-id with the v2 discovery protocol:
+    etcd.set:
+        - name: "/discovery/{{ MachineID }}/_config/size"
+        - value: {{ pillar['bootstrap']['etcd']['cluster-size'] }} 
+        - profile: root_etcd
+        - requires:
+            - Check firewall rules
 
-    ## register machine-id with the discovery protocol
-    res = os.path.join(pillar('bootstrap:root'), 'etc/machine-id')
-    mid = file(res, 'rt').read().strip()
-    uri = "http://{:s}:{:d}/v2/keys/discovery/{:s}/_config/{:s}".format(Server['host'], Server['port'], mid, '{:s}')
+### Project configuration
 
-    for item, dictionary in pillar('bootstrap:etcd').iteritems():
-        res = uri.format(item)
-        response = salt.utils.http.query(res, method='GET').get('status', 200)
-        if response != 200:
-            Http.query(res,
-                method='PUT',
-                data=';'.join("{:s}={:s}".format(k, str(v)) for k, v in dictionary.iteritems()),
-                status=201
-            )
-        continue
+{% for item in pillar['master']['configuration'] %}
+Populate configuration with project variable {{ item }}:
+    etcd.set:
+        - name: /config/{{ item }}
+        - value: '{{ pillar['master']['configuration'][item] | json }}'
+        - profile: root_etcd
+        - requires:
+            - Check firewall rules
+{% endfor %}
 
-    ## init the default namespace for nodes
-    if hasattr(Etcd, 'directory'):
-        Etcd.directory("/node", profile='root_etcd')
+### Miscellaneous namespaces
 
-    ## create a namespace for project-specific configuration
-    if hasattr(Etcd, 'directory'):
-        Etcd.directory('/config', profile='root_etcd')
+Initialize the default nodes namespaces:
+    etcd.set:
+        - name: /node
+        - value: null
+        - directory: true
+        - profile: root_etcd
+        - requires:
+            - Check firewall rules
 
-    # populate it
-    Config = pillar('master:configuration')
-    for var in Config:
-        Etcd.set("/config/{:s}".format(var), value=json.serialize(Config[var]), profile="root_etcd")
+Register the salt-master namespace:
+    etcd.set:
+        - name: {{ pillar['master']['service']['salt-master']['Namespace'] }}
+        - value: null
+        - directory: true
+        - profile: root_etcd
+        - requires:
+            - Check firewall rules
 
-    ## register the salt-master namespace
-    res = pillar('master:service:salt-master')
-    if hasattr(Etcd, 'directory'):
-        Etcd.directory(res['Namespace'], profile='root_etcd')
+### Flannel configuration
+Register the flannel namespace:
+    etcd.set:
+        - name: {{ pillar['master']['service']['flannel']['Namespace'] }}
+        - value: null
+        - directory: true
+        - profile: root_etcd
+        - requires:
+            - Check firewall rules
 
-    ## register the network config (flannel)
-    res = pillar('master:service:flannel')
-    if hasattr(Etcd, 'directory'):
-        Etcd.directory(res['Namespace'], profile='root_etcd')
-
-    # write the settings
-    Etcd.set("{:s}/config".format(res['Namespace']), value=json.serialize(res['Configuration']))
+Register the network configuration for flannel:
+    etcd.set:
+        - name: {{ pillar['master']['service']['flannel']['Namespace'] }}/config
+        - value: '{{ pillar['master']['service']['flannel']['Configuration'] | json }}'
+        - profile: root_etcd
+        - requires:
+            - Check firewall rules
+            - Register the flannel namespace
