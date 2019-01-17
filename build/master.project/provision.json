@@ -66,7 +66,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "dnf -y --setopt=retries=0 upgrade 2>&1 | tee \"$ROOT/$LOGFILE\""
+                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 upgrade 2>&1 | tee \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -80,7 +80,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "dnf -y --setopt=retries=0 install casync jq | tee -a \"$ROOT/LOGFILE\""
+                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install casync jq | tee -a \"$ROOT/LOGFILE\""
             ]
         },
 
@@ -100,10 +100,10 @@
                 "MASTER_ID={{ user `guest-name` }}"
             ],
             "inline" : [
-                "dnf -y --setopt=retries=0 install ca-certificates net-tools procps-ng git 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "dnf -y --setopt=retries=0 install systemd-container m2crypto PyYAML 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "dnf -y --setopt=retries=0 install dnf-utils libyaml procps-ng python2-crypto python2-jinja 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "dnf -y --setopt=retries=0 install python2-msgpack python2-requests python2-zmq 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install ca-certificates net-tools procps-ng git 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install systemd-container m2crypto PyYAML 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils libyaml procps-ng python2-crypto python2-jinja 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install python2-msgpack python2-requests python2-zmq 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "/usr/bin/bash \"$ROOT/tmp/install-salt.sh\" -X -i \"$MASTER_ID\" git {{ user `salt-bootstrap-version` }} 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
