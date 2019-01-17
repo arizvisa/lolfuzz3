@@ -19,7 +19,7 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
 Populate configuration with project variable {{ item }}:
     etcd.set:
         - name: /config/{{ item }}
-        - value: '{{ pillar['master']['configuration'][item] | json }}'
+        - value: {{ pillar['master']['configuration'][item] | json | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check firewall rules
@@ -58,7 +58,7 @@ Register the flannel namespace:
 Register the network configuration for flannel:
     etcd.set:
         - name: {{ pillar['master']['service']['flannel']['Namespace'] }}/config
-        - value: '{{ pillar['master']['service']['flannel']['Configuration'] | json }}'
+        - value: {{ pillar['master']['service']['flannel']['Configuration'] | json | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check firewall rules
