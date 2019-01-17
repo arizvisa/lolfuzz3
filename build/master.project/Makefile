@@ -67,6 +67,7 @@ checksum_type := md5
 ignition_config := $(MAKEDIR)ignition/
 salt_config := $(MAKEDIR)salt
 salt_pillar := $(MAKEDIR)pillar
+salt_patches := $(MAKEDIR)patches
 
 ## all important files that are copied to output
 output_files := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
@@ -336,10 +337,10 @@ $(boxname_work)/$(boxname)-vars.json.tools: $(extra_tools_files) $(setup_network
 	@jq -n '{ "tools-directory": "$(workdir)/tools" }' >| '$@'
 
 ## generate necessary configuration variables for salt-stack
-$(boxname_work)/$(boxname)-vars.json.salt: $(boxname_work)/salt $(boxname_work)/pillar $(boxname_work)/salt-minion.conf $(workdir)/$(salt_bootstrap_file)
+$(boxname_work)/$(boxname)-vars.json.salt: $(boxname_work)/salt $(boxname_work)/pillar $(boxname_work)/salt-minion.conf $(workdir)/$(salt_bootstrap_file) $(salt_patches)
 	@test -d '$(boxname_work)' || mkdir -p '$(boxname_work)'
 	$(info [-] Generating bootstrap variables for salt-bootstrap : : $^)
-	@jq -n '{ "salt-bootstrap-config": "$(boxname_work)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_work)/salt", "salt-bootstrap-pillar": "$(boxname_work)/pillar", "salt-bootstrap-version": "$(salt_bootstrap_version)" }' >| '$@'
+	@jq -n '{ "salt-bootstrap-config": "$(boxname_work)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_work)/salt", "salt-bootstrap-pillar": "$(boxname_work)/pillar", "salt-bootstrap-version": "$(salt_bootstrap_version)", "salt-bootstrap-patches": "$(salt_patches)" }' >| '$@'
 
 ## concatenate json template into a single .json file together with plugins
 $(boxname_work)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)

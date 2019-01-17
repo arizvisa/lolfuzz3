@@ -1,7 +1,7 @@
 {
     "provisioners": [
         { "type" : "shell-local",
-            "command" : "echo [*] System was successfully installed"
+            "command" : "echo [*] System was successfully built"
         },
         { "type" : "shell",
             "inline" : [
@@ -31,19 +31,22 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Uploading generic CoreOS tools"
+            "command" : "echo [*] Staging general CoreOS tools at {{user `coreos-tools-stage`}} and deploying in /opt/coreos"
         },
         { "type" : "file",
             "source" : "{{user `tools-directory`}}",
-            "destination" : "/home/core/coreos"
+            "destination" : "{{user `coreos-tools-stage`}}"
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "STAGE={{user `coreos-tools-stage`}}"
+            ],
             "inline" : [
                 "mkdir /opt",
-                "chmod 755 /opt",
-                "find /home/core/coreos -exec chmod 755 {} +",
-                "mv /home/core/coreos /opt/coreos"
+                "chmod 0755 /opt",
+                "find \"$STAGE\" -exec chmod 0755 {} +",
+                "mv \"$STAGE\" /opt/coreos"
             ]
         },
 
@@ -80,73 +83,99 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install casync jq | tee -a \"$ROOT/LOGFILE\""
+                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install casync jq 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
         { "type" : "shell-local",
-            "command" : "echo [-] Installing salt-minion inside toolbox"
+            "command" : "echo [-] Staging salt-minion installer for deployment into toolbox: {{user `salt-bootstrap-installer-stage`}}"
         },
         { "type" : "file",
             "source" : "{{user `salt-bootstrap-installer`}}",
-            "destination" : "/tmp/install-salt.sh"
+            "destination" : "{{user `salt-bootstrap-installer-stage`}}/install-salt.sh"
         },
 
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
+                "STAGE={{user `salt-bootstrap-installer-stage`}}",
                 "LOGFILE=/root/bootstrap.install.log",
-                "MASTER_ID={{ user `guest-name` }}"
+                "MASTER_ID={{user `guest-name`}}"
             ],
             "inline" : [
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install ca-certificates net-tools procps-ng git 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install systemd-container m2crypto PyYAML 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils libyaml procps-ng python2-crypto python2-jinja 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install python2-msgpack python2-requests python2-zmq 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "/usr/bin/bash \"$ROOT/tmp/install-salt.sh\" -X -i \"$MASTER_ID\" git {{ user `salt-bootstrap-version` }} 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "/usr/bin/bash \"$ROOT/$STAGE/install-salt.sh\" -X -i \"$MASTER_ID\" git {{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
         { "type" : "shell-local",
-            "command" : "echo [-] Creating directory structure for salt-stack configuration"
+            "command": "echo [-] Staging patches for site-packages in directory: {{user `site-packages-stage`}}"
+        },
+        { "type" : "file",
+            "source" : "{{user `salt-bootstrap-patches`}}",
+            "destination" : "{{user `site-packages-stage`}}"
+        },
+
+        { "type" : "shell-local",
+            "command": "echo [-] Applying patches from {{user `site-packages-stage`}} to site-packages in toolbox instance"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/media/root",
+                "STAGE={{user `site-packages-stage`}}",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
+            "inline" : [
+                "dnf -y install patch 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "cd /usr/lib/python2*/site-packages 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "for fix in \"$ROOT/$STAGE\"/patches/*; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [-] Creating directory structure in {{user `salt-bootstrap-stage`}} for staging salt-stack configuration"
         },
         { "type" : "shell",
             "inline" : [
                 "umask 022",
-                "mkdir -p '{{user `tmp-bootstrap-root`}}/etc/salt'",
-                "mkdir -p '{{user `tmp-bootstrap-root`}}/srv/bootstrap/'{salt,pillar}"
+                "mkdir -p '{{user `salt-bootstrap-stage`}}/etc/salt'",
+                "mkdir -p '{{user `salt-bootstrap-stage`}}/srv/bootstrap/'{salt,pillar}"
             ]
         },
         { "type" : "file",
             "source" : "{{user `salt-bootstrap-config`}}",
-            "destination" : "{{user `tmp-bootstrap-root`}}/etc/salt/minion"
+            "destination" : "{{user `salt-bootstrap-stage`}}/etc/salt/minion"
         },
         { "type" : "file",
             "source" : "{{user `salt-bootstrap-files`}}",
-            "destination" : "{{user `tmp-bootstrap-root`}}/srv/bootstrap"
+            "destination" : "{{user `salt-bootstrap-stage`}}/srv/bootstrap"
         },
         { "type" : "file",
             "source" : "{{user `salt-bootstrap-pillar`}}",
-            "destination" : "{{user `tmp-bootstrap-root`}}/srv/bootstrap"
+            "destination" : "{{user `salt-bootstrap-stage`}}/srv/bootstrap"
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Installing salt-stack directories into root"
+            "command" : "echo [*] Deploying salt-stack stage ({{user `salt-bootstrap-stage`}} into root filesystem"
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/",
-                "BOOTSTRAP_DIR={{ user `tmp-bootstrap-root` }}"
+                "STAGE={{user `salt-bootstrap-stage`}}"
             ],
             "inline" : [
                 "umask 022",
-                "chown -R root:root \"$BOOTSTRAP_DIR\"",
-                "find \"$BOOTSTRAP_DIR\" -type f -exec chmod 0644 {} +",
-                "find \"$BOOTSTRAP_DIR\" -type d -exec chmod 0755 {} +",
-                "tar -C \"$BOOTSTRAP_DIR\" -cpf- . | tar -xpf- -C \"$ROOT\"",
-                "rm -rf \"$BOOTSTRAP_DIR\""
+                "chown -R root:root \"$STAGE\"",
+                "find \"$STAGE\" -type f -exec chmod 0644 {} +",
+                "find \"$STAGE\" -type d -exec chmod 0755 {} +",
+                "tar -C \"$STAGE\" -cpf- . | tar -xpf- -C \"$ROOT\"",
+                "rm -rf \"$STAGE\""
             ]
         },
 
@@ -164,14 +193,13 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [-] Applying bootstrap state to {{ user `guest-name` }}"
+            "command" : "echo [-] Applying bootstrap state to {{user `guest-name`}}"
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/etc/salt --bind=/srv --bind=/opt -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
-                "LOGFILE=/root/bootstrap.state.log",
-                "MASTER_ID={{ user `guest-name` }}"
+                "LOGFILE=/root/bootstrap.state.log"
             ],
             "inline" : [
                 "until salt-call --retcode-passthrough --local state.apply; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
