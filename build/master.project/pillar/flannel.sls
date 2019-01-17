@@ -1,7 +1,7 @@
+# configuration for flannel bridge which facilitates communicaton between containers
+
 master:
-    # configuration for project services
     service:
-        # flannel bridge for communication between containers
         flannel:
             Namespace: "/coreos.com/network"
             Configuration:
