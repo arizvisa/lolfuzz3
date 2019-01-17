@@ -371,6 +371,7 @@ $(workdir)/$(boxname_config): $(boxname_work)/$(boxname_config)-original $(if $(
 		rm -f '$@'; \
 		exit 1; \
 	done
+	$(info [*] Successfully validated ignition configuration.)
 	cp -f '$(boxname_work)/$(boxname_config)' '$@'
 
 # combine all ignition jsons into the template
