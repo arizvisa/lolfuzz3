@@ -51,4 +51,4 @@ with Firewall.check(Server['host'], port=Server['port'], proto='tcp'):
         Etcd.directory(res['Namespace'], profile='root_etcd')
 
     # write the settings
-    Etcd.set("{:s}/config".format(res['Namespace']), value=json.serialize(res))
+    Etcd.set("{:s}/config".format(res['Namespace']), value=json.serialize(res['Configuration']))
