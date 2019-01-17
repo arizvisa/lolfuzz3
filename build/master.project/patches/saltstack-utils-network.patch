@@ -1,0 +1,184 @@
+There's an issue with the fqdn grain that is busted in salt/utils/network.py.
+What happens is the fqdn grain calls socket.getfqdn() which is busted in
+Python3 for some reason. If the fqdn that this returns is not resolvable,
+salt's get_fqhostname() function will call socket.getaddrinfo(). This can
+raise a socket.error which isn't caught in v2019.2. However because the
+salt developers fucking suck at defining stable code, this issue is already
+fixed in the develop branch by commit 05a9304b048fa05a39c633edbfd68453f8bea2bb.
+A lot of information about how this code changes and why it sucks is laid out
+in issue #36619.
+
+This patch allows us to provision the build/master.project box by running salt
+in a container without needing to setup network resolution or write anything
+into a hosts file. Some other things were also fixed for free because it was
+included in the git-diff.
+
+Author: Ali Rizvi-Santiago <arizvisa@gmail.com>
+Date: Thu Jan 17 06:16:00 2019 -0600
+
+--- a/salt/utils/network.py
++++ b/salt/utils/network.py
+@@ -59,7 +59,7 @@ def sanitize_host(host):
+     Sanitize host string.
+     '''
+     return ''.join([
+-        c for c in host[0:255] if c in (ascii_letters + digits + '.-')
++        c for c in host[0:255] if c in (ascii_letters + digits + '.-_')
+     ])
+
+
+@@ -197,9 +197,8 @@ def get_fqhostname():
+     '''
+     Returns the fully qualified hostname
+     '''
+-    l = [socket.getfqdn()]
+-
+-    # try socket.getaddrinfo
++    # try getaddrinfo()
++    fqdn = None
+     try:
+         addrinfo = socket.getaddrinfo(
+             socket.gethostname(), 0, socket.AF_UNSPEC, socket.SOCK_STREAM,
+@@ -207,12 +206,18 @@ def get_fqhostname():
+         )
+         for info in addrinfo:
+             # info struct [family, socktype, proto, canonname, sockaddr]
+-            if len(info) >= 4:
+-                l.append(info[3])
++            # On Windows `canonname` can be an empty string
++            # This can cause the function to return `None`
++            if len(info) > 3 and info[3]:
++                fqdn = info[3]
++                break
+     except socket.gaierror:
+-        pass
+-
+-    return l and l[0] or None
++        pass  # NOTE: this used to log.error() but it was later disabled
++    except socket.error as err:
++        log.debug('socket.getaddrinfo() failure while finding fqdn: %s', err)
++    if fqdn is None:
++        fqdn = socket.getfqdn()
++    return fqdn
+
+
+ def ip_to_host(ip):
+@@ -1152,19 +1157,16 @@ def in_subnet(cidr, addr=None):
+     try:
+         cidr = ipaddress.ip_network(cidr)
+     except ValueError:
+-        log.error('Invalid CIDR \'{0}\''.format(cidr))
++        log.error('Invalid CIDR \'%s\'', cidr)
+         return False
+
+     if addr is None:
+         addr = ip_addrs()
+         addr.extend(ip_addrs6())
+-    elif isinstance(addr, six.string_types):
+-        return ipaddress.ip_address(addr) in cidr
++    elif not isinstance(addr, (list, tuple)):
++        addr = (addr,)
+
+-    for ip_addr in addr:
+-        if ipaddress.ip_address(ip_addr) in cidr:
+-            return True
+-    return False
++    return any(ipaddress.ip_address(item) in cidr for item in addr)
+
+
+ def _ip_addrs(interface=None, include_loopback=False, interface_data=None, proto='inet'):
+@@ -1270,7 +1272,7 @@ def mac2eui64(mac, prefix=None):
+             net = ipaddress.ip_network(prefix, strict=False)
+             euil = int('0x{0}'.format(eui64), 16)
+             return '{0}/{1}'.format(net[euil], net.prefixlen)
+-        except:  # pylint: disable=bare-except
++        except Exception:
+             return
+
+
+@@ -1764,8 +1766,16 @@ def refresh_dns():
+         pass
+
+
++@jinja_filter('connection_check')
++def connection_check(addr, port=80, safe=False, ipv6=None):
++    '''
++    Provides a convenient alias for the dns_check filter.
++    '''
++    return dns_check(addr, port, safe, ipv6)
++
++
+ @jinja_filter('dns_check')
+-def dns_check(addr, port, safe=False, ipv6=None):
++def dns_check(addr, port=80, safe=False, ipv6=None, attempt_connect=True):
+     '''
+     Return the ip resolved by dns, but do not exit on failure, only raise an
+     exception. Obeys system preference for IPv4/6 address resolution - this
+@@ -1777,9 +1787,33 @@ def dns_check(addr, port, safe=False, ipv6=None):
+     lookup = addr
+     seen_ipv6 = False
+     family = socket.AF_INET6 if ipv6 else socket.AF_INET if ipv6 is False else socket.AF_UNSPEC
++
++    hostnames = []
+     try:
+         refresh_dns()
+         hostnames = socket.getaddrinfo(addr, port, family, socket.SOCK_STREAM)
++    except TypeError:
++        err = ('Attempt to resolve address \'{0}\' failed. Invalid or unresolveable address').format(lookup)
++        raise SaltSystemExit(code=42, msg=err)
++    except socket.error:
++        error = True
++
++    # If ipv6 is set to True, attempt another lookup using the IPv4 family,
++    # just in case we're attempting to lookup an IPv4 IP
++    # as an IPv6 hostname.
++    if error and ipv6:
++        try:
++            refresh_dns()
++            hostnames = socket.getaddrinfo(addr, port,
++                                           socket.AF_INET,
++                                           socket.SOCK_STREAM)
++        except TypeError:
++            err = ('Attempt to resolve address \'{0}\' failed. Invalid or unresolveable address').format(lookup)
++            raise SaltSystemExit(code=42, msg=err)
++        except socket.error:
++            error = True
++
++    try:
+         if not hostnames:
+             error = True
+         else:
+@@ -1792,17 +1816,24 @@ def dns_check(addr, port, safe=False, ipv6=None):
+                     break
+
+                 candidate_addr = salt.utils.zeromq.ip_bracket(h[4][0])
+-                candidates.append(candidate_addr)
+
+-                try:
+-                    s = socket.socket(h[0], socket.SOCK_STREAM)
+-                    s.connect((candidate_addr.strip('[]'), h[4][1]))
+-                    s.close()
++                # sometimes /etc/hosts contains ::1 localhost
++                if not ipv6 and candidate_addr == '[::1]':
++                    continue
+
+-                    resolved = candidate_addr
+-                    break
+-                except socket.error:
+-                    pass
++                candidates.append(candidate_addr)
++
++                if attempt_connect:
++                    try:
++                        s = socket.socket(h[0], socket.SOCK_STREAM)
++                        s.settimeout(2)
++                        s.connect((candidate_addr.strip('[]'), h[4][1]))
++                        s.close()
++
++                        resolved = candidate_addr
++                        break
++                    except socket.error:
++                        pass
+             if not resolved:
+                 if len(candidates) > 0:
+                     resolved = candidates[0]
