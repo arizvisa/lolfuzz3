@@ -96,6 +96,8 @@ Transfer salt-master build rules:
         - name: "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
         - defaults:
             version: {{ salt_container.Version }}
+            python: {{ salt_container.Python }}
+            pip: {{ salt_container.Pip }}
         - require:
             - Make container-root build directory
             - file: Install container-build.service

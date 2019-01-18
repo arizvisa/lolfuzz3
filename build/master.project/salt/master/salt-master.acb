@@ -8,20 +8,21 @@ label add distro fedora
 
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 update
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils chkconfig procps-ng git
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install python3 python3-devel
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install python3-pip python3-six python3-requests python3-urllib3
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}} {{python}}-devel
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pip {{python}}-six {{python}}-requests {{python}}-urllib3
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 libgit2-devel libsodium libsodium-devel libyaml libyaml-devel zeromq zeromq-devel
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install python3-pycurl
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pycurl
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 groupinstall "Development Tools"
 run -- dnf -y clean packages
 
-run -- pip3 --retries=65536 install --upgrade pip
-run -- pip3 --retries=65536 install MarkupSafe backports_abc psutil requests
-run -- pip3 --retries=65536 install cffi python-dateutil gitdb gitpython ioflo Jinja2 libnacl Mako msgpack-python pycparser pycryptodome pygit2 smmap timelib tornado PyYAML pyzmq python-etcd
+run -- {{pip}} --retries=65536 install --upgrade pip
+run -- {{pip}} --retries=65536 install MarkupSafe backports_abc psutil requests
+run -- {{pip}} --retries=65536 install cffi python-dateutil gitdb gitpython ioflo Jinja2 libnacl Mako msgpack-python pycparser pycryptodome pygit2 smmap timelib tornado PyYAML
+run -- {{pip}} --retries=65536 install pyzmq raet python-etcd
 
 run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 upgrade
-run -- bash /root/install-salt.sh -b -x python3 -L -F -P -X -N -M git {{ version }}
+run -- bash /root/install-salt.sh -b -x {{python}} -L -F -P -X -N -M git {{ version }}
 
 run -- mkdir -p /var/run/dbus /etc/salt /var/cache/salt /var/log/salt /var/run/salt /srv
 
