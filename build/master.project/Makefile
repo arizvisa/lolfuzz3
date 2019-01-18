@@ -249,70 +249,70 @@ master-output: $(foreach f,$(output_names),$(outdir)/$(f))
 .PHONY: clean-output
 clean-output:
 	$(info [!] Erasing image at $(boxname_outdir))
-	test -d '$(boxname_outdir)' && rm -rf '$(boxname_outdir)'
+	-rm -rf '$(boxname_outdir)'
 	$(info [!] Erasing output files from $(outdir))
-	rm -f $(foreach f,$(output_names),'$(outdir)/$(f)')
+	-rm -f $(foreach f,$(output_names),'$(outdir)/$(f)')
 
 .PHONY: clean-installer
 clean-installer:
 	$(info [!] Removing CoreOS installer files)
-	rm -f $(foreach f,$(coreos_installer_files),'$(f)')
+	-rm -f $(foreach f,$(coreos_installer_files),'$(f)')
 
 .PHONY: clean-image
 clean-image:
 	$(info [!] Erasing temporary image at $(boxname_template))
-	test -d '$(boxname_template)' && rm -rf '$(boxname_template)'
+	-rm -rf '$(boxname_template)'
 
 .PHONY: clean-build
 clean-build:
 	$(info [!] Erasing output files from $(workdir))
-	rm -f $(foreach f,$(output_names),'$(workdir)/$(f)')
+	-rm -f $(foreach f,$(output_names),'$(workdir)/$(f)')
 
 .PHONY: clean-provisioning
 clean-provisioning:
-	$(info [!] Erasing temporary files used for provisionining: $(boxname_workdir)/salt $(boxname_workdir)/pillar $(boxname_workdir/salt-minion.conf))
-	test -d '$(boxname_workdir)/salt' && rm -rf '$(boxname_workdir)/salt'
-	test -d '$(boxname_workdir)/pillar' && rm -rf '$(boxname_workdir)/pillar'
-	rm -f '$(boxname_workdir)/salt-minion.conf'
+	$(info [!] Erasing temporary files used for provisioning: $(boxname_workdir)/salt $(boxname_workdir)/pillar $(boxname_workdir/salt-minion.conf))
+	-rm -rf '$(boxname_workdir)/salt'
+	-rm -rf '$(boxname_workdir)/pillar'
+	-rm -f '$(boxname_workdir)/salt-minion.conf'
 
 .PHONY: clean-tools
 clean-tools:
 	$(info [!] Erasing temporary files from $(workdir)/files)
-	test -d '$(workdir)/files' && rm -rf '$(workdir)/files'
+	-rm -rf '$(workdir)/files'
 	$(info [!] Erasing $(workdir)/$(salt_bootstrap_file))
-	rm -f '$(workdir)/$(salt_bootstrap_file)'
+	-rm -f '$(workdir)/$(salt_bootstrap_file)'
 	$(info [!] Erasing $(setup_network_environment_files))
-	rm -f '$(setup_network_environment_files)'
+	-rm -f '$(setup_network_environment_files)'
 
 .PHONY: clean-ignition
 clean-ignition:
 	$(info [!] Erasing temporary files for building ignition : $(boxname_workdir)/ignition-*)
-	rm -f $(foreach f,$(ignition_sysctl_files),'$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f))'{,.json-raw})
-	rm -f $(foreach f,$(ignition_users_files),'$(boxname_workdir)/ignition-user.json-$(notdir $(f))')
-	rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-unit.json-$(name)'-*)
-	rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-unit.json-$(name)')
-	rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-units.json-$(name)'-*)
-	rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-units.json-$(name)')
-	rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)'-* '$(boxname_workdir)/ignition-dropins.json-$(name)'-*)
-	rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)' '$(boxname_workdir)/ignition-dropins.json-$(name)')
+	-rm -f $(foreach f,$(ignition_sysctl_files),'$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f))'{,.json-raw})
+	-rm -f $(foreach f,$(ignition_users_files),'$(boxname_workdir)/ignition-user.json-$(notdir $(f))')
+	-rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-unit.json-$(name)'-*)
+	-rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-unit.json-$(name)')
+	-rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-units.json-$(name)'-*)
+	-rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-units.json-$(name)')
+	-rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)'-* '$(boxname_workdir)/ignition-dropins.json-$(name)'-*)
+	-rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)' '$(boxname_workdir)/ignition-dropins.json-$(name)')
 	$(info [!] Erasing temporary files for ssh keys : $(boxname_workdir)/$(boxname).id_rsa*)
-	rm -f '$(boxname_workdir)/$(boxname).id_rsa'*
+	-rm -f '$(boxname_workdir)/$(boxname).id_rsa'*
 	$(info [!] Erasing temporary files for building config : $(foreach name,original files units users hostname sysctl pubkey validated,$(boxname_workdir)/$(boxname_config)-$(name)))
-	rm -f $(foreach name,original files units users hostname sysctl pubkey validated,'$(boxname_workdir)/$(boxname_config)-$(name)')
+	-rm -f $(foreach name,original files units users hostname sysctl pubkey validated,'$(boxname_workdir)/$(boxname_config)-$(name)')
 	$(info [!] Erasing temporary configuration file : $(workdir)/$(boxname_config))
-	rm -f '$(workdir)/$(boxname_config)'
+	-rm -f '$(workdir)/$(boxname_config)'
 
 .PHONY: clean-json
 clean-json:
 	$(info [!] Erasing temporary packer template : $(boxname).json)
-	rm -f '$(boxname_workdir)/$(boxname).json'
+	-rm -f '$(boxname_workdir)/$(boxname).json'
 	$(info [!] Erasing temporary files for building packer template: $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)'))
-	rm -f '$(boxname_workdir)/$(boxname)-vars.json'{,.base,.iso,.salt,.ssh,.tools}
-	rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
+	-rm -f '$(boxname_workdir)/$(boxname)-vars.json'{,.base,.iso,.salt,.ssh,.tools}
+	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
 
 .PHONY: clean
 clean: clean-ignition clean-json clean-provisioning clean-build clean-image
-	test -d '$(boxname_workdir)' && rmdir '$(boxname_workdir)' || exit 0
+	rmdir '$(boxname_workdir)'
 
 .PHONY: all
 all: download-installer master-image master-output
