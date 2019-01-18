@@ -109,7 +109,8 @@
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils libyaml procps-ng python2-crypto python2-jinja2 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install python2-msgpack python2-requests python2-zmq 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install python2-etcd 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "/usr/bin/bash \"$ROOT/$STAGE/install-salt.sh\" -X -i \"$MASTER_ID\" git {{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "/usr/bin/bash \"$ROOT/$STAGE\"/install-salt.sh -X -i \"$MASTER_ID\" git {{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "rm -f \"$ROOT/$STAGE\"/install-salt.sh"
             ]
         },
 
@@ -144,7 +145,8 @@
             "inline" : [
                 "dnf -y install patch 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "cd /usr/lib/python2*/site-packages 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "for fix in \"$ROOT/$STAGE\"/*.patch; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "for fix in \"$ROOT/$STAGE\"/*.patch; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "rm -rf \"$ROOT/$STAGE\""
             ]
         },
 
