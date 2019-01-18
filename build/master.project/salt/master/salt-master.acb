@@ -39,5 +39,5 @@ mount add salt-run /var/run/salt
 mount add salt-srv /srv
 
 annotation add appc.io/executor/supports-systemd-notify true
-set-exec -- /usr/bin/salt-master --log-level=error
+set-exec -- /usr/bin/salt-master
 
