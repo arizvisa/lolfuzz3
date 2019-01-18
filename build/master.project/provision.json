@@ -114,6 +114,16 @@
         },
 
         { "type" : "shell-local",
+            "command": "echo [-] Cleaning temporary files leftover from installing packages"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "inline" : [
+                "dnf -y clean all --enablerepo='*'"
+            ]
+        },
+
+        { "type" : "shell-local",
             "command": "echo [-] Staging patches for site-packages in directory: {{user `site-packages-stage`}}"
         },
         { "type" : "file",
