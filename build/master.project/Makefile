@@ -142,7 +142,7 @@ endef
 
 # json_rawfile '$source.raw' '$target.json'
 define json_rawfile
-$(2): $(1)	| $(dir $(2))
+$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@jq -Rs . '$(1)' >| '$(2)'
 endef
 
@@ -150,7 +150,7 @@ endef
 
 # gh_download '$filename'
 define gh_download
-$(1):	| $(dir $(1))
+$(1):	| $(patsubst %/,%,$(dir $(1)))
 	$$(info [!] Downloading $$(notdir $(1)) from $(2))
 	$${DOWNLOAD} -o '$$@' '$(2)'
 endef
@@ -166,7 +166,7 @@ endef
 
 # coreos_tool '$target' '$source'
 define coreos_tool
-$(2): $(1)	| $(dir $(2))
+$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	$$(info [!] Staging file $(1) in $(2))
 	cp -f '$(1)' '$(2)'
 endef
@@ -175,7 +175,7 @@ endef
 
 # ignition_file '$infile.json' '$target.json' '$decimal-mode'
 define ignition_file
-$(2): $(1)	| $(dir $(2))
+$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	$$(info [-] Building ignition file $(2) from contents at $(1))
 	@jq -n --slurpfile contents '$(1)' '{ filesystem: "root", path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
@@ -196,27 +196,27 @@ endef
 
 # ignition_unit_dropin_file '$filename.conf' '$dropin.conf' '$target.json'
 define ignition_unit_dropins_file
-$(3): $(2)	| $(dir $(3))
+$(3): $(2)	| $(patsubst %/,%,$(dir $(3)))
 	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", contents: $$$$contents[0] }' >| '$(3)'
 endef
 
 # ignition_unit '$target.json' '$unit.json' '$dropins.json'
 define ignition_unit
-$(1): $(2) $(3)	| $(dir $(1))
+$(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
 	$$(info [*] Combining ignition unit $(1): $(2) $(3))
 	@jq '.dropins = (inputs // .dropins)' $$^ >| '$(1)'
 endef
 
 # ignition_unit_missing '$unit.service' '$target.json' '$dropins.json'
 define ignition_unit_missing
-$(2): $(3)	| $(dir $(2))
+$(2): $(3)	| $(patsubst %/,%,$(dir $(2)))
 	$$(info [*] Combining (missing) ignition unit $(2): $(3))
 	@jq -n --slurpfile dropins '$(3)' '{ name: "$(1)", dropins: $$$$dropins[0] }' >| '$(2)'
 endef
 
 # ignition_user '$target.json' '$source.json' '$list-of-json-files'
 define ignition_user
-$(1): $(2) $(3)	| $(dir $(1))
+$(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
 	$$(info [*] Combining files for user into $(1): $$^)
 	@jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
 endef
