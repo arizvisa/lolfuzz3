@@ -41,7 +41,7 @@ boxname_config=$(boxname).config
 
 boxname_outdir=$(outdir)/$(boxname)
 boxname_workdir=$(workdir)/$(boxname)
-boxname_template=$(workdir)/$(boxname)/template
+boxname_template=$(boxname_workdir)/template
 
 ### Check output directory
 outdir=${OUTPUT}
@@ -266,7 +266,7 @@ clean-image:
 
 .PHONY: clean-build
 clean-build:
-	$(info [!] Erasing output files from $(workdir))
+	$(info [!] Erasing temporary output files from $(workdir))
 	-rm -f $(foreach f,$(output_names),'$(workdir)/$(f)')
 
 .PHONY: clean-provisioning
@@ -300,8 +300,8 @@ clean-ignition:
 	-rm -f '$(boxname_workdir)/$(boxname).id_rsa'*
 	$(info [!] Erasing temporary files for building config : $(foreach name,original files units users hostname sysctl pubkey,$(boxname_workdir)/$(boxname_config)-$(name)))
 	-rm -f $(foreach name,original files units users hostname sysctl pubkey,'$(boxname_workdir)/$(boxname_config)-$(name)')
-	$(info [!] Erasing temporary configuration files : $(boxname_workdir)/$(boxname_config) $(boxname_workdir)/$(boxname_config).validated)
-	-rm -f '$(boxname_workdir)/$(boxname_config)' '$(boxname_workdir)/$(boxname_config).validated'
+	$(info [!] Erasing temporary configuration files : $(boxname_workdir)/$(boxname_config) $(boxname_workdir)/$(boxname_config).validate)
+	-rm -f '$(boxname_workdir)/$(boxname_config)' '$(boxname_workdir)/$(boxname_config).validate'
 
 .PHONY: clean-json
 clean-json:
@@ -385,22 +385,26 @@ $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 
 ### rules for building bootstrap config
 
-# combine the result ignition json with any other configurations
-$(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)	| $(workdir)
-	$(info [*] Merging the ignition configuration $(boxname_workdir)/$(boxname_config) using the result json and extra configurations: $^)
-	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$(boxname_workdir)/$(boxname_config)'
-	$(info [!] Validating ignition configuration $(boxname_workdir)/$(boxname_config) : $(coreos_validate_url))
-	${PUT} '@$(boxname_workdir)/$(boxname_config)' '$(coreos_validate_url)' >| '$(boxname_workdir)/$(boxname_config).validated'
-	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$(boxname_workdir)/$(boxname_config).validated' | while read y x message; do \
+# rules for validating the config
+$(boxname_workdir)/$(boxname_config).validate: $(boxname_workdir)/$(boxname_config)	| $(boxname_workdir)
+	$(info [!] Validating ignition configuration $< : $(coreos_validate_url))
+	${PUT} '@$<' '$(coreos_validate_url)' >| '$@'
+
+$(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)	| $(workdir) $(boxname_workdir)/$(boxname_config).validate
+	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$<.validate' | while read y x message; do \
 		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
 	done
-	@jq '(.result // []) | .[] | select(.kind == "error") | .message | @sh' '$(boxname_workdir)/$(boxname_config).validated' | while read message; do \
+	@jq '(.result // []) | .[] | select(.kind == "error") | .message | @sh' '$<.validate' | while read message; do \
 		printf 'Validation Error: %s\n' "$$message" 1>&2; \
-		rm -f '$@'; \
 		exit 1; \
 	done
-	$(info [*] Successfully validated ignition configuration.)
-	cp -f '$(boxname_workdir)/$(boxname_config)' '$@'
+	$(info [*] Successfully validated ignition configuration: $@)
+	cp -f '$<' '$@'
+
+# combine the result ignition json with any other configurations
+$(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)	| $(workdir)
+	$(info [*] Merging the ignition configuration $@ using the result json and extra configurations: $^)
+	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
 
 # combine all ignition jsons into the template
 $(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users	| $(boxname_workdir)
