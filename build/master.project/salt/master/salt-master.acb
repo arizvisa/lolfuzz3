@@ -11,7 +11,7 @@ run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils c
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}} {{python}}-devel
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pip {{python}}-six {{python}}-requests {{python}}-urllib3
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 libgit2-devel libsodium libsodium-devel libyaml libyaml-devel zeromq zeromq-devel
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pycurl
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pycurl {{python}}-Cython
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 groupinstall "Development Tools"
 
 run -- {{pip}} --retries=65536 install --upgrade pip
