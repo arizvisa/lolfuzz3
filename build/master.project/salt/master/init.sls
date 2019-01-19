@@ -1,6 +1,7 @@
 {% set tools = pillar['master']['tools'] %}
 {% set container_service = pillar['master']['service']['container'] %}
 {% set salt_container = pillar['master']['service']['salt-master'] %}
+{% set MachineID = salt['file.read']('/'.join([pillar['bootstrap']['root'], '/etc/machine-id'])).strip() %}
 
 include:
     - container
@@ -70,9 +71,15 @@ Install salt-master configuration:
                 - name: "base"
                   path: "/srv/salt"
 
+                - name: "bootstrap"
+                  path: "/srv/bootstrap/salt"
+
             root_pillars:
-                - name: "root"
+                - name: "base"
                   path: "/srv/pillar"
+
+                - name: "bootstrap"
+                  path: "/srv/bootstrap/pillar"
 
             etcd_pillars_ext:
                 - name: "root_etcd"
@@ -93,6 +100,9 @@ Install salt-minion configuration:
         - template: jinja
         - source: salt://master/salt-minion.conf
         - name: /etc/salt/minion
+        - context:
+            id: {{ MachineID }}.master.{{ pillar['master']['configuration']['project'] }}
+            machine-id: {{ MachineID }}
         - use:
             - Install salt-master configuration
         - require:
