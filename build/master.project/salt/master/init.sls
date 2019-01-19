@@ -95,20 +95,6 @@ Install salt-master configuration:
             - Make salt-configuration directory
         - mode: 0664
 
-Install salt-minion configuration:
-    file.managed:
-        - template: jinja
-        - source: salt://master/salt-minion.conf
-        - name: /etc/salt/minion
-        - context:
-            id: {{ MachineID }}.master.{{ pillar['master']['configuration']['project'] }}
-            machine_id: {{ MachineID }}
-        - use:
-            - Install salt-master configuration
-        - require:
-            - Make salt-configuration directory
-            - sls: seed-etcd
-
 Transfer salt-master build rules:
     # FIXME: this file source should be versioned so that container_version can choose which one
     file.managed:
@@ -204,6 +190,21 @@ Enable systemd multi-user.target wants salt-master.service:
             - Install salt-master.service
             - sls: seed-etcd
         - makedirs: true
+
+### once we're sure the salt-master.service will run, we can install the salt-minion configuration
+Install salt-minion configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://master/salt-minion.conf
+        - name: /etc/salt/minion
+        - context:
+            id: {{ MachineID }}.master.{{ pillar['master']['configuration']['project'] }}
+            machine_id: {{ MachineID }}
+        - use:
+            - Install salt-master configuration
+        - require:
+            - Enable systemd multi-user.target wants salt-master.service
+            - sls: seed-etcd
 
 ### Scripts for interacting with the salt-master
 
