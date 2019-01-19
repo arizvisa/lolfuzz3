@@ -95,13 +95,14 @@ coreos_installer_files := $(foreach f,$(file <$(in_coreos_files)),$(workdir)/$(f
 
 ### tools configuration
 toolsdir=$(workdir)/tools
+filesdir=$(workdir)/files
 
 ## acbuild
 in_acbuild_repo=$(MAKEDIR)acbuild.repo
 acbuild_metaurl := $(shell printf -- '$(github_url_format)' '$(file <$(in_acbuild_repo))')
 
 # required files for acbuild
-acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].name'),$(workdir)/files/$(f))
+acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].name'),$(filesdir)/$(f))
 
 ## kelseyhightower's setup-network-environment
 in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
@@ -282,12 +283,12 @@ clean-provisioning:
 
 .PHONY: clean-tools
 clean-tools:
-	$(info [!] Erasing temporary files from $(workdir)/files)
-	-rm -rf '$(workdir)/files'
 	$(info [!] Erasing tool $(workdir)/$(salt_bootstrap_file))
 	-rm -f '$(workdir)/$(salt_bootstrap_file)'
 	$(info [!] Erasing tool $(setup_network_environment_files))
 	-rm -f '$(setup_network_environment_files)'
+	$(info [!] Erasing temporary files from $(filesdir))
+	-rm -rf '$(filesdir)'
 	$(info [!] Removing tool directories $(toolsdir))
 	rmdir '$(toolsdir)/bin' '$(toolsdir)'
 
@@ -450,8 +451,8 @@ $(boxname_workdir)/salt $(boxname_workdir)/pillar: $(salt_config) $(salt_pillar)
 	cp -r '$(salt_config)' '$(boxname_workdir)'/
 	$(info [*] Copying bootstrap pillar to $(boxname_workdir)/pillar.)
 	cp -r '$(salt_pillar)' '$(boxname_workdir)'/
-	$(info [*] Copying extra files from $(workdir)/files into states at $(boxname_workdir)/salt.)
-	cp -r '$(workdir)/files' '$(boxname_workdir)/salt'/
+	$(info [*] Copying extra files from $(filesdir) into states at $(boxname_workdir)/salt.)
+	cp -r '$(filesdir)' '$(boxname_workdir)/salt'/
 
 $(boxname_workdir)/salt-minion.conf: $(MAKEDIR)salt-minion.conf	| $(boxname_workdir)
 	$(info [*] Copying in bootstrap configuration from $@.)
@@ -476,7 +477,7 @@ $(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(outdir))
 $(foreach f,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(f))))
 
 # fetch the acbuild tool
-$(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(workdir)/files/$(notdir $(u)),$(u))))
+$(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(filesdir)/$(notdir $(u)),$(u))))
 
 # fetch the setup-network-environment tool
 $(foreach u,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(toolsdir)/bin/$(notdir $(u)),$(u))))
