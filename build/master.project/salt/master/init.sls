@@ -126,7 +126,9 @@ Transfer salt-master build rules:
 
     event.send:
         - name: build/{{ MachineID }}/salt-master/building
-        - data: "salt-master:{{ salt_container.Version }}.acb"
+        - data:
+            file: "salt-master:{{ salt_container.Version }}.acb"
+        - show_changed: true
 
 Install openssh-clients in toolbox:
     pkg.installed:
@@ -160,7 +162,9 @@ Build salt-master image:
 
     event.send:
         - name: build/{{ MachineID }}/salt-master/complete
-        - data: "salt-master:{{ salt_container.Version }}.aci"
+        - data:
+            image: "salt-master:{{ salt_container.Version }}.aci"
+        - show_changed: true
 
 Completed salt-master image:
     event.wait:
