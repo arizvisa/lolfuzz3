@@ -131,8 +131,7 @@ ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$
 
 # gh_download '$filename'
 define gh_download
-$(1):
-	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
+$(1):	| $(dir $(1))
 	$$(info [!] Downloading $$(notdir $(1)) from $(2))
 	$${DOWNLOAD} -o '$$@' '$(2)'
 endef
@@ -141,16 +140,14 @@ endef
 
 # coreos_download '$filename'
 define coreos_download
-$$(workdir)/$$(notdir $(1)):
-	@test -d '$$(workdir)' || mkdir -p '$$(workdir)'
+$(workdir)/$$(notdir $(1)):	| $(workdir)
 	$$(info [!] Downloading CoreOS Installer $(coreos_url)/$(1))
 	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(1)'
 endef
 
 # coreos_tool '$target' '$source'
 define coreos_tool
-$(2): $(1)
-	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
+$(2): $(1)	| $(dir $(2))
 	$$(info [!] Staging file $(1) in $(2))
 	cp -f '$(1)' '$(2)'
 endef
@@ -165,8 +162,7 @@ endef
 
 # ignition_file '$infile.json' '$target.json' '$decimal-mode'
 define ignition_file
-$(2): $(1)
-	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
+$(2): $(1)	| $(dir $(2))
 	$$(info [-] Building ignition file $(2) from contents at $(1))
 	@jq -n --slurpfile contents '$(1)' '{ filesystem: "root", path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
@@ -187,39 +183,34 @@ endef
 
 # ignition_unit_dropin_file '$filename.conf' '$dropin.conf' '$target.json'
 define ignition_unit_dropins_file
-$(3): $(2)
-	@test -d '$$(dir $(3))' || mkdir -p '$$(dir $(3))'
+$(3): $(2)	| $(dir $(3))
 	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", contents: $$$$contents[0] }' >| '$(3)'
 endef
 
 # ignition_unit '$target.json' '$unit.json' '$dropins.json'
 define ignition_unit
-$(1): $(2) $(3)
+$(1): $(2) $(3)	| $(dir $(1))
 	$$(info [*] Combining ignition unit $(1): $(2) $(3))
-	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(2))'
 	@jq '.dropins = (inputs // .dropins)' $$^ >| '$(1)'
 endef
 
 # ignition_unit_missing '$unit.service' '$target.json' '$dropins.json'
 define ignition_unit_missing
-$(2): $(3)
+$(2): $(3)	| $(dir $(2))
 	$$(info [*] Combining (missing) ignition unit $(2): $(3))
-	@test -d '$$(dir $(2))' || mkdir -p '$$(dir $(2))'
 	@jq -n --slurpfile dropins '$(3)' '{ name: "$(1)", dropins: $$$$dropins[0] }' >| '$(2)'
 endef
 
 # ignition_user '$target.json' '$source.json' '$list-of-json-files'
 define ignition_user
-$(1): $(2) $(3)
+$(1): $(2) $(3)	| $(dir $(1))
 	$$(info [*] Combining files for user into $(1): $$^)
-	@test -d '$$(dir $(1))' || mkdir -p '$$(dir $(1))'
 	@jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
 endef
 
 # output_file '$file' '$directory'
 define output_file
-$(2)/$(notdir $(1)): $(1)
-	@test -d '$(2)' || mkdir -p '$(2)'
+$(2)/$(notdir $(1)): $(1)	| $(2)
 	$$(info [*] Copying output file to $(2): $$<)
 	cp '$$<' '$$@'
 endef
