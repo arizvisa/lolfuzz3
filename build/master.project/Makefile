@@ -141,7 +141,7 @@ endef
 
 # json_rawfile '$source.raw' '$target.json'
 define json_rawfile
-$(2): $(1)  | $(dir $(2))
+$(2): $(1)	| $(dir $(2))
 	@jq -Rs . '$(1)' >| '$(2)'
 endef
 
@@ -327,10 +327,10 @@ $(workdir):
 $(boxname_workdir):	| $(workdir)
 	test -d '$@' || mkdir -p '$@'
 
-$(workdir)/tools:   | $(workdir)
+$(workdir)/tools:	| $(workdir)
 	test -d '$@' || mkdir -p '$@'
 
-$(workdir)/tools/bin:   | $(workdir)/tools
+$(workdir)/tools/bin:	| $(workdir)/tools
 	test -d '$@' || mkdir -p '$@'
 
 ### rules for actual output of the template and its related files
@@ -376,7 +376,7 @@ $(boxname_workdir)/$(boxname)-vars.json.salt: $(boxname_workdir)/salt $(boxname_
 	@jq -n '{ "salt-bootstrap-config": "$(boxname_workdir)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_workdir)/salt", "salt-bootstrap-pillar": "$(boxname_workdir)/pillar", "salt-bootstrap-version": "$(salt_bootstrap_version)", "salt-bootstrap-patches": "$(salt_patches)" }' >| '$@'
 
 # concatenate json template into a single .json file together with plugins
-$(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)
+$(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)	| $(boxname_workdir)
 	$(info [*] Merging box with enabled plugins into $@: $^)
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
 
