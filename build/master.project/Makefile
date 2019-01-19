@@ -284,10 +284,12 @@ clean-provisioning:
 clean-tools:
 	$(info [!] Erasing temporary files from $(workdir)/files)
 	-rm -rf '$(workdir)/files'
-	$(info [!] Erasing $(workdir)/$(salt_bootstrap_file))
+	$(info [!] Erasing tool $(workdir)/$(salt_bootstrap_file))
 	-rm -f '$(workdir)/$(salt_bootstrap_file)'
-	$(info [!] Erasing $(setup_network_environment_files))
+	$(info [!] Erasing tool $(setup_network_environment_files))
 	-rm -f '$(setup_network_environment_files)'
+	$(info [!] Removing tool directories $(toolsdir))
+	rmdir '$(toolsdir)/bin' '$(toolsdir)'
 
 .PHONY: clean-ignition
 clean-ignition:
