@@ -55,9 +55,9 @@ else
 endif
 
 ### some utility macros for downloading files
-DOWNLOAD := curl -L -k --progress-bar
-FETCH := curl -s -S -L -k
-PUT := curl -s -S -L -k -X PUT --data-binary
+DOWNLOAD := curl -k -L -C- --progress-bar
+FETCH := curl -k -L -s -S
+PUT := curl -k -L -s -S -X PUT --data-binary
 
 ifneq ("$(wildcard $(ROOTDIR)/github.token)","")
 GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
