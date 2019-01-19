@@ -156,7 +156,7 @@ endef
 
 # raw_file '$source.json-raw' '$target.json'
 define raw_file
-$(2): $(1)
+$(2): $(1)  | $(dir $(2))
 	@jq -Rs . '$(1)' >| '$(2)'
 endef
 
@@ -351,7 +351,7 @@ $(boxname_workdir)/$(boxname)-vars.json.base:	| $(boxname_workdir)
 	@jq -n '{ "guest-name": "$(boxname)", "install-input": "$(workdir)", "install-output": "$(boxname_template)" }' >| '$@'
 
 ### concatenate entire template config into a single .json file
-$(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workdir)/$(boxname)-vars.json.iso $(boxname_workdir)/$(boxname)-vars.json.ssh $(boxname_workdir)/$(boxname)-vars.json.salt $(boxname_workdir)/$(boxname)-vars.json.tools $(boxname_workdir)/$(boxname)-vars.json.base	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workdir)/$(boxname)-vars.json.iso $(boxname_workdir)/$(boxname)-vars.json.ssh $(boxname_workdir)/$(boxname)-vars.json.salt $(boxname_workdir)/$(boxname)-vars.json.tools $(boxname_workdir)/$(boxname)-vars.json.base
 	$(info [*] Merging build variables together into $@: $^)
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
 
@@ -360,12 +360,12 @@ $(boxname_workdir)/$(boxname)-vars.json.tools: $(extra_tools_files) $(setup_netw
 	@jq -n '{ "tools-directory": "$(workdir)/tools" }' >| '$@'
 
 ## generate necessary configuration variables for salt-stack
-$(boxname_workdir)/$(boxname)-vars.json.salt: $(boxname_workdir)/salt $(boxname_workdir)/pillar $(foreach name,$(salt_bootstrap_pillar_files),$(boxname_workdir)/pillar/$(name)) $(boxname_workdir)/salt-minion.conf $(workdir)/$(salt_bootstrap_file) $(salt_patches)	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname)-vars.json.salt: $(boxname_workdir)/salt $(boxname_workdir)/pillar $(foreach name,$(salt_bootstrap_pillar_files),$(boxname_workdir)/pillar/$(name)) $(boxname_workdir)/salt-minion.conf $(workdir)/$(salt_bootstrap_file) $(salt_patches)
 	$(info [-] Generating bootstrap variables for salt-bootstrap: $^)
 	@jq -n '{ "salt-bootstrap-config": "$(boxname_workdir)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_workdir)/salt", "salt-bootstrap-pillar": "$(boxname_workdir)/pillar", "salt-bootstrap-version": "$(salt_bootstrap_version)", "salt-bootstrap-patches": "$(salt_patches)" }' >| '$@'
 
 ## concatenate json template into a single .json file together with plugins
-$(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(if $(box_template_extra),$(foreach d,$(shell echo $(box_template_extra)/*),$(d)),)
 	$(info [*] Merging box with enabled plugins into $@: $^)
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
 
@@ -377,7 +377,7 @@ $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 ### rules for building bootstrap config
 
 # rules for validating the config
-$(boxname_workdir)/$(boxname_config).validate: $(boxname_workdir)/$(boxname_config)	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname_config).validate: $(boxname_workdir)/$(boxname_config)
 	$(info [!] Validating ignition configuration $<: $(coreos_validate_url))
 	${PUT} '@$<' '$(coreos_validate_url)' >| '$@'
 
@@ -393,12 +393,12 @@ $(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config).validate $(bo
 	cp -f '$(boxname_workdir)/$(boxname_config)' '$@'
 
 # combine the result ignition json with any other configurations
-$(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)	| $(workdir)
+$(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
 	$(info [*] Merging the ignition configuration $@ using the result json and extra configurations: $^)
 	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
 
 # combine all ignition jsons into the template
-$(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users
 	$(info [*] Making the ignition configuration $@ from the template $<)
 	@jq --slurpfile files '$(boxname_workdir)/$(boxname_config)-files' --slurpfile units '$(boxname_workdir)/$(boxname_config)-units' --slurpfile users '$(boxname_workdir)/$(boxname_config)-users' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0]' '$(ignition_template)' >| '$@'
 
@@ -409,27 +409,27 @@ $(boxname_workdir)/$(boxname_config)-hostname:	| $(boxname_workdir)
 	@jq -n '[ { filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ("$(boxname)" | @uri)) } } ]' >| '$@'
 
 # bootstrap for ignition/sysctl directory
-$(boxname_workdir)/$(boxname_config)-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)))	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname_config)-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)))
 	$(info [*] Merging all ignition sysctl files into $@: $^)
 	@jq '[., inputs]' $^ >| '$@'
 
 # combine all ignition file jsons into a single one
-$(boxname_workdir)/$(boxname_config)-files: $(boxname_workdir)/$(boxname_config)-hostname $(boxname_workdir)/$(boxname_config)-sysctl	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname_config)-files: $(boxname_workdir)/$(boxname_config)-hostname $(boxname_workdir)/$(boxname_config)-sysctl
 	$(info [*] Merging the ignition file section into $@: $^)
 	@jq '. + inputs' $^ >| '$@'
 
 # combining for ignition/units and ignition/dropins
-$(boxname_workdir)/$(boxname_config)-units: $(foreach name,$(ignition_units_names),$(boxname_workdir)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_workdir)/ignition-unit.json-$(name))	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname_config)-units: $(foreach name,$(ignition_units_names),$(boxname_workdir)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_workdir)/ignition-unit.json-$(name))
 	$(info [*] Merging the ignition unit section into $@: $^)
 	@jq '[., inputs]' $^ >| '$@'
 
 # generate a json containing the sshAuthorizedKeys field in an object
-$(boxname_workdir)/$(boxname_config)-pubkey: $(boxname_workdir)/$(boxname).id_rsa.pub.json-raw	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname_config)-pubkey: $(boxname_workdir)/$(boxname).id_rsa.pub.json-raw
 	$(info [-] Generating a json with the public key in $@: $^)
 	@jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0] | rtrimstr("\n") ] }' >| '$@'
 
 # combine all joined user objects into a single list
-$(boxname_workdir)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(boxname_workdir)/ignition-user.json-$(notdir $(f)))	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(boxname_workdir)/ignition-user.json-$(notdir $(f)))
 	$(info [*] Merging the ignition user section into $@: $^)
 	@jq '[., inputs]' $^ >| '$@'
 
