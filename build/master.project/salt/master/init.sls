@@ -102,7 +102,7 @@ Install salt-minion configuration:
         - name: /etc/salt/minion
         - context:
             id: {{ MachineID }}.master.{{ pillar['master']['configuration']['project'] }}
-            machine-id: {{ MachineID }}
+            machine_id: {{ MachineID }}
         - use:
             - Install salt-master configuration
         - require:
@@ -149,10 +149,11 @@ Build salt-master image:
             - Install openssh-clients in toolbox
             - Transfer salt-master build rules
             - Install container build script
+
     file.managed:
         - name: "{{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci"
         - mode: 0664
-        - replace: true
+        - replace: false
 
 Install salt-master.service:
     file.managed:
