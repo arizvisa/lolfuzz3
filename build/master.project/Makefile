@@ -51,7 +51,7 @@ outdir=${OUTPUT}
 ifeq ("$(wildcard $(boxname_outdir))","")
     $(info [.] Output path for $(boxname) was specified: $(abspath $(boxname_outdir)))
 else
-    $(warning [!] Output path for $(boxname) already exists: $(abspath $(boxname_outdir)))
+    $(error [!] Output path for $(boxname) already exists: $(abspath $(boxname_outdir)))
 endif
 
 ### some utility macros for downloading files
