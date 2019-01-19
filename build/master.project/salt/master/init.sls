@@ -57,15 +57,7 @@ Install salt-master configuration:
         - source: salt://master/salt-master.conf
         - name: /etc/salt/master
         - defaults:
-            root_files:
-                - name: "base"
-                  path: "/srv/salt"
-
-            root_pillars:
-                - name: "root"
-                  path: "/srv/pillar"
-
-            etcd_pillars:
+            etcd_hosts:
                 - name: "root_etcd"
                   host: {{ grains['fqdn_ip4'] | last }} # FIXME: this host should come from network.interface xref'd with /etc/network-environment
                   port: 4001
@@ -73,6 +65,14 @@ Install salt-master configuration:
                 - name: "minion_etcd"
                   host: {{ grains['fqdn_ip4'] | last }}
                   port: 4001
+
+            root_files:
+                - name: "base"
+                  path: "/srv/salt"
+
+            root_pillars:
+                - name: "root"
+                  path: "/srv/pillar"
 
             etcd_pillars_ext:
                 - name: "root_etcd"
@@ -87,6 +87,17 @@ Install salt-master configuration:
         - require:
             - Make salt-configuration directory
         - mode: 0664
+
+Install salt-minion configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://master/salt-minion.conf
+        - name: /etc/salt/minion
+        - use:
+            - Install salt-master configuration
+        - require:
+            - Make salt-configuration directory
+            - sls: seed-etcd
 
 Transfer salt-master build rules:
     # FIXME: this file source should be versioned so that container_version can choose which one
