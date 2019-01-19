@@ -96,7 +96,6 @@ Install salt-master configuration:
         - mode: 0664
 
 Transfer salt-master build rules:
-    # FIXME: this file source should be versioned so that container_version can choose which one
     file.managed:
         - template: jinja
         - source: salt://master/salt-master.acb
@@ -107,14 +106,8 @@ Transfer salt-master build rules:
             pip: {{ salt_container.Pip }}
         - require:
             - Make container-root build directory
-            - file: Install container-build.service
+            - Install container-build.service
         - mode: 0664
-
-    event.send:
-        - name: build/{{ MachineID }}/salt-master/building
-        - data:
-            file: "salt-master:{{ salt_container.Version }}.acb"
-        - show_changed: true
 
 Install openssh-clients in toolbox:
     pkg.installed:
@@ -129,39 +122,26 @@ Install openssh-clients in toolbox:
         - makedirs : true
 
 Build salt-master image:
-    file.exists:
-        - name: "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
-        - require:
-            - Transfer salt-master build rules
-
-    cmd.run:
+    cmd.wait:
         - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['bootstrap']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ container_service.Path }}" -- "{{ container_service.Path }}/build.sh" "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
         - cwd: {{ container_service.Path }}
         - use_vt: true
-        - output_loglevel: debug
         - creates: "{{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci"
         - env:
             - CONTAINER_DIR: {{ container_service.Path }}
+        - watch:
+            - Transfer salt-master build rules
         - require:
             - Install openssh-clients in toolbox
             - Install container build script
 
-    event.send:
-        - name: build/{{ MachineID }}/salt-master/complete
-        - data:
-            image: "salt-master:{{ salt_container.Version }}.aci"
-        - show_changed: true
-
-Completed salt-master image:
-    event.wait:
-        - name: build/{{ MachineID }}/salt-master/complete
-        - watch:
-            - Build salt-master image
-
+Finished building the salt-master image:
     file.managed:
         - name: "{{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci"
         - mode: 0664
         - replace: false
+        - watch:
+            - Build salt-master image
 
 Install salt-master.service:
     file.managed:
@@ -177,8 +157,9 @@ Install salt-master.service:
                 - host: 127.0.0.1
                   port: 4001
         - require:
-            - Completed salt-master image
+            - Install container load script
             - Install salt-master configuration
+            - Finished building the salt-master image
         - mode: 0664
 
 ### symbolic link for service
@@ -187,8 +168,9 @@ Enable systemd multi-user.target wants salt-master.service:
         - name: /etc/systemd/system/multi-user.target.wants/salt-master.service
         - target: /etc/systemd/system/salt-master.service
         - require:
-            - Install salt-master.service
             - sls: seed-etcd
+            - Install salt-master.service
+            - Finished building the salt-master image
         - makedirs: true
 
 ### once we're sure the salt-master.service will run, we can install the salt-minion configuration
@@ -203,8 +185,9 @@ Install salt-minion configuration:
         - use:
             - Install salt-master configuration
         - require:
-            - Enable systemd multi-user.target wants salt-master.service
             - sls: seed-etcd
+            - Finished building the salt-master image
+            - Enable systemd multi-user.target wants salt-master.service
 
 ### Scripts for interacting with the salt-master
 
