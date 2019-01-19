@@ -124,6 +124,10 @@ Transfer salt-master build rules:
             - file: Install container-build.service
         - mode: 0664
 
+    event.send:
+        - name: build/{{ MachineID }}/salt-master/building
+        - data: "salt-master:{{ salt_container.Version }}.acb"
+
 Install openssh-clients in toolbox:
     pkg.installed:
         - pkgs:
@@ -137,6 +141,11 @@ Install openssh-clients in toolbox:
         - makedirs : true
 
 Build salt-master image:
+    file.exists:
+        - name: "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
+        - require:
+            - Transfer salt-master build rules
+
     cmd.run:
         - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['bootstrap']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ container_service.Path }}" -- "{{ container_service.Path }}/build.sh" "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
         - cwd: {{ container_service.Path }}
@@ -147,8 +156,17 @@ Build salt-master image:
             - CONTAINER_DIR: {{ container_service.Path }}
         - require:
             - Install openssh-clients in toolbox
-            - Transfer salt-master build rules
             - Install container build script
+
+    event.send:
+        - name: build/{{ MachineID }}/salt-master/complete
+        - data: "salt-master:{{ salt_container.Version }}.aci"
+
+Completed salt-master image:
+    event.wait:
+        - name: build/{{ MachineID }}/salt-master/complete
+        - watch:
+            - Build salt-master image
 
     file.managed:
         - name: "{{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci"
@@ -169,7 +187,7 @@ Install salt-master.service:
                 - host: 127.0.0.1
                   port: 4001
         - require:
-            - Build salt-master image
+            - Completed salt-master image
             - Install salt-master configuration
         - mode: 0664
 
