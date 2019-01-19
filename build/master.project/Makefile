@@ -352,7 +352,7 @@ $(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso)	| $(boxnam
 ### build json file containing all information for ssh'ing to the box
 $(boxname_workdir)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa	| $(boxname_workdir)
 	$(info [-] Generating SSH variables $@: $^)
-	@jq -n '{ "provision-key": "$(workdir)/$(boxname).id_rsa" }' >| '$@'
+	@jq -n '{ "provision-key": "$<" }' >| '$@'
 
 ### build json file containing build-specific variables
 $(boxname_workdir)/$(boxname)-vars.json.base:	| $(boxname_workdir)
@@ -390,16 +390,16 @@ $(boxname_workdir)/$(boxname_config).validate: $(boxname_workdir)/$(boxname_conf
 	$(info [!] Validating ignition configuration $<: $(coreos_validate_url))
 	${PUT} '@$<' '$(coreos_validate_url)' >| '$@'
 
-$(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)	| $(workdir) $(boxname_workdir)/$(boxname_config).validate
+$(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config).validate $(boxname_workdir)/$(boxname_config)	| $(workdir)
 	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$<.validate' | while read y x message; do \
 		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
 	done
-	@jq '(.result // []) | .[] | select(.kind == "error") | .message | @sh' '$<.validate' | while read message; do \
+	@jq '(.result // []) | .[] | select(.kind == "error") | .message | @sh' '$<' | while read message; do \
 		printf 'Validation Error: %s\n' "$$message" 1>&2; \
 		exit 1; \
 	done
 	$(info [*] Successfully validated ignition configuration: $@)
-	cp -f '$<' '$@'
+	cp -f '$(boxname_workdir)/$(boxname_config)' '$@'
 
 # combine the result ignition json with any other configurations
 $(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)	| $(workdir)
@@ -408,7 +408,7 @@ $(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-origi
 
 # combine all ignition jsons into the template
 $(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users	| $(boxname_workdir)
-	$(info [*] Making the ignition configuration $@ from the template $(ignition_template))
+	$(info [*] Making the ignition configuration $@ from the template $<)
 	@jq --slurpfile files '$(boxname_workdir)/$(boxname_config)-files' --slurpfile units '$(boxname_workdir)/$(boxname_config)-units' --slurpfile users '$(boxname_workdir)/$(boxname_config)-users' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0]' '$(ignition_template)' >| '$@'
 
 # set the hostname using $(boxname)
