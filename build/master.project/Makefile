@@ -319,19 +319,13 @@ clean-json:
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
 
 ### rules for required directories
-$(outdir):
+$(outdir) $(workdir):
 	test -d '$@' || mkdir -p '$@'
 
-$(workdir):
+$(boxname_workdir):	$(workdir)
 	test -d '$@' || mkdir -p '$@'
 
-$(boxname_workdir):	| $(workdir)
-	test -d '$@' || mkdir -p '$@'
-
-$(workdir)/tools:	| $(workdir)
-	test -d '$@' || mkdir -p '$@'
-
-$(workdir)/tools/bin:	| $(workdir)/tools
+$(filesdir) $(toolsdir) $(toolsdir)/bin: $(workdir)
 	test -d '$@' || mkdir -p '$@'
 
 ### rules for actual output of the template and its related files
