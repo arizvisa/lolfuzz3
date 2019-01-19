@@ -2,13 +2,13 @@ MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ROOTDIR := $(realpath $(MAKEDIR)../..)
 
 ifndef PROJECT
-    $(error Build variable name PROJECT is undefined)
+    $(error [!] Build variable name PROJECT is undefined)
 endif
 ifndef INPUT
-    $(error Build variable path INPUT is undefined)
+    $(error [!] Build variable path INPUT is undefined)
 endif
 ifndef OUTPUT
-    $(error Build variable path OUTPUT is undefined.)
+    $(error [!] Build variable path OUTPUT is undefined)
 endif
 
 ### Check input directory with configuration for master
@@ -27,9 +27,9 @@ ifneq ("$(wildcard ${INPUT})","")
         box_template_extra?=${INPUT}/master-packer
     endif
 
-    $(info Project "${PROJECT}" using configuration in "$(abspath ${INPUT})".)
+    $(info [.] Project "${PROJECT}" using configuration: "$(abspath ${INPUT})")
 else
-    $(error Specified path for variable INPUT does not exist: $(abspath ${INPUT}))
+    $(error [!] Specified path for build variable INPUT does not exist: $(abspath ${INPUT}))
 endif
 
 ### user variables
@@ -49,9 +49,9 @@ output_names := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
 ### Check output directory
 outdir=${OUTPUT}
 ifeq ("$(wildcard $(boxname_outdir))","")
-    $(info Output path for $(boxname) was specified: $(abspath $(boxname_outdir)))
+    $(info [.] Output path for $(boxname) was specified: $(abspath $(boxname_outdir)))
 else
-    $(warning Output path for $(boxname) already exists: $(abspath $(boxname_outdir)))
+    $(warning [!] Output path for $(boxname) already exists: $(abspath $(boxname_outdir)))
 endif
 
 ### some utility macros for downloading files
@@ -441,23 +441,23 @@ $(boxname_workdir)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),
 
 ### rules for provisioning with saltstack
 $(boxname_workdir)/salt $(boxname_workdir)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files)	| $(boxname_workdir)
-	$(info [*] Copying states for bootstrapping $(boxname) to $(boxname_workdir)/salt.)
+	$(info [*] Copying states for bootstrapping $(boxname): $(boxname_workdir)/salt)
 	cp -r '$(salt_config)' '$(boxname_workdir)'/
-	$(info [*] Copying bootstrap pillar to $(boxname_workdir)/pillar.)
+	$(info [*] Copying bootstrap pillar: $(boxname_workdir)/pillar)
 	cp -r '$(salt_pillar)' '$(boxname_workdir)'/
-	$(info [*] Copying extra files from $(filesdir) into states at $(boxname_workdir)/salt.)
+	$(info [*] Copying extra files from $(filesdir) into states: $(boxname_workdir)/salt)
 	cp -r '$(filesdir)' '$(boxname_workdir)/salt'/
 
 $(boxname_workdir)/salt-minion.conf: $(MAKEDIR)salt-minion.conf	| $(boxname_workdir)
-	$(info [*] Copying in bootstrap configuration from $@.)
+	$(info [*] Copying in bootstrap configuration: $@)
 	cp '$<' '$@'
 
 $(boxname_workdir)/pillar/acbuild.sls: $(acbuild_files)	| $(boxname_workdir)/pillar
-	$(info [-] Generating default pillar configuration for acbuild.)
+	$(info [-] Generating default pillar configuration: $^)
 	@printf -- '- Source: %s\n  Algo: %s\n  Hash: %s\n\n' $(foreach f,$^,'$(shell basename $(f))' '$(checksum_type)' "$(shell openssl dgst -r -$(checksum_type) '$(f)' | cut -d' ' -f1)") >| '$@'
 
 $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
-	$(info [-] Writing project name into pillar configuration.)
+	$(info [-] Writing project name into pillar configuration: $@)
 	@printf -- '%s\n' '$(PROJECT)' >| '$@'
 
 ### rules that are automatically generated
