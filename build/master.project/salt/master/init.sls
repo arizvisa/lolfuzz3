@@ -99,6 +99,9 @@ Install salt-master configuration:
         - source: salt://master/salt-master.conf
         - name: /etc/salt/master
         - defaults:
+            id: {{ MachineID }}.master.{{ pillar['master']['configuration']['project'] }}
+            log_level: info
+
             etcd_hosts:
                 - name: "root_etcd"
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
@@ -224,8 +227,8 @@ Install salt-minion configuration:
         - source: salt://master/salt-minion.conf
         - name: /etc/salt/minion
         - context:
-            id: {{ MachineID }}.master.{{ pillar['master']['configuration']['project'] }}
             machine_id: {{ MachineID }}
+            log_level: info
         - use:
             - Install salt-master configuration
         - require:
