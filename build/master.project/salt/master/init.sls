@@ -7,13 +7,14 @@ include:
     - container
     - seed-etcd
 
+## salt states directories
+
 Make service directory:
     file.directory:
         - name: /srv
         - mode: 0775
         - makedirs: True
 
-## salt states directories
 Make salt-files directory:
     file.directory:
         - name: /srv/salt
@@ -31,26 +32,54 @@ Make salt-pillar directory:
             - Make service directory
 
 ## salt directories
-Make salt-configuration directory:
-    file.directory:
-        - name: /etc/salt
-        - mode: 0770
-        - makedirs: True
+
 Make salt-log directory:
     file.directory:
         - name: /var/log/salt
         - mode: 0770
-        - makedirs: True
+
 Make salt-cache directory:
     file.directory:
         - name: /var/cache/salt
-        - makedirs: True
-        - mode: 0775
+        - use:
+            - Make salt-log directory
+
 Make salt-run directory:
     file.directory:
         - name: /var/run/salt
         - use:
-            - file: Make salt-cache directory
+            - Make salt-cache directory
+
+# salt configuration directories
+Make salt-configuration directory:
+    file.directory:
+        - name: /etc/salt
+        - mode: 0770
+
+Make salt-configuration pki directory:
+    file.directory:
+        - name: /etc/salt/pki
+        - use:
+            - Make salt-configuration directory
+        - require:
+            - Make salt-configuration directory
+
+Make salt-configuration pki directory for master:
+    file.directory:
+        - name: /etc/salt/pki/master
+        - use:
+            - Make salt-configuration pki directory
+        - require:
+            - Make salt-configuration pki directory
+
+Make salt-configuration pki directory for minion:
+        - name: /etc/salt/pki/minion
+        - use:
+            - Make salt-configuration pki directory
+        - require:
+            - Make salt-configuration pki directory
+
+## saltstack master
 
 Install salt-master configuration:
     file.managed:
@@ -109,6 +138,7 @@ Transfer salt-master build rules:
             - Install container-build.service
         - mode: 0664
 
+# building the salt-master container
 Install openssh-clients in toolbox:
     pkg.installed:
         - pkgs:
@@ -162,7 +192,7 @@ Install salt-master.service:
             - Finished building the salt-master image
         - mode: 0664
 
-### symbolic link for service
+# simulates systemctl enable
 Enable systemd multi-user.target wants salt-master.service:
     file.symlink:
         - name: /etc/systemd/system/multi-user.target.wants/salt-master.service
@@ -173,7 +203,9 @@ Enable systemd multi-user.target wants salt-master.service:
             - Finished building the salt-master image
         - makedirs: true
 
-### once we're sure the salt-master.service will run, we can install the salt-minion configuration
+## saltstack minion
+
+# once we're sure the salt-master.service will run, we can install the salt-minion configuration
 Install salt-minion configuration:
     file.managed:
         - template: jinja
@@ -189,7 +221,7 @@ Install salt-minion configuration:
             - Finished building the salt-master image
             - Enable systemd multi-user.target wants salt-master.service
 
-### Scripts for interacting with the salt-master
+## scripts for interacting with the salt-master
 
 Install the toolbox script for bootstrapping the master:
     file.managed:
@@ -232,6 +264,7 @@ Create the script for interacting with salt:
         - mode: 0755
         - makedirs: true
 
+# everything else can just be a symbolic link
 Link the script for calling salt-api:
     file.symlink:
         - name: {{ tools.prefix }}/bin/salt-api
