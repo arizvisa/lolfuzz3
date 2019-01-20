@@ -6,7 +6,7 @@ Requires=etcd.service
 After=etcd.service
 
 [Service]
-LimitNOFILE=16384 
+LimitNOFILE=16384
 Type=notify
 NotifyAccess=all
 TimeoutStartSec=infinity
