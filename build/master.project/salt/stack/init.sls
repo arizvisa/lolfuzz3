@@ -1,5 +1,5 @@
-{% set MachineID = salt['file.read']('/'.join([pillar['bootstrap']['root'], '/etc/machine-id'])).strip() %}
-{% set tools = pillar['master']['tools'] %}
+{% set MachineID = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
+{% set tools = pillar['configuration']['tools'] %}
 
 ### Service directories
 Make service directory:
@@ -30,12 +30,12 @@ Make salt pki directory:
 Make salt cache directory:
     file.directory:
         - name: /var/cache/salt
-        - mode: 0770:
+        - mode: 0770
 
 Make salt run directory:
     file.directory:
         - name: /var/run/salt
-        - mode: 0770:
+        - mode: 0770
 
 ### Scripts for interacting with saltstack
 Install the salt-toolbox wrapper:

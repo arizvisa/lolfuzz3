@@ -11,7 +11,7 @@ Enable systemd multi-user.target wants flanneld.service:
 ## etcd configuration
 Register the flannel namespace:
     etcd.set:
-        - name: {{ pillar['master']['service']['flannel']['Namespace'] }}
+        - name: {{ pillar['service']['flannel']['Namespace'] }}
         - value: null
         - directory: true
         - profile: root_etcd
@@ -20,8 +20,8 @@ Register the flannel namespace:
 
 Register the network configuration for flannel:
     etcd.set:
-        - name: {{ pillar['master']['service']['flannel']['Namespace'] }}/config
-        - value: {{ pillar['master']['service']['flannel']['Configuration'] | json | yaml_dquote }}
+        - name: {{ pillar['service']['flannel']['Namespace'] }}/config
+        - value: {{ pillar['service']['flannel']['Configuration'] | json | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Register the flannel namespace

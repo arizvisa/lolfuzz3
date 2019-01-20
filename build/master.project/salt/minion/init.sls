@@ -1,5 +1,5 @@
-{% set MachineID = salt['file.read']('/'.join([pillar['bootstrap']['root'], '/etc/machine-id'])).strip() %}
-{% set tools = pillar['master']['tools'] %}
+{% set MachineID = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
+{% set tools = pillar['configuration']['tools'] %}
 
 include:
     - stack
@@ -71,5 +71,5 @@ Link the script for calling salt-call:
         - name: {{ tools.prefix }}/bin/salt-call
         - target: salt
         - require:
-            - Install the script for interacting with salt-master:
+            - Install the script for interacting with salt-master
         - makedirs: true

@@ -1,4 +1,4 @@
-{% set Root = pillar['bootstrap']['root'] %}
+{% set Root = pillar['configuration']['root'] %}
 
 # Get the machine-id from /etc/machine-id
 {% set MachineID = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}

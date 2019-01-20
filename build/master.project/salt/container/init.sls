@@ -1,4 +1,4 @@
-{% set container_service = pillar['master']['service']['container'] %}
+{% set container_service = pillar['service']['container'] %}
 
 ### container directory structure
 Make container-root directory:

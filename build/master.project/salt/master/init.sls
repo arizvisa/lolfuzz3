@@ -1,8 +1,8 @@
 # Get the machine-id from /etc/machine-id
-{% set MachineID = salt['file.read']('/'.join([pillar['bootstrap']['root'], '/etc/machine-id'])).strip() %}
+{% set MachineID = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
 
 # Figure out the external network interface by searching /etc/network-environment
-{% set Address = salt['file.grep']('/'.join([pillar['bootstrap']['root'], '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
+{% set Address = salt['file.grep']('/'.join([pillar['configuration']['root'], '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
 {% if Address %}
     {% set Interface = salt['network.ifacestartswith'](Address) | first %}
 {% else %}
@@ -10,9 +10,9 @@
 {% endif %}
 
 # Shortcut variables that point into the pillar configuration
-{% set tools = pillar['master']['tools'] %}
-{% set container_service = pillar['master']['service']['container'] %}
-{% set salt_container = pillar['master']['service']['salt-master'] %}
+{% set tools = pillar['configuration']['tools'] %}
+{% set container_service = pillar['service']['container'] %}
+{% set salt_container = pillar['service']['salt-master'] %}
 
 include:
     - stack
@@ -76,7 +76,7 @@ Install salt-master configuration:
         - source: salt://master/salt-master.conf
         - name: /etc/salt/master
         - defaults:
-            id: {{ MachineID }}.master.{{ pillar['master']['configuration']['project'] }}
+            id: {{ MachineID }}.master.{{ pillar['configuration']['project'] }}
             log_level: info
 
             etcd_hosts:
@@ -138,14 +138,14 @@ Install openssh-clients in toolbox:
 
     file.symlink:
         - name: {{ salt['user.info'](grains['username']).home }}/.ssh/id_rsa
-        - target: {{ pillar['bootstrap']['root'] }}{{ pillar['bootstrap']['remote']['key'] }}
+        - target: {{ pillar['configuration']['root'] }}{{ pillar['configuration']['remote']['key'] }}
         - force: true
         - mode: 0400
         - makedirs : true
 
 Build salt-master image:
     cmd.wait:
-        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['bootstrap']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ container_service.Path }}" -- "{{ container_service.Path }}/build.sh" "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
+        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ container_service.Path }}" -- "{{ container_service.Path }}/build.sh" "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
         - cwd: {{ container_service.Path }}
         - use_vt: true
         - hide_output: true
@@ -270,7 +270,7 @@ Link the script for calling salt-unity:
 ## States for etcd
 Create the salt-master pillar:
     etcd.set:
-        - name: /node/{{ MachineID }}.master.{{ pillar['master']['configuration']['project'] }}
+        - name: /node/{{ MachineID }}.master.{{ pillar['configuration']['project'] }}
         - value: null
         - directory: true
         - profile: root_etcd
@@ -279,7 +279,7 @@ Create the salt-master pillar:
 
 Register the salt-master namespace:
     etcd.set:
-        - name: {{ pillar['master']['service']['salt-master']['Namespace'] }}
+        - name: {{ pillar['service']['salt-master']['Namespace'] }}
         - value: null
         - directory: true
         - profile: root_etcd
