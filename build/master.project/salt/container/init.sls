@@ -7,6 +7,7 @@ Make container-root directory:
         - dir_mode: 1755
         - file_mode: 0664
         - makedirs: True
+
 Make container-root build directory:
     file.directory:
         - name: {{ container_service.Path }}/build
@@ -16,6 +17,7 @@ Make container-root build directory:
             - Make container-root directory
         - dir_mode: 1755
         - file_mode: 0664
+
 Make container-root image directory:
     file.directory:
         - name: {{ container_service.Path }}/image
@@ -25,6 +27,7 @@ Make container-root image directory:
             - Make container-root directory
         - dir_mode: 1755
         - file_mode: 0664
+
 Make container-root tools directory:
     file.directory:
         - name: {{ container_service.Path }}/tools
@@ -67,6 +70,7 @@ Install container build script:
             - Make container-root directory
             - Extract container-root tools
         - mode: 0775
+
 Install container-build.service script:
     file.managed:
         - source: salt://container/container-build.sh
@@ -78,6 +82,7 @@ Install container-build.service script:
             - Make container-root build directory
             - Make container-root image directory
         - mode: 0775
+
 Install container-build.service:
     file.managed:
         - template: jinja
@@ -88,6 +93,7 @@ Install container-build.service:
         - require:
             - Install container-build.service script
         - mode: 0664
+
 Install container-build.path:
     file.managed:
         - source: salt://container/container-build.path
@@ -106,6 +112,7 @@ Install container load script:
         - require:
             - Make container-root directory
         - mode: 0775
+
 Install container-load.service script:
     file.managed:
         - source: salt://container/container-load.sh
@@ -116,6 +123,7 @@ Install container-load.service script:
             - Make container-root image directory
             - Install container load script
         - mode: 0775
+
 Install container-load.service:
     file.managed:
         - template: jinja
@@ -126,6 +134,7 @@ Install container-load.service:
         - require:
             - Install container-load.service script
         - mode: 0664
+
 Install container-load.path:
     file.managed:
         - source: salt://container/container-load.path
@@ -145,6 +154,7 @@ Install container update script:
             - Make container-root directory
             - Make container-root image directory
         - mode: 0775
+
 Install container-sync.service script:
     file.managed:
         - source: salt://container/container-update.sh
@@ -155,6 +165,7 @@ Install container-sync.service script:
             - Make container-root image directory
             - Install container update script
         - mode: 0775
+
 Install container-sync.service:
     file.managed:
         - template: jinja
@@ -165,6 +176,7 @@ Install container-sync.service:
         - require:
             - Install container-sync.service script
         - mode: 0664
+
 Install container-sync.path:
     file.managed:
         - source: salt://container/container-sync.path
@@ -184,6 +196,7 @@ Enable systemd multi-user.target wants container-build.path:
         - require:
             - Install container-build.path
         - makedirs: true
+
 Enable systemd container-build.path requires container-build.service:
     file.symlink:
         - name: /etc/systemd/system/container-build.path.requires/container-build.service
@@ -200,6 +213,7 @@ Enable systemd multi-user.target wants container-load.path:
         - require:
             - Install container-load.path
         - makedirs: true
+
 Enable systemd container-load.path requires container-load.service:
     file.symlink:
         - name: /etc/systemd/system/container-load.path.requires/container-load.service
@@ -216,6 +230,7 @@ Enable systemd multi-user.target wants container-sync.path:
         - require:
             - Install container-sync.path
         - makedirs: true
+
 Enable systemd multi-user.target wants container-sync.service:
     file.symlink:
         - name: /etc/systemd/system/multi-user.target.wants/container-sync.service
@@ -223,6 +238,7 @@ Enable systemd multi-user.target wants container-sync.service:
         - require:
             - Install container-sync.service
         - makedirs: true
+
 Enable systemd container-sync.path requires container-sync.service:
     file.symlink:
         - name: /etc/systemd/system/container-sync.path.requires/container-sync.service
