@@ -1,28 +1,28 @@
-#!pyobjects
-include('container', 'master', 'seed-etcd')
+{% set Root = pillar['bootstrap']['root'] %}
 
-import os.path
-root = pillar('bootstrap:root')
+# Get the machine-id from /etc/machine-id
+{% set MachineID = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
 
-if 'Generate bootstrap-environment from machine-id':
-    # read machine-id from pivoted root
-    res = os.path.join(root, 'etc/machine-id')
-    mid = file(res, 'rt').read().strip()
+# Figure out the external network interface by searching /etc/network-environment
+{% set Address = salt['file.grep']('/'.join([Root, '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
+{% if Address %}
+    {% set Interface = salt['network.ifacestartswith'](Address) %}
+{% else %}
+    {% set Interface = "lo" %}
+{% endif %}
 
-    # build default template variables from grains
-    ip4, ip6 = grains('fqdn_ip4'), grains('fqdn_ip6')
-    if not ip4:
-        raise ValueError("fqdn_ip4 is unset: {!r}".format(ip4))
-    if not ip6:
-        raise ValueError("fqdn_ip6 is unset: {!r}".format(ip6))
-    defaults = dict(fqdn_ip4=ip4[0], fqdn_ip6=max(ip6, key=len), machine_id=mid)
+include:
+    - master
 
-    # generate bootstrap-environment to pivoted root
-    File.managed(
-        os.path.join(root, "etc/bootstrap-environment"),
-        template='jinja',
-        source='salt://bootstrap/bootstrap.env',
-        defaults=defaults,
-        mode='0664',
-        require=[File("Install salt-master.service")]
-    )
+Generate bootstrap-environment from machine-id:
+    file.managed:
+        - template jinja
+        - source: salt://bootstrap/bootstrap.env
+        - name: {{ Root }}/etc/bootstrap-environment
+        - defaults:
+            ip4: {{ grains['ip4_interfaces'][Interface] | first }}
+            ip6: {{ grains['ip6_interfaces'][Interface] | first }}
+            machine_id: {{ MachineID }}
+        - require:
+            - sls: master
+        - mode: 0664
