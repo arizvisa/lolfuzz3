@@ -16,7 +16,7 @@ include:
 
 Generate bootstrap-environment from machine-id:
     file.managed:
-        - template jinja
+        - template: jinja
         - source: salt://bootstrap/bootstrap.env
         - name: {{ Root }}/etc/bootstrap-environment
         - defaults:
