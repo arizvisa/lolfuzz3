@@ -46,6 +46,7 @@ Transfer container-root tools ({{ item.Source }}):
             - Make container-root tools directory
         - mode: 0640
 {% endfor %}
+
 Extract container-root tools:
     archive.extracted:
         - source: {{ container_service.Path }}/tools/{{ container_service.Tools | map(attribute='Source') | first }}
