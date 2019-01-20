@@ -3,6 +3,7 @@
 
 include:
     - stack
+    - etcd
     - master
 
 Make salt-minion cache directory:
@@ -29,6 +30,14 @@ Make salt-minion run directory:
         - require:
             - Make salt run directory
 
+Make salt-minion configuration directory:
+    file.directory:
+        - name: /etc/salt/minion.d
+        - use:
+            - Make salt config directory
+        - require:
+            - Make salt config directory
+
 # once we're sure the salt-master.service will run, we can install the salt-minion configuration
 Install salt-minion configuration:
     file.managed:
@@ -43,8 +52,7 @@ Install salt-minion configuration:
             - Install salt-master configuration
         - require:
             - sls: etcd
-            - Finished building the salt-master image
-            - Enable systemd multi-user.target wants salt-master.service
+            - sls: master
 
 Install the script for bootstrapping the master:
     file.managed:

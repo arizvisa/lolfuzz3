@@ -15,9 +15,9 @@
 {% set salt_container = pillar['master']['service']['salt-master'] %}
 
 include:
-    - container
-    - etcd
     - stack
+    - etcd
+    - container
 
 ## standard salt-master directories
 Make salt-master cache directory:
@@ -60,6 +60,14 @@ Make salt-master pillar directory:
             - Make service directory
         - require:
             - Make service directory
+
+Make salt-master configuration directory:
+    file.directory:
+        - name: /etc/salt/master.d
+        - use:
+            - Make salt config directory
+        - require:
+            - Make salt config directory
 
 ## saltstack master
 Install salt-master configuration:
