@@ -17,82 +17,51 @@
 include:
     - container
     - etcd
+    - stack
 
-## salt states directories
-
-Make service directory:
+## standard salt-master directories
+Make salt-master cache directory:
     file.directory:
-        - name: /srv
-        - mode: 0775
-        - makedirs: True
-
-Make salt-files directory:
-    file.directory:
-        - name: /srv/salt
+        - name: /var/cache/salt/master
+        - use:
+            - Make salt cache directory
         - require:
-            - Make service directory
-        - use:
-            - Make service directory
+            - Make salt cache directory
 
-Make salt-pillar directory:
-    file.directory:
-        - name: /srv/pillar
-        - require:
-            - Make service directory
-        - use:
-            - Make service directory
-
-## salt directories
-
-Make salt-log directory:
-    file.directory:
-        - name: /var/log/salt
-        - mode: 0770
-
-Make salt-cache directory:
-    file.directory:
-        - name: /var/cache/salt
-        - use:
-            - Make salt-log directory
-
-Make salt-run directory:
-    file.directory:
-        - name: /var/run/salt
-        - use:
-            - Make salt-cache directory
-
-# salt configuration directories
-Make salt-configuration directory:
-    file.directory:
-        - name: /etc/salt
-        - mode: 0770
-
-Make salt-configuration pki directory:
-    file.directory:
-        - name: /etc/salt/pki
-        - use:
-            - Make salt-configuration directory
-        - require:
-            - Make salt-configuration directory
-
-Make salt-configuration pki directory for master:
+Make salt-master pki directory:
     file.directory:
         - name: /etc/salt/pki/master
         - use:
-            - Make salt-configuration pki directory
+            - Make salt pki directory
         - require:
-            - Make salt-configuration pki directory
+            - Make salt pki directory
 
-Make salt-configuration pki directory for minion:
+Make salt-master run directory:
     file.directory:
-        - name: /etc/salt/pki/minion
+        - name: /var/run/salt/master
         - use:
-            - Make salt-configuration pki directory
+            - Make salt run directory
         - require:
-            - Make salt-configuration pki directory
+            - Make salt run directory
+
+## salt states directories
+Make salt-master files directory:
+    file.directory:
+        - name: /srv/salt
+        - use:
+            - Make service directory
+        - require:
+            - Make service directory
+
+Make salt-master pillar directory:
+    file.directory:
+        - name: /srv/pillar
+        - use:
+            - Make service directory
+        - require:
+            - Make service directory
 
 ## saltstack master
-
 Install salt-master configuration:
     file.managed:
         - template: jinja
@@ -136,7 +105,7 @@ Install salt-master configuration:
                 - name: "root_etcd"
                   path: "{{ salt_container.Namespace }}"
         - require:
-            - Make salt-configuration directory
+            - Make salt config directory
         - mode: 0664
 
 Transfer salt-master build rules:
@@ -219,55 +188,8 @@ Enable systemd multi-user.target wants salt-master.service:
             - Finished building the salt-master image
         - makedirs: true
 
-## saltstack minion
-
-# once we're sure the salt-master.service will run, we can install the salt-minion configuration
-Install salt-minion configuration:
-    file.managed:
-        - template: jinja
-        - source: salt://master/salt-minion.conf
-        - name: /etc/salt/minion
-        - context:
-            machine_id: {{ MachineID }}
-            log_level: info
-        - use:
-            - Install salt-master configuration
-        - require:
-            - sls: etcd
-            - Finished building the salt-master image
-            - Enable systemd multi-user.target wants salt-master.service
-
 ## scripts for interacting with the salt-master
-
-Install the toolbox script for bootstrapping the master:
-    file.managed:
-        - template: jinja
-        - source: salt://master/salt-toolbox.command
-        - name: {{ tools.prefix }}/bin/salt-toolbox
-        - defaults:
-            toolbox: /bin/toolbox
-            mounts:
-                - "/var/run/dbus"
-                - "/etc/systemd"
-                - "/etc/salt"
-                - "/srv"
-                - "{{ tools.prefix }}"
-        - mode: 0755
-        - makedirs: true
-
-Install the script for bootstrapping the master:
-    file.managed:
-        - template: jinja
-        - source: salt://master/salt-bootstrap.command
-        - name: {{ tools.prefix }}/bin/salt-bootstrap
-        - defaults:
-            salt_toolbox: {{ tools.prefix }}/bin/salt-toolbox
-        - require:
-            - Install the toolbox script for bootstrapping the master
-        - mode: 0755
-        - makedirs: true
-
-Create the script for interacting with salt:
+Install the script for interacting with salt-master:
     file.managed:
         - template: jinja
         - source: salt://master/salt.command
@@ -286,15 +208,7 @@ Link the script for calling salt-api:
         - name: {{ tools.prefix }}/bin/salt-api
         - target: salt
         - require:
-            - Create the script for interacting with salt
-        - makedirs: true
-
-Link the script for calling salt-call:
-    file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-call
-        - target: salt
-        - require:
-            - Create the script for interacting with salt
+            - Install the script for interacting with salt-master
         - makedirs: true
 
 Link the script for calling salt-cloud:
@@ -302,7 +216,7 @@ Link the script for calling salt-cloud:
         - name: {{ tools.prefix }}/bin/salt-cloud
         - target: salt
         - require:
-            - Create the script for interacting with salt
+            - Install the script for interacting with salt-master
         - makedirs: true
 
 Link the script for calling salt-cp:
@@ -310,7 +224,7 @@ Link the script for calling salt-cp:
         - name: {{ tools.prefix }}/bin/salt-cp
         - target: salt
         - require:
-            - Create the script for interacting with salt
+            - Install the script for interacting with salt-master
         - makedirs: true
 
 Link the script for calling salt-key:
@@ -318,7 +232,7 @@ Link the script for calling salt-key:
         - name: {{ tools.prefix }}/bin/salt-key
         - target: salt
         - require:
-            - Create the script for interacting with salt
+            - Install the script for interacting with salt-master
         - makedirs: true
 
 Link the script for calling salt-run:
@@ -326,7 +240,7 @@ Link the script for calling salt-run:
         - name: {{ tools.prefix }}/bin/salt-run
         - target: salt
         - require:
-            - Create the script for interacting with salt
+            - Install the script for interacting with salt-master
         - makedirs: true
 
 Link the script for calling salt-ssh:
@@ -334,7 +248,7 @@ Link the script for calling salt-ssh:
         - name: {{ tools.prefix }}/bin/salt-ssh
         - target: salt
         - require:
-            - Create the script for interacting with salt
+            - Install the script for interacting with salt-master
         - makedirs: true
 
 Link the script for calling salt-unity:
@@ -342,5 +256,24 @@ Link the script for calling salt-unity:
         - name: {{ tools.prefix }}/bin/salt-unity
         - target: salt
         - require:
-            - Create the script for interacting with salt
+            - Install the script for interacting with salt-master
         - makedirs: true
+
+## States for etcd
+Create the salt-master pillar:
+    etcd.set:
+        - name: /node/{{ MachineID }}.master.{{ pillar['master']['configuration']['project'] }}
+        - value: null
+        - directory: true
+        - profile: root_etcd
+        - requires:
+            - sls: etcd
+
+Register the salt-master namespace:
+    etcd.set:
+        - name: {{ pillar['master']['service']['salt-master']['Namespace'] }}
+        - value: null
+        - directory: true
+        - profile: root_etcd
+        - requires:
+            - sls: etcd

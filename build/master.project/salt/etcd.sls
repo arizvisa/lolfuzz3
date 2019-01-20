@@ -14,6 +14,14 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
             - Check firewall rules
 
 ### Project configuration
+Initialize the project configuration:
+    etcd.set:
+        - name: /config
+        - value: null
+        - directory: true
+        - profile: root_etcd
+        - requires:
+            - Check firewall rules
 
 {% for item in pillar['master']['configuration'] %}
 Populate configuration with project variable {{ item }}:
@@ -22,12 +30,10 @@ Populate configuration with project variable {{ item }}:
         - value: {{ pillar['master']['configuration'][item] | json | yaml_dquote }}
         - profile: root_etcd
         - requires:
-            - Check firewall rules
+            - Initialize the project configuration
 {% endfor %}
 
-### Miscellaneous namespaces
-
-Initialize the default nodes namespaces:
+Initialize the nodes pillar:
     etcd.set:
         - name: /node
         - value: null
@@ -35,31 +41,3 @@ Initialize the default nodes namespaces:
         - profile: root_etcd
         - requires:
             - Check firewall rules
-
-Register the salt-master namespace:
-    etcd.set:
-        - name: {{ pillar['master']['service']['salt-master']['Namespace'] }}
-        - value: null
-        - directory: true
-        - profile: root_etcd
-        - requires:
-            - Check firewall rules
-
-### Flannel configuration
-Register the flannel namespace:
-    etcd.set:
-        - name: {{ pillar['master']['service']['flannel']['Namespace'] }}
-        - value: null
-        - directory: true
-        - profile: root_etcd
-        - requires:
-            - Check firewall rules
-
-Register the network configuration for flannel:
-    etcd.set:
-        - name: {{ pillar['master']['service']['flannel']['Namespace'] }}/config
-        - value: {{ pillar['master']['service']['flannel']['Configuration'] | json | yaml_dquote }}
-        - profile: root_etcd
-        - requires:
-            - Check firewall rules
-            - Register the flannel namespace
