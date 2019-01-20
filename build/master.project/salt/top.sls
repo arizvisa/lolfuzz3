@@ -1,4 +1,5 @@
-base:
+bootstrap:
+
     # from packer image
     'G@minion-role:master-bootstrap':
         - container         # create container-directory and build-scripts
