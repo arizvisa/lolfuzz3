@@ -16,7 +16,7 @@
 
 include:
     - container
-    - seed-etcd
+    - etcd
 
 ## salt states directories
 
@@ -209,7 +209,7 @@ Enable systemd multi-user.target wants salt-master.service:
         - name: /etc/systemd/system/multi-user.target.wants/salt-master.service
         - target: /etc/systemd/system/salt-master.service
         - require:
-            - sls: seed-etcd
+            - sls: etcd
             - Install salt-master.service
             - Finished building the salt-master image
         - makedirs: true
@@ -228,7 +228,7 @@ Install salt-minion configuration:
         - use:
             - Install salt-master configuration
         - require:
-            - sls: seed-etcd
+            - sls: etcd
             - Finished building the salt-master image
             - Enable systemd multi-user.target wants salt-master.service
 

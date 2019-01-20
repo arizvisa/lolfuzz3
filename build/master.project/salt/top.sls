@@ -3,7 +3,7 @@ bootstrap:
     # from packer image
     'G@minion-role:master-bootstrap':
         - container         # create container-directory and build-scripts
-        - seed-etcd         # seed etcd with /etc/machine-id
+        - etcd              # seed etcd with /etc/machine-id
         - master            # create salt-master container and services
         - bootstrap         # create /etc/bootstrap-environment
         - flannel           # enable the flanneld service
