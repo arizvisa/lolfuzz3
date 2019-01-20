@@ -84,6 +84,7 @@ Make salt-configuration pki directory for master:
             - Make salt-configuration pki directory
 
 Make salt-configuration pki directory for minion:
+    file.directory:
         - name: /etc/salt/pki/minion
         - use:
             - Make salt-configuration pki directory
