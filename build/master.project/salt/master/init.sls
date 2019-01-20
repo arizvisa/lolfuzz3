@@ -4,7 +4,7 @@
 # Figure out the external network interface by searching /etc/network-environment
 {% set Address = salt['file.grep']('/'.join([pillar['bootstrap']['root'], '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
 {% if Address %}
-    {% set Interface = salt['network.ifacestartswith'](Address) %}
+    {% set Interface = salt['network.ifacestartswith'](Address) | first %}
 {% else %}
     {% set Interface = "lo" %}
 {% endif %}
