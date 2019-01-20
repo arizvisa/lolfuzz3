@@ -1,7 +1,18 @@
+# Get the machine-id from /etc/machine-id
+{% set MachineID = salt['file.read']('/'.join([pillar['bootstrap']['root'], '/etc/machine-id'])).strip() %}
+
+# Figure out the external network interface by searching /etc/network-environment
+{% set Address = salt['file.grep']('/'.join([pillar['bootstrap']['root'], '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
+{% if Address %}
+    {% set Interface = salt['network.ifacestartswith'](Address) %}
+{% else %}
+    {% set Interface = "lo" %}
+{% endif %}
+
+# Shortcut variables that point into the pillar configuration
 {% set tools = pillar['master']['tools'] %}
 {% set container_service = pillar['master']['service']['container'] %}
 {% set salt_container = pillar['master']['service']['salt-master'] %}
-{% set MachineID = salt['file.read']('/'.join([pillar['bootstrap']['root'], '/etc/machine-id'])).strip() %}
 
 include:
     - container
@@ -89,11 +100,11 @@ Install salt-master configuration:
         - defaults:
             etcd_hosts:
                 - name: "root_etcd"
-                  host: {{ grains['fqdn_ip4'] | last }} # FIXME: this host should come from network.interface xref'd with /etc/network-environment
+                  host: {{ grains['ip4_interfaces'][Interface] | first }}
                   port: 4001
 
                 - name: "minion_etcd"
-                  host: {{ grains['fqdn_ip4'] | last }}
+                  host: {{ grains['ip4_interfaces'][Interface] | first }}
                   port: 4001
 
             root_files:
@@ -192,7 +203,7 @@ Install salt-master.service:
             - Finished building the salt-master image
         - mode: 0664
 
-# simulates systemctl enable
+# systemctl enable the salt-master.service
 Enable systemd multi-user.target wants salt-master.service:
     file.symlink:
         - name: /etc/systemd/system/multi-user.target.wants/salt-master.service
