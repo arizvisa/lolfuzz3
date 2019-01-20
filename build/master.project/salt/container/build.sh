@@ -4,6 +4,7 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 027
 
 # Set some default variables
+BUILDDIR=${BUILDDIR:-"$CONTAINER_DIR/build"}
 IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
 TOOLDIR=${TOOLDIR:-"$CONTAINER_DIR/tools"}
 
@@ -30,7 +31,7 @@ case "$rule" in
     imgver=`basename "${imgfull}" | cut -d: -f2`
 
     imgfile="${imgname}:${imgver}.aci"
-    [ -e "$IMAGEDIR/${imgfile}" ] && printf 'Skipping build of %s due to %s already existing.\n' "${imgfull}" "$BUILDDIR/${imgfile}" 1>&2 && printf $'%s\t%s\n' "${imgname}" "${imgver}" && exit 0
+    [ -f "$IMAGEDIR/${imgfile}" ] && printf 'Skipping build of %s due to %s already existing.\n' "${imgfull}" "$IMAGEDIR/${imgfile}" 1>&2 && printf $'%s\t%s\n' "${imgname}" "${imgver}" && exit 0
 
     cat "${rule}" <( printf 'write --overwrite %s\n' "$IMAGEDIR/${imgfile}" ) | "$ACBUILD" script /dev/stdin
 
@@ -79,11 +80,11 @@ imgname=`basename "${imgfull}" | cut -d: -f1`
 imgver=`basename "${imgfull}" | cut -d: -f2`
 
 imgfile="${imgname}:${imgver}${imgtype}"
-[ -f "$IMAGEDIR/${imgfile}" ] && printf 'Skipping build of %s due to %s already existing.\n' "${imgfull}" "$BUILDDIR/${imgfile}" 1>&2 && printf $'%s\t%s\n' "${imgname}" "${imgver}" && exit 0
+[ -f "$IMAGEDIR/${imgfile}" ] && printf 'Skipping build of %s due to %s already existing.\n' "${imgfull}" "$IMAGEDIR/${imgfile}" 1>&2 && printf $'%s\t%s\n' "${imgname}" "${imgver}" && exit 0
 
 printf 'Found rule for image "%s:%s" at %s.\n' "${imgname}" "${imgver}" "$IMAGEDIR/${imgname}:${imgver}${imgtype}.${shtype}" 1>&2
 
-imgtemp="$BUILDDIR/${imgfull}.tmp"
+imgtemp="$IMAGEDIR/${imgfull}.tmp"
 trap "[ -f \"${imgtemp}\" ] && /bin/rm -f \"${imgtemp}\"; exit" SIGHUP SIGINT SIGTERM
 
 # And now we can execute it..
