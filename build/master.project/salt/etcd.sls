@@ -82,9 +82,11 @@ Enable systemd multi-user.target wants etcd-member.service:
     file.symlink:
         - name: /etc/systemd/system/multi-user.target.wants/etcd.service
         - target: /etc/systemd/system/etcd.service
+        - makedirs: true
 
 # systemctl enable the etcd-master.service
 Enable systemd multi-user.target wants etcd-master.service:
     file.symlink:
         - name: /etc/systemd/system/multi-user.target.wants/etcd-master.service
         - target: /etc/systemd/system/etcd-master.service
+        - makedirs: true
