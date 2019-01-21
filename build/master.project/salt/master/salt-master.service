@@ -2,8 +2,9 @@
 Description=Salt-Master
 ConditionPathExists={{ container_path }}/image/salt-master:{{ version }}.aci
 ConditionPathExists=/etc/salt/master
-Requires=etcd.service
-After=etcd.service
+Wants=network.target
+After=flanneld.service
+Requires=flanneld.service
 
 [Service]
 LimitNOFILE=16384
