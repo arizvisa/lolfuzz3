@@ -71,7 +71,7 @@ rkt image list --format=json | jq -rc 'map((.name | split("/") | .[-1]) as $imag
     fi
 
     # so remove the image from rkt if it's not running...
-    task_count=`rkt list --format=json | jq -r --arg name "${imgname}" 'map(select(.state == "running")) | map(select(.app_names | inside([$name]))) | length'
+    task_count=`rkt list --format=json | jq -r --arg name "${imgname}" 'map(select(.state == "running")) | map(select(.app_names | inside([$name]))) | length'`
     if [ "${task_count}" -gt 0 ]; then
         printf 'Refusing to remove image %s:%s as it'\''s still in use!\n' "${imgname}" "${imgver}" 1>&2
     else
