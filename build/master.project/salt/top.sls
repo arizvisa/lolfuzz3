@@ -5,10 +5,16 @@ bootstrap:
         - bootstrap         # create /etc/bootstrap-environment
         - etcd              # seed etcd with /etc/machine-id
         - container         # create container-directory and build-scripts
-        - stack             # common salt-stack configuration
-        - master            # create salt-master container and services
-        - minion            # create the salt-minion for managing the master
         - flannel           # enable the flanneld service
+        - stack             # common salt-stack configuration
+
+    # salt-master container and services
+        - master
+        - reactor
+
+    # salt-minion configuration
+        - minion
+        - beacon
 
     # when being deployed/cloned
     'G@minion-role:master': []
