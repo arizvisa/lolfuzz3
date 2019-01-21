@@ -1,16 +1,16 @@
-{% set container_service = pillar['service']['container'] %}
+{% set ContainerService = pillar['service']['container'] %}
 
 ### container directory structure
 Make container-root directory:
     file.directory:
-        - name: {{ container_service.Path }}
+        - name: {{ ContainerService.Path }}
         - dir_mode: 1755
         - file_mode: 0664
         - makedirs: True
 
 Make container-root build directory:
     file.directory:
-        - name: {{ container_service.Path }}/build
+        - name: {{ ContainerService.Path }}/build
         - use:
             - Make container-root directory
         - require:
@@ -20,7 +20,7 @@ Make container-root build directory:
 
 Make container-root image directory:
     file.directory:
-        - name: {{ container_service.Path }}/image
+        - name: {{ ContainerService.Path }}/image
         - use:
             - Make container-root directory
         - require:
@@ -30,7 +30,7 @@ Make container-root image directory:
 
 Make container-root tools directory:
     file.directory:
-        - name: {{ container_service.Path }}/tools
+        - name: {{ ContainerService.Path }}/tools
         - use:
             - Make container-root directory
         - require:
@@ -39,12 +39,12 @@ Make container-root tools directory:
         - file_mode: 0664
 
 ### container tools (FIXME: either check the signature, or replace this with just an archive.extracted)
-{% for item in container_service.Tools %}
+{% for item in ContainerService.Tools %}
 Transfer container-root tools ({{ item.Source }}):
     file.managed:
         - source: salt://files/{{ item.Source }}
         - source_hash: {{ item.Algo }}={{ item.Hash }}
-        - name: {{ container_service.Path }}/tools/{{ item.Source }}
+        - name: {{ ContainerService.Path }}/tools/{{ item.Source }}
         - require:
             - Make container-root tools directory
         - mode: 0640
@@ -52,10 +52,10 @@ Transfer container-root tools ({{ item.Source }}):
 
 Extract container-root tools:
     archive.extracted:
-        - source: {{ container_service.Path }}/tools/{{ container_service.Tools | map(attribute='Source') | first }}
-        - name: {{ container_service.Path }}/tools
+        - source: {{ ContainerService.Path }}/tools/{{ ContainerService.Tools | map(attribute='Source') | first }}
+        - name: {{ ContainerService.Path }}/tools
         - require:
-        {% for item in container_service.Tools %}
+        {% for item in ContainerService.Tools %}
             - Transfer container-root tools ({{ item.Source }})
         {% endfor %}
         - user: root
@@ -65,7 +65,7 @@ Extract container-root tools:
 Install container build script:
     file.managed:
         - source: salt://container/build.sh
-        - name: {{ container_service.Path }}/build.sh
+        - name: {{ ContainerService.Path }}/build.sh
         - require:
             - Make container-root directory
             - Extract container-root tools
@@ -74,7 +74,7 @@ Install container build script:
 Install container-build.service script:
     file.managed:
         - source: salt://container/container-build.sh
-        - name: {{ container_service.Path }}/container-build.sh
+        - name: {{ ContainerService.Path }}/container-build.sh
         - use:
             - file: Install container build script
         - require:
@@ -89,7 +89,7 @@ Install container-build.service:
         - source: salt://container/container-build.service
         - name: /etc/systemd/system/container-build.service
         - defaults:
-            container_path: {{ container_service.Path }}
+            container_path: {{ ContainerService.Path }}
         - require:
             - Install container-build.service script
         - mode: 0664
@@ -108,7 +108,7 @@ Install container-build.path:
 Install container load script:
     file.managed:
         - source: salt://container/load.sh
-        - name: {{ container_service.Path }}/load.sh
+        - name: {{ ContainerService.Path }}/load.sh
         - require:
             - Make container-root directory
         - mode: 0775
@@ -116,7 +116,7 @@ Install container load script:
 Install container-load.service script:
     file.managed:
         - source: salt://container/container-load.sh
-        - name: {{ container_service.Path }}/container-load.sh
+        - name: {{ ContainerService.Path }}/container-load.sh
         - use:
             - Install container load script
         - require:
@@ -130,7 +130,7 @@ Install container-load.service:
         - source: salt://container/container-load.service
         - name: /etc/systemd/system/container-load.service
         - defaults:
-            container_path: {{ container_service.Path }}
+            container_path: {{ ContainerService.Path }}
         - require:
             - Install container-load.service script
         - mode: 0664
@@ -149,7 +149,7 @@ Install container-load.path:
 Install container update script:
     file.managed:
         - source: salt://container/update.sh
-        - name: {{ container_service.Path }}/update.sh
+        - name: {{ ContainerService.Path }}/update.sh
         - require:
             - Make container-root directory
             - Make container-root image directory
@@ -158,7 +158,7 @@ Install container update script:
 Install container-sync.service script:
     file.managed:
         - source: salt://container/container-update.sh
-        - name: {{ container_service.Path }}/container-update.sh
+        - name: {{ ContainerService.Path }}/container-update.sh
         - use:
             - Install container update script
         - require:
@@ -172,7 +172,7 @@ Install container-sync.service:
         - source: salt://container/container-sync.service
         - name: /etc/systemd/system/container-sync.service
         - defaults:
-            container_path: {{ container_service.Path }}
+            container_path: {{ ContainerService.Path }}
         - require:
             - Install container-sync.service script
         - mode: 0664
