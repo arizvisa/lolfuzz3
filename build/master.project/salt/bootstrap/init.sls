@@ -12,7 +12,7 @@
 {% if Address %}
     {% set Interface = salt['network.ifacestartswith'](Address) | first %}
 {% else %}
-    {% set Interface = "lo" %}
+    {% set Interface = 'lo' %}
 {% endif %}
 
 ### Bootstrap the network environment with the unique MachineId

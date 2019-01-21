@@ -16,7 +16,7 @@
 {% if Address %}
     {% set Interface = salt['network.ifacestartswith'](Address) | first %}
 {% else %}
-    {% set Interface = "lo" %}
+    {% set Interface = 'lo' %}
 {% endif %}
 
 ### States to bootstrap the salt-master container and install it as a service
