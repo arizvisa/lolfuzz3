@@ -191,15 +191,27 @@
                 "rm -rf \"$STAGE\""
             ]
         },
-
         { "type" : "shell-local",
-            "command" : "echo [*] Starting etcd-schema service"
+            "command" : "echo [*] Starting setup-network-environment.service"
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "inline" : [
-                "systemctl start etcd-schema",
-                "systemctl status etcd-schema",
+                "systemctl start setup-network-environment.service",
+                "systemctl status setup-network-environment.service",
+                "until [ -e /etc/network-environment ]; do :; done",
+                "cat /etc/network-environment"
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [*] Starting etcd-schema.service"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "inline" : [
+                "systemctl start etcd-schema.service",
+                "systemctl status etcd-schema.service",
                 "until etcdctl cluster-health; do :; done",
                 "etcdctl setdir /coreos.com"
             ]
