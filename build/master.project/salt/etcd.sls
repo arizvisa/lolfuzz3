@@ -11,7 +11,7 @@
 Project variable {{ (root + [name]) | join('.') }}:
     etcd.set:
         - name: {{ (root + [name]) | join('/') }}
-        - value: {{ value | json | yaml_dquote }}
+        - value: {{ value }}
         - profile: root_etcd
         - requires:
             - Project key {{ root }}
