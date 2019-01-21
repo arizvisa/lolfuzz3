@@ -20,15 +20,17 @@ ver_lt()
 }
 
 # Enumerate all images in rkt
-rkt image list --full=true --no-legend=true --fields=id,name,importtime | while read id imgfull ts; do
+rkt image list --format=json | jq -rc 'map((.name | split("/") | .[-1]) as $image | . * {image_name: $image | split(":") | .[0], image_version: $image | split(":") | .[-1]}) | sort_by(.version) | map(. | @json) | join("\n")'
+#rkt image list --full=true --no-legend=true --fields=id,name,importtime | while read id imgfull ts; do
+    imgfull=`echo -n "$json" | jq -r '.name'`
+    id=`echo -n "$json" | jq -r '.id'`
+    ts=`echo -n "$json" | jq -r '.import_time'`
     [ -z "${id}" ] && continue
 
-    tss=`echo -n "${ts}" | cut -d' ' -f1,2`
-
     # Extract the different components out of the image list
-    imgname=`basename "${imgfull}" | cut -d: -f1`
-    imgver=`basename "${imgfull}" | cut -d: -f2`
-    imgts=`date +%s -d "${tss}"`
+    imgname=`echo -n "$json" | jq -r '.image_name'`
+    imgver=`echo -n "$json" | jq -r '.image_version'`
+    imgts=`echo -n "$json" | jq -r '.import_time / 1000000000 | @text | split(".") | .[0]'`
 
     # Find the image file named $imgname with the newest version.
     file=`ls -1 "$IMAGEDIR/${imgname}:"*.{aci,oci} 2>/dev/null | sort -Vr | head -n1`
@@ -70,7 +72,7 @@ rkt image list --full=true --no-legend=true --fields=id,name,importtime | while 
     fi
 
     # so remove the image from rkt if it's not running...
-    task_count=`rkt list --full=true --no-legend=true | cut -f3,5 | grep "^${imgname}:" | grep $'\t'"running$" | wc -l`
+    task_count=`rkt list --format=json | jq -r --arg name "${imgname}" 'map(select(.state == "running")) | map(select(.app_names | inside([$name]))) | length'
     if [ "${task_count}" -gt 0 ]; then
         printf 'Refusing to remove image %s:%s as it'\''s still in use!\n' "${imgname}" "${imgver}" 1>&2
     else
