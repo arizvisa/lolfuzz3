@@ -158,6 +158,7 @@ Build salt-master image:
     cmd.run:
         - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ ContainerService.Path }}" -- "{{ ContainerService.Path }}/build.sh" "{{ ContainerService.Path }}/build/salt-master:{{ SaltContainer.Version }}.acb"
         - cwd: {{ ContainerService.Path }}
+        - use_vt: true
         - hide_output: true
         - creates: "{{ ContainerService.Path }}/image/salt-master:{{ SaltContainer.Version }}.aci"
         - env:
