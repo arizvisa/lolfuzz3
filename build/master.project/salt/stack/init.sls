@@ -1,10 +1,12 @@
-{% set Root = pillar['configuration']['root'] %}
 {% set Tools = pillar['configuration']['tools'] %}
 
-# Get the machine-id from the grain, otherwise /etc/machine-id
-{% set MachineId = grains.get('machine-id', None) %}
-{% if not MachineId %}
-    {% set MachineId = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
+# Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
+{% if grains['minion-role'] == 'master-bootstrap' %}
+    {% set Root = pillar['configuration']['root'] %}
+    {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
+{% else %}
+    {% set Root = '/media/root' %}
+    {% set MachineId = grains['machine-id'] %}
 {% endif %}
 
 ### Service directories

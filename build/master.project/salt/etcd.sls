@@ -1,9 +1,11 @@
-{% set Root = pillar['configuration']['root'] %}
 
-# Get the machine-id from the grain, otherwise /etc/machine-id
-{% set MachineId = grains.get('machine-id', None) %}
-{% if not MachineId %}
+# Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
+{% if grains['minion-role'] == 'master-bootstrap' %}
+    {% set Root = pillar['configuration']['root'] %}
     {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
+{% else %}
+    {% set Root = '/media/root' %}
+    {% set MachineId = grains['machine-id'] %}
 {% endif %}
 
 ### Macros to recursively serialize arbitrary data structures into etcd
