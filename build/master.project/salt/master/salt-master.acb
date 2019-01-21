@@ -7,7 +7,7 @@ label add os linux
 label add distro fedora
 
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 update
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils chkconfig procps-ng git
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils chkconfig procps-ng net-tools git
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}} {{python}}-devel
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pip {{python}}-six {{python}}-requests {{python}}-urllib3
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 libgit2-devel libsodium libsodium-devel libyaml libyaml-devel zeromq zeromq-devel
