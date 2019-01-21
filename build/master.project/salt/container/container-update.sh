@@ -20,8 +20,7 @@ ver_lt()
 }
 
 # Enumerate all images in rkt
-rkt image list --format=json | jq -rc 'map((.name | split("/") | .[-1]) as $image | . * {image_name: $image | split(":") | .[0], image_version: $image | split(":") | .[-1]}) | sort_by(.version) | map(. | @json) | join("\n")'
-#rkt image list --full=true --no-legend=true --fields=id,name,importtime | while read id imgfull ts; do
+rkt image list --format=json | jq -rc 'map((.name | split("/") | .[-1]) as $image | . * {image_name: $image | split(":") | .[0], image_version: $image | split(":") | .[-1]}) | sort_by(.version) | map(. | @json) | join("\n")' | while read json; do
     imgfull=`echo -n "$json" | jq -r '.name'`
     id=`echo -n "$json" | jq -r '.id'`
     ts=`echo -n "$json" | jq -r '.import_time'`
