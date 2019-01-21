@@ -46,7 +46,7 @@ filever=`basename "${filefull}" | cut -d: -f2-`
 
 # If image name exists in the list of current images..
 matched=`rkt image list --format=json | jq -c --arg name "$filename" 'map((.name | split("/") | .[-1]) as $image | . * {image_name: $image | split(":") | .[0], image_version: $image | split(":") | .[-1]}) | map(select(.image_name == $name)) | sort_by(.version) | .[0]'`
-if [ ! -z "${matched}" ]; then
+if [ "${matched}" != "null" ]; then
 
     # ...but the image version is less than the one loaded, then skip it.
     loadedname=`echo -n "${matched}" | jq -r '.name'`

@@ -26,7 +26,7 @@ rkt image list --format=json | jq -r --arg name "${name}" 'map((.name | split("/
     id=`echo -n "$json" | jq -r '.id'`
     ts=`echo -n "$json" | jq -r '.import_time'`
 
-    [ -z "${id}" ] && continue
+    [ "${id}" == "null" ] && continue
 
     # Extract the different components out of the image list
     imgname=`echo -n "$json" | jq -r '.image_name'`
