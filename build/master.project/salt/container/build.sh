@@ -35,6 +35,12 @@ case "$rule" in
 
     cat "${rule}" <( printf 'write --overwrite %s\n' "$IMAGEDIR/${imgfile}" ) | "$ACBUILD" script /dev/stdin
 
+    if [ $? -ne 0 ] || [ ! -f "$IMAGEDIR/${imgname}:${imgver}.aci"]; then
+        printf 'Error trying to build image: "%s:%s"\n' "${imgname}" "${imgver}" 1>&2
+        rm -f "$IMAGEDIR/${imgname}:${imgver}.aci"
+        exit 1
+    fi
+
     printf 'Successfully built image "%s:%s" at %s.\n' "${imgname}" "${imgver}" "$IMAGEDIR/${imgname}:${imgver}.aci" 1>&2
     printf $'%s\t%s\n' "${imgname}" "${imgver}"
     exit 0
@@ -89,11 +95,11 @@ trap "[ -f \"${imgtemp}\" ] && /bin/rm -f \"${imgtemp}\"; exit" SIGHUP SIGINT SI
 
 # And now we can execute it..
 if "${shtype}" "$BUILDDIR/${rule}" >| "${imgtemp}"; then
-    mv -f "${imgtemp}" "$IMAGEDIR/${imgfile}"
-else
     rm -f "${imgtemp}"
-    printf 'Failure while trying to generate image for rule "%s".\n' "${rule}" 1>&2
+    printf 'Error trying to build image for rule "%s".\n' "${rule}" 1>&2
     exit 1
+else
+    mv -f "${imgtemp}" "$IMAGEDIR/${imgfile}"
 fi
 
 # ..and now we can inform the user that it's there.
