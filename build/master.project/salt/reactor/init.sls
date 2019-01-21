@@ -21,15 +21,15 @@ Install a default salt-master reactor highstate:
         - name: /srv/reactor/top.sls
         - defaults:
             reactor:
-                'salt/minion/*/start':
+                - 'salt/minion/*/start':
                     - /srv/reactor/minion-status.sls
-                'salt/job/*/new':
+                - 'salt/job/*/new':
                     - /srv/reactor/job-status.new.sls
-                'salt/job/*/ret/*':
+                - 'salt/job/*/ret/*':
                     - /srv/reactor/job-status.ret.sls
-                'salt/run/*/new':
+                - 'salt/run/*/new':
                     - /srv/reactor/run-status.new.sls
-                'salt/run/*/ret':
+                - 'salt/run/*/ret':
                     - /srv/reactor/run-status.ret.sls
         - use:
             - Make salt-master reactor directory
