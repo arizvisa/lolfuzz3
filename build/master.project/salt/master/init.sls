@@ -1,5 +1,13 @@
-# Get the machine-id from /etc/machine-id
-{% set MachineID = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
+{% set Root = pillar['configuration']['root'] %}
+{% set Tools = pillar['configuration']['tools'] %}
+{% set ContainerService = pillar['service']['container'] %}
+{% set SaltContainer = pillar['service']['salt-master'] %}
+
+# Get the machine-id from the grain, otherwise /etc/machine-id
+{% set MachineId = grains.get('machine-id', None) %}
+{% if not MachineId %}
+    {% set MachineId = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
+{% endif %}
 
 # Figure out the external network interface by searching /etc/network-environment
 {% set Address = salt['file.grep']('/'.join([pillar['configuration']['root'], '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
@@ -9,11 +17,7 @@
     {% set Interface = "lo" %}
 {% endif %}
 
-# Shortcut variables that point into the pillar configuration
-{% set tools = pillar['configuration']['tools'] %}
-{% set container_service = pillar['service']['container'] %}
-{% set salt_container = pillar['service']['salt-master'] %}
-
+### States to bootstrap the salt-master container and install it as a service
 include:
     - stack
     - etcd
@@ -76,8 +80,11 @@ Install salt-master configuration:
         - source: salt://master/salt-master.conf
         - name: /etc/salt/master
         - defaults:
-            id: {{ MachineID }}.master.{{ pillar['configuration']['project'] }}
+            id: {{ MachineId }}.master.{{ pillar['configuration']['project'] }}
             log_level: info
+
+            saltenv: base
+            pillarenv: base
 
             etcd_hosts:
                 - name: "root_etcd"
@@ -111,7 +118,7 @@ Install salt-master configuration:
 
             etcd_returners:
                 - name: "root_etcd"
-                  path: "{{ salt_container.Namespace }}"
+                  path: "{{ SaltContainer.Namespace }}"
         - require:
             - Make salt config directory
         - mode: 0664
@@ -120,11 +127,11 @@ Transfer salt-master build rules:
     file.managed:
         - template: jinja
         - source: salt://master/salt-master.acb
-        - name: "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
+        - name: "{{ ContainerService.Path }}/build/salt-master:{{ SaltContainer.Version }}.acb"
         - defaults:
-            version: {{ salt_container.Version }}
-            python: {{ salt_container.Python }}
-            pip: {{ salt_container.Pip }}
+            version: {{ SaltContainer.Version }}
+            python: {{ SaltContainer.Python }}
+            pip: {{ SaltContainer.Pip }}
         - require:
             - Make container-root build directory
             - Install container-build.service
@@ -145,13 +152,13 @@ Install openssh-clients in toolbox:
 
 Build salt-master image:
     cmd.wait:
-        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ container_service.Path }}" -- "{{ container_service.Path }}/build.sh" "{{ container_service.Path }}/build/salt-master:{{ salt_container.Version }}.acb"
-        - cwd: {{ container_service.Path }}
+        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ ContainerService.Path }}" -- "{{ ContainerService.Path }}/build.sh" "{{ ContainerService.Path }}/build/salt-master:{{ SaltContainer.Version }}.acb"
+        - cwd: {{ ContainerService.Path }}
         - use_vt: true
         - hide_output: true
-        - creates: "{{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci"
+        - creates: "{{ ContainerService.Path }}/image/salt-master:{{ SaltContainer.Version }}.aci"
         - env:
-            - CONTAINER_DIR: {{ container_service.Path }}
+            - CONTAINER_DIR: {{ ContainerService.Path }}
         - watch:
             - Transfer salt-master build rules
         - require:
@@ -160,7 +167,7 @@ Build salt-master image:
 
 Finished building the salt-master image:
     file.managed:
-        - name: "{{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci"
+        - name: "{{ ContainerService.Path }}/image/salt-master:{{ SaltContainer.Version }}.aci"
         - mode: 0664
         - replace: false
         - watch:
@@ -172,10 +179,10 @@ Install salt-master.service:
         - source: salt://master/salt-master.service
         - name: /etc/systemd/system/salt-master.service
         - defaults:
-            version: {{ salt_container.Version }}
-            container_path: {{ container_service.Path }}
-            image_uuid_path: {{ container_service.Path }}/image/salt-master:{{ salt_container.Version }}.aci.id
-            run_uuid_path: {{ salt_container.UUID }}
+            version: {{ SaltContainer.Version }}
+            container_path: {{ ContainerService.Path }}
+            image_uuid_path: {{ ContainerService.Path }}/image/salt-master:{{ SaltContainer.Version }}.aci.id
+            run_uuid_path: {{ SaltContainer.UUID }}
             services:
                 - host: 127.0.0.1
                   port: 4001
@@ -201,10 +208,10 @@ Install the script for interacting with salt-master:
     file.managed:
         - template: jinja
         - source: salt://master/salt.command
-        - name: {{ tools.prefix }}/bin/salt
+        - name: {{ Tools.prefix }}/bin/salt
         - defaults:
             rkt: /bin/rkt
-            run_uuid_path: {{ salt_container.UUID }}
+            run_uuid_path: {{ SaltContainer.UUID }}
         - require:
             - Install salt-master.service
         - mode: 0755
@@ -213,7 +220,7 @@ Install the script for interacting with salt-master:
 # everything else can just be a symbolic link
 Link the script for calling salt-api:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-api
+        - name: {{ Tools.prefix }}/bin/salt-api
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -221,7 +228,7 @@ Link the script for calling salt-api:
 
 Link the script for calling salt-cloud:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-cloud
+        - name: {{ Tools.prefix }}/bin/salt-cloud
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -229,7 +236,7 @@ Link the script for calling salt-cloud:
 
 Link the script for calling salt-cp:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-cp
+        - name: {{ Tools.prefix }}/bin/salt-cp
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -237,7 +244,7 @@ Link the script for calling salt-cp:
 
 Link the script for calling salt-key:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-key
+        - name: {{ Tools.prefix }}/bin/salt-key
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -245,7 +252,7 @@ Link the script for calling salt-key:
 
 Link the script for calling salt-run:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-run
+        - name: {{ Tools.prefix }}/bin/salt-run
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -253,7 +260,7 @@ Link the script for calling salt-run:
 
 Link the script for calling salt-ssh:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-ssh
+        - name: {{ Tools.prefix }}/bin/salt-ssh
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -261,7 +268,7 @@ Link the script for calling salt-ssh:
 
 Link the script for calling salt-unity:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-unity
+        - name: {{ Tools.prefix }}/bin/salt-unity
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -270,7 +277,7 @@ Link the script for calling salt-unity:
 ## States for etcd
 Create the salt-master pillar:
     etcd.set:
-        - name: /node/{{ MachineID }}.master.{{ pillar['configuration']['project'] }}
+        - name: /node/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}
         - value: null
         - directory: true
         - profile: root_etcd

@@ -1,5 +1,13 @@
-{% set MachineID = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
-{% set tools = pillar['configuration']['tools'] %}
+{% set Root = pillar['configuration']['root'] %}
+{% set Tools = pillar['configuration']['tools'] %}
+
+# Get the machine-id from the grain, otherwise /etc/machine-id
+{% set MachineId = grains.get('machine-id', None) %}
+{% if not MachineId %}
+    {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
+{% endif %}
+
+### States to build the salt-minion configuration for managing the salt-master
 
 include:
     - stack
@@ -45,7 +53,7 @@ Install salt-minion configuration:
         - source: salt://minion/salt-minion.conf
         - name: /etc/salt/minion
         - context:
-            machine_id: {{ MachineID }}
+            machine_id: {{ MachineId }}
             master: localhost
             log_level: info
         - use:
@@ -58,9 +66,9 @@ Install the script for bootstrapping the master:
     file.managed:
         - template: jinja
         - source: salt://master/salt-bootstrap.command
-        - name: {{ tools.prefix }}/bin/salt-bootstrap
+        - name: {{ Tools.prefix }}/bin/salt-bootstrap
         - defaults:
-            salt_toolbox: {{ tools.prefix }}/bin/salt-toolbox
+            salt_toolbox: {{ Tools.prefix }}/bin/salt-toolbox
         - require:
             - Install the salt-toolbox wrapper
         - mode: 0755
@@ -68,7 +76,7 @@ Install the script for bootstrapping the master:
 
 Link the script for calling salt-call:
     file.symlink:
-        - name: {{ tools.prefix }}/bin/salt-call
+        - name: {{ Tools.prefix }}/bin/salt-call
         - target: salt
         - require:
             - Install the script for interacting with salt-master

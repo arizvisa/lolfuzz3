@@ -1,5 +1,11 @@
-{% set MachineID = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
-{% set tools = pillar['configuration']['tools'] %}
+{% set Root = pillar['configuration']['root'] %}
+{% set Tools = pillar['configuration']['tools'] %}
+
+# Get the machine-id from the grain, otherwise /etc/machine-id
+{% set MachineId = grains.get('machine-id', None) %}
+{% if not MachineId %}
+    {% set MachineId = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
+{% endif %}
 
 ### Service directories
 Make service directory:
@@ -42,7 +48,7 @@ Install the salt-toolbox wrapper:
     file.managed:
         - template: jinja
         - source: salt://stack/salt-toolbox.command
-        - name: {{ tools.prefix }}/bin/salt-toolbox
+        - name: {{ Tools.prefix }}/bin/salt-toolbox
         - defaults:
             toolbox: /bin/toolbox
             mounts:
@@ -50,7 +56,7 @@ Install the salt-toolbox wrapper:
                 - "/etc/systemd"
                 - "/etc/salt"
                 - "/srv"
-                - "{{ tools.prefix }}"
+                - "{{ Tools.prefix }}"
         - mode: 0755
         - makedirs: true
 
