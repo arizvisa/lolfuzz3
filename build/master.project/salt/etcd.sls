@@ -76,3 +76,15 @@ Project key {{ ProjectRoot | join('.') }}:
 {{ project_set_value(['', 'config'], item, pillar['configuration']['defaults'][item]) }}
     {%- endif -%}
 {% endfor %}
+
+# systemctl enable the etcd-member.service
+Enable systemd multi-user.target wants etcd-member.service:
+    file.symlink:
+        - name: /etc/systemd/system/multi-user.target.wants/etcd.service
+        - target: /etc/systemd/system/etcd.service
+
+# systemctl enable the etcd-master.service
+Enable systemd multi-user.target wants etcd-master.service:
+    file.symlink:
+        - name: /etc/systemd/system/multi-user.target.wants/etcd-master.service
+        - target: /etc/systemd/system/etcd-master.service
