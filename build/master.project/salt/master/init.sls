@@ -114,13 +114,14 @@ Install salt-master configuration:
                   path: "/config"
 
                 - name: "minion_etcd"
-                  path: "/node/%(minion_id)s"
+                  path: "{{ pillar['service']['salt-master']['Namespace'] }}/node/%(minion_id)s"
 
             etcd_returners:
                 - name: "root_etcd"
                   path: "{{ SaltContainer.Namespace }}"
         - require:
             - Make salt config directory
+            - Initialize the nodes pillar namespace
         - mode: 0664
 
 Transfer salt-master build rules:
@@ -198,9 +199,9 @@ Enable systemd multi-user.target wants salt-master.service:
         - name: /etc/systemd/system/multi-user.target.wants/salt-master.service
         - target: /etc/systemd/system/salt-master.service
         - require:
-            - sls: etcd
-            - Install salt-master.service
+            - Install salt-master configuration
             - Finished building the salt-master image
+            - Install salt-master.service
         - makedirs: true
 
 ## scripts for interacting with the salt-master
@@ -213,6 +214,7 @@ Install the script for interacting with salt-master:
             rkt: /bin/rkt
             run_uuid_path: {{ SaltContainer.UUID }}
         - require:
+            - Finished building the salt-master image
             - Install salt-master.service
         - mode: 0755
         - makedirs: true
@@ -275,20 +277,29 @@ Link the script for calling salt-unity:
         - makedirs: true
 
 ## States for etcd
-Create the salt-master pillar:
+Register the salt-master namespace:
     etcd.set:
-        - name: /node/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}
+        - name: "{{ pillar['service']['salt-master']['Namespace'] }}"
         - value: null
         - directory: true
         - profile: root_etcd
         - requires:
             - sls: etcd
 
-Register the salt-master namespace:
+Initialize the nodes pillar namespace:
     etcd.set:
-        - name: {{ pillar['service']['salt-master']['Namespace'] }}
+        - name: "{{ pillar['service']['salt-master']['Namespace'] }}/node"
         - value: null
         - directory: true
         - profile: root_etcd
         - requires:
-            - sls: etcd
+            - Register the salt-master namespace
+
+Create the pillar for the salt-master:
+    etcd.set:
+        - name: "{{ pillar['service']['salt-master']['Namespace'] }}/node/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}"
+        - value: null
+        - directory: true
+        - profile: root_etcd
+        - requires:
+            - Initialize the nodes pillar namespace

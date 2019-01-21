@@ -74,13 +74,3 @@ Project key {{ ProjectRoot | join('.') }}:
 {{ project_set_value(['', 'config'], item, pillar['configuration']['defaults'][item]) }}
     {%- endif -%}
 {% endfor %}
-
-# This is really for salt, but we're leaving it here
-Initialize the nodes pillar:
-    etcd.set:
-        - name: /node
-        - value: null
-        - directory: true
-        - profile: root_etcd
-        - requires:
-            - Check firewall rules
