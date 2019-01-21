@@ -104,7 +104,7 @@
                 "MASTER_ID={{user `guest-name`}}"
             ],
             "inline" : [
-                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install ca-certificates net-tools procps-ng git 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install ca-certificates procps-ng net-tools git 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install systemd-container m2crypto PyYAML 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils libyaml procps-ng python2-crypto python2-jinja2 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install python2-msgpack python2-requests python2-zmq 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
