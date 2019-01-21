@@ -1,0 +1,8 @@
+Log a completed job runner message:
+    runner.salt.cmd:
+        - fun: log.info
+        - args:
+            - message: "The job {{ data.jid }} for {{ data.fun }} has completed."
+
+
+

@@ -1,0 +1,9 @@
+Make a pillar for the new minion:
+    runner.salt.cmd:
+        - fun: etcd.set
+        - args:
+            - key: {{ path }}/node/{{ '{{ data.id }}' }}
+            - value: null
+            - directory: true
+            - profile: root_etcd
+

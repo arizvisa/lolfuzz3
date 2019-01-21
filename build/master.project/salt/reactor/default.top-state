@@ -1,0 +1,2 @@
+reactor:
+    {{ reactor | yaml(False) | indent(4) }}
