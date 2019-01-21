@@ -136,14 +136,6 @@ Transfer salt-master build rules:
             version: {{ SaltContainer.Version }}
             python: {{ SaltContainer.Python }}
             pip: {{ SaltContainer.Pip }}
-            volumes:
-                dbus-socket: /var/run/dbus
-                salt-etc: /etc/salt
-                salt-cache: /var/cache/salt
-                salt-logs: /var/log/salt
-                salt-run: /var/run/salt
-                salt-srv: /srv
-                media-root: {{ Root }}
         - require:
             - Make container-root build directory
             - Install container-build.service
@@ -196,6 +188,14 @@ Install salt-master.service:
             services:
                 - host: 127.0.0.1
                   port: 4001
+            volumes:
+                dbus-socket: /var/run/dbus
+                salt-etc: /etc/salt
+                salt-cache: /var/cache/salt
+                salt-logs: /var/log/salt
+                salt-run: /var/run/salt
+                salt-srv: /srv
+                media-root: {{ Root }}
         - require:
             - Install container load script
             - Install salt-master configuration
