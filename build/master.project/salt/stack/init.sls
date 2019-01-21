@@ -5,7 +5,7 @@
     {% set Root = pillar['configuration']['root'] %}
     {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
 {% else %}
-    {% set Root = '/media/root' %}
+    {% set Root = grains['root'] %}
     {% set MachineId = grains['machine-id'] %}
 {% endif %}
 
