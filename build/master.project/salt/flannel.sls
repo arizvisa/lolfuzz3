@@ -1,4 +1,4 @@
-{% set FlannelService = pillar['service']['container'] %}
+{% set FlannelService = pillar['service']['flannel'] %}
 
 include:
     - etcd
