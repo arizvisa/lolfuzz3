@@ -19,12 +19,9 @@ ExecStart=/usr/bin/rkt run \
             --net=default \
             --port=salt-job:4505 \
             --port=salt-result:4506 \
-            --volume dbus-socket,kind=host,source=/var/run/dbus \
-            --volume salt-etc,kind=host,source=/etc/salt \
-            --volume salt-cache,kind=host,source=/var/cache/salt \
-            --volume salt-logs,kind=host,source=/var/log/salt \
-            --volume salt-run,kind=host,source=/var/run/salt \
-            --volume salt-srv,kind=host,source=/srv \
+{% for vol in volumes %}
+            --volume {{ vol }},kind=host,source={{ volumes[vol] }} \
+{% endfor %}
             --inherit-env=true lol/salt-master:{{ version }}
 {% for svc in services %}
 ExecStartPost=/usr/bin/bash -c \

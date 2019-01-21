@@ -1,16 +1,18 @@
-{% set Root = pillar['configuration']['root'] %}
 {% set Tools = pillar['configuration']['tools'] %}
 {% set ContainerService = pillar['service']['container'] %}
 {% set SaltContainer = pillar['service']['salt-master'] %}
 
-# Get the machine-id from the grain, otherwise /etc/machine-id
-{% set MachineId = grains.get('machine-id', None) %}
-{% if not MachineId %}
-    {% set MachineId = salt['file.read']('/'.join([pillar['configuration']['root'], '/etc/machine-id'])).strip() %}
+# Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
+{% if grains['minion-role'] == 'master-bootstrap' %}
+    {% set Root = pillar['configuration']['root'] %}
+    {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
+{% else %}
+    {% set Root = '/media/root' %}
+    {% set MachineId = grains['machine-id'] %}
 {% endif %}
 
 # Figure out the external network interface by searching /etc/network-environment
-{% set Address = salt['file.grep']('/'.join([pillar['configuration']['root'], '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
+{% set Address = salt['file.grep']('/'.join([Root, '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
 {% if Address %}
     {% set Interface = salt['network.ifacestartswith'](Address) | first %}
 {% else %}
@@ -114,7 +116,7 @@ Install salt-master configuration:
                   path: "/config"
 
                 - name: "minion_etcd"
-                  path: "{{ pillar['service']['salt-master']['Namespace'] }}/node/%(minion_id)s"
+                  path: "{{ SaltContainer.Namespace }}/node/%(minion_id)s"
 
             etcd_returners:
                 - name: "root_etcd"
@@ -133,6 +135,14 @@ Transfer salt-master build rules:
             version: {{ SaltContainer.Version }}
             python: {{ SaltContainer.Python }}
             pip: {{ SaltContainer.Pip }}
+            volumes:
+                dbus-socket: /var/run/dbus
+                salt-etc: /etc/salt
+                salt-cache: /var/cache/salt
+                salt-logs: /var/log/salt
+                salt-run: /var/run/salt
+                salt-srv: /srv
+                media-root: /media/root
         - require:
             - Make container-root build directory
             - Install container-build.service
@@ -146,7 +156,7 @@ Install openssh-clients in toolbox:
 
     file.symlink:
         - name: {{ salt['user.info'](grains['username']).home }}/.ssh/id_rsa
-        - target: {{ pillar['configuration']['root'] }}{{ pillar['configuration']['remote']['key'] }}
+        - target: {{ Root }}{{ pillar['configuration']['remote']['key'] }}
         - force: true
         - mode: 0400
         - makedirs : true
@@ -277,7 +287,7 @@ Link the script for calling salt-unity:
 ## States for etcd
 Register the salt-master namespace:
     etcd.set:
-        - name: "{{ pillar['service']['salt-master']['Namespace'] }}"
+        - name: "{{ SaltContainer.Namespace }}"
         - value: null
         - directory: true
         - profile: root_etcd
@@ -286,7 +296,7 @@ Register the salt-master namespace:
 
 Initialize the nodes pillar namespace:
     etcd.set:
-        - name: "{{ pillar['service']['salt-master']['Namespace'] }}/node"
+        - name: "{{ SaltContainer.Namespace }}/node"
         - value: null
         - directory: true
         - profile: root_etcd
@@ -295,7 +305,7 @@ Initialize the nodes pillar namespace:
 
 Create the pillar for the salt-master:
     etcd.set:
-        - name: "{{ pillar['service']['salt-master']['Namespace'] }}/node/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}"
+        - name: "{{ SaltContainer.Namespace }}/node/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}"
         - value: null
         - directory: true
         - profile: root_etcd
