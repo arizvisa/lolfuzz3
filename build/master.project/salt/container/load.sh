@@ -45,17 +45,18 @@ filename=`basename "${filefull}" | cut -d: -f1`
 filever=`basename "${filefull}" | cut -d: -f2-`
 
 # If image name exists in the list of current images..
-matched=`rkt image list --full=true --no-legend=true --fields=name,id,importtime | grep "${filename}:" | sort -Vr | head -n1 | sed 's/\t\+/\t/g'`
+matched=`rkt image list --format=json | jq -c --arg name "$filename" 'map((.name | split("/") | .[-1]) as $image | . * {image_name: $image | split(":") | .[0], image_version: $image | split(":") | .[-1]}) | map(select(.image_name == $name)) | sort_by(.version) | .[0]'`
 if [ ! -z "${matched}" ]; then
 
     # ...but the image version is less than the one loaded, then skip it.
-    loadedver=`echo -n "${matched}" | cut -d$'\t' -f1 | cut -d: -f2`
-    loadedid=`echo -n "${matched}" | cut -d$'\t' -f2`
+    loadedname=`echo -n "${matched}" | jq -r '.name'`
+    loadedver=`echo -n "${matched}" | jq -r '.image_version'`
+    loadedid=`echo -n "${matched}" | jq -r '.image_name'`
     ver_le "${filever}" "${loadedver}" && printf 'Image file for %s is older than the one currently running (%s <= %s). No need to re-load it. Skipping.\n' "${file}" "${filever}" "${loadedver}" 1>&2 && printf $'%s\t%s\t%s\n' "${file}" "${loadedver}" "${loadedid}" && exit 0
 
     # otherwise, remove it and continue...
     printf 'Removing older image %s from list. : %s > %s.\n' "${filename}" "${filever}" "${loadedver}" 1>&2
-    rkt image rm "${filename}:${filever}" 1>&2
+    rkt image rm "$loadedname" 1>&2
 fi
 
 # Try and load the image insecurely if a signature was found.
@@ -68,7 +69,10 @@ else
     res=`rkt --insecure-options=image image fetch file://"${base}"/"${filefull}${suffix}" 2>/dev/null`
 fi
 
-[ -z "${res}" ] && printf 'Error loading image %s:%s\n' "${filename}" "${filever}" 1>&2 && continue
+if [ -z "${res}" ]; then
+    printf 'Error loading image %s:%s\n' "${filename}" "${filever}" 1>&2
+    exit 1
+fi
 
 # ..and then output our result.
 printf $'%s\t%s\t%s\n' "${filename}" "${filever}" "${res}"
