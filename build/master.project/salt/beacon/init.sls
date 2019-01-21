@@ -1,3 +1,5 @@
+{% set ContainerService = pillar['service']['container'] %}
+
 include:
     - stack
     - minion
@@ -12,9 +14,9 @@ Install a default salt-minion beacon highstate:
             beacon:
                 inotify:
                     - files:
-                        {{ pillar['service']['container']['Path'] }}/build:
+                        {{ ContainerService.Path }}/build:
                             auto_add: true
-                        {{ pillar['service']['container']['Path'] }}/image:
+                        {{ ContainerService.Path }}/image:
                             auto_add: true
                 service:
                     - services:
