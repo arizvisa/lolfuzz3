@@ -8,8 +8,11 @@ configuration:
 
     # project namespace configuration
     defaults:
+        repository: "git://path/to/{{ project_name }}/repository"
         project: {{ project_name }}
-        masters: []
+        service: {}
+        template: {}
+        pod: {}
 
     # path to root filesystem while running CoreOS' toolbox
     root: /media/root
