@@ -7,7 +7,7 @@
     {% set Root = pillar['configuration']['root'] %}
     {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
 {% else %}
-    {% set Root = '/media/root' %}
+    {% set Root = grains['root'] %}
     {% set MachineId = grains['machine-id'] %}
 {% endif %}
 
@@ -87,6 +87,7 @@ Install salt-master configuration:
 
             saltenv: base
             pillarenv: base
+            rootfs: {{ Root }}
 
             etcd_hosts:
                 - name: "root_etcd"
@@ -142,7 +143,7 @@ Transfer salt-master build rules:
                 salt-logs: /var/log/salt
                 salt-run: /var/run/salt
                 salt-srv: /srv
-                media-root: /media/root
+                media-root: {{ Root }}
         - require:
             - Make container-root build directory
             - Install container-build.service
