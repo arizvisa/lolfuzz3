@@ -70,7 +70,7 @@ Install salt-minion configuration:
 Install the script for bootstrapping the master:
     file.managed:
         - template: jinja
-        - source: salt://master/salt-bootstrap.command
+        - source: salt://minion/salt-bootstrap.command
         - name: {{ Tools.prefix }}/bin/salt-bootstrap
 
         - context:
