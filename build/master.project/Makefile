@@ -1,6 +1,8 @@
 MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ROOTDIR := $(realpath $(MAKEDIR)../..)
 
+### Parameters that the user can supply
+
 ifndef PROJECT
     $(error [!] Build variable name PROJECT is undefined)
 endif
@@ -99,14 +101,14 @@ filesdir=$(workdir)/files
 
 ## acbuild
 in_acbuild_repo=$(MAKEDIR)acbuild.repo
-acbuild_metaurl := $(shell printf -- '$(github_url_format)' '$(file <$(in_acbuild_repo))')
+acbuild_metaurl != printf -- '$(github_url_format)' '$(file <$(in_acbuild_repo))'
 
 # required files for acbuild
 acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].name'),$(filesdir)/$(f))
 
 ## kelseyhightower's setup-network-environment
 in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
-setup_network_environment_metaurl := $(shell printf -- '$(github_url_format)' '$(file <$(in_setup_network_environment_repo))')
+setup_network_environment_metaurl != printf -- '$(github_url_format)' '$(file <$(in_setup_network_environment_repo))'
 
 setup_network_environment_files := $(foreach f,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name'),$(toolsdir)/bin/$(f))
 
@@ -118,8 +120,8 @@ in_salt_bootstrap_metaurl=$(MAKEDIR)salt-bootstrap.url
 in_salt_bootstrap_version=$(MAKEDIR)salt-bootstrap.version
 
 salt_bootstrap_metaurl := '$(file <$(in_salt_bootstrap_metaurl))'
-salt_bootstrap_file := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.name | @sh')
-salt_bootstrap_file_url := $(shell ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.download_url | @sh')
+salt_bootstrap_file != ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.name | @sh'
+salt_bootstrap_file_url != ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.download_url | @sh'
 salt_bootstrap_version := '$(file <$(in_salt_bootstrap_version))'
 salt_bootstrap_pillar_files := acbuild.sls project-name.sls
 
