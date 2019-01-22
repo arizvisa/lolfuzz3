@@ -147,7 +147,7 @@ Transfer salt-master build rules:
                     source: /var/run/dbus
                     mount: /var/run/dbus
                 media-root:
-                    source: {{ Root }}
+                    source: /
                     mount: /media/root
                 salt-cache:
                     source: /var/cache/salt
