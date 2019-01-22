@@ -25,7 +25,7 @@ run -- bash /root/install-salt.sh -b -x {{python}} -L -F -P -X -N -M git {{ vers
 
 run -- dnf -y clean all --enablerepo='*'
 
-run -- mkdir -p {%- for name in volumes -%} {{ volumes[name].mount }}{% endfor %}
+run -- mkdir -p {%- for name in volumes %} {{ volumes[name].mount }}{% endfor %}
 
 port add salt-job tcp 4505
 port add salt-result tcp 4506
