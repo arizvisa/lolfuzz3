@@ -1,4 +1,5 @@
 {% set Tools = pillar['configuration']['tools'] %}
+{% set SaltContainer = pillar['service']['salt-master'] %}
 
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
 {% if grains['minion-role'] == 'master-bootstrap' %}
@@ -57,8 +58,6 @@ Install salt-minion configuration:
         - context:
             machine_id: {{ MachineId }}
             master: localhost
-            log_level: info
-            rootfs: {{ Root }}
         - use:
             - Install salt-master configuration
         - require:
