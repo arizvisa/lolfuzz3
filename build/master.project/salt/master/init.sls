@@ -114,16 +114,17 @@ Install salt-master configuration:
                   path: "/config"
 
                 - name: "minion_etcd"
-                  path: "{{ SaltContainer.Namespace }}/node/%(minion_id)s"
+                  path: "{{ SaltContainer.Namespace }}/pillar/%(minion_id)s"
 
-            etcd_returners:
-                - name: "root_etcd"
-                  path: "{{ SaltContainer.Namespace }}/return"
+            etcd_returner:
+                returner: "root_etcd"
+                returner_root: "{{ SaltContainter.Namespace }}"
+                ttl: {{ 60 * 30 }}
 
             etcd_cache:
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
                   port: 2379
-                  path_prefix: "{{ SaltContainer.Namespace }}/cache"
+                  path_prefix: "{{ SaltContainer.Namespace }}"
 
         - require:
             - Make salt config directory
