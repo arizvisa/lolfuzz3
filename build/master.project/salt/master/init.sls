@@ -77,6 +77,7 @@ Install salt-master configuration:
         - template: jinja
         - source: salt://master/salt-master.conf
         - name: /etc/salt/master
+
         - defaults:
             id: {{ MachineId }}.master.{{ pillar['configuration']['project'] }}
             log_level: info
@@ -134,10 +135,36 @@ Transfer salt-master build rules:
         - template: jinja
         - source: salt://master/salt-master.acb
         - name: "{{ ContainerService.Path }}/build/salt-master:{{ SaltContainer.Version }}.acb"
-        - defaults:
+
+        - context:
             version: {{ SaltContainer.Version }}
             python: {{ SaltContainer.Python }}
             pip: {{ SaltContainer.Pip }}
+
+        - defaults:
+            volumes:
+                dbus-socket:
+                    source: /var/run/dbus
+                    mount: /var/run/dbus
+                media-root:
+                    source: {{ Root }}
+                    mount: /media/root
+                salt-cache:
+                    source: /var/cache/salt
+                    mount: /var/cache/salt
+                salt-logs:
+                    source: /var/log/salt
+                    mount: /var/log/salt
+                salt-run:
+                    source: /var/run/salt
+                    mount: /var/run/salt
+                salt-etc:
+                    source: /etc/salt
+                    mount: /etc/salt
+                salt-srv:
+                    source: /srv
+                    mount: /srv
+
         - require:
             - Make container-root build directory
             - Install container-build.service
@@ -183,7 +210,8 @@ Install salt-master.service:
         - template: jinja
         - source: salt://master/salt-master.service
         - name: /etc/systemd/system/salt-master.service
-        - defaults:
+
+        - context:
             version: {{ SaltContainer.Version }}
             container_path: {{ ContainerService.Path }}
             image_uuid_path: {{ ContainerService.Path }}/image/salt-master:{{ SaltContainer.Version }}.aci.id
@@ -191,14 +219,9 @@ Install salt-master.service:
             services:
                 - host: 127.0.0.1
                   port: 2379
-            volumes:
-                dbus-socket: /var/run/dbus
-                salt-etc: /etc/salt
-                salt-cache: /var/cache/salt
-                salt-logs: /var/log/salt
-                salt-run: /var/run/salt
-                salt-srv: /srv
-                media-root: {{ Root }}
+        - use:
+            - Transfer salt-master build rules
+
         - require:
             - Install container load script
             - Install salt-master configuration
@@ -222,12 +245,15 @@ Install the script for interacting with salt-master:
         - template: jinja
         - source: salt://master/salt.command
         - name: {{ Tools.prefix }}/bin/salt
+
         - defaults:
             rkt: /bin/rkt
             run_uuid_path: {{ SaltContainer.UUID }}
+
         - require:
             - Finished building the salt-master image
             - Install salt-master.service
+
         - mode: 0755
         - makedirs: true
 

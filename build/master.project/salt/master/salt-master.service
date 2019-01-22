@@ -20,8 +20,8 @@ ExecStart=/usr/bin/rkt run \
             --net=default \
             --port=salt-job:4505 \
             --port=salt-result:4506 \
-{%- for vol in volumes %}
-            --volume {{ vol }},kind=host,source={{ volumes[vol] }} \
+{%- for name in volumes %}
+            --volume {{ name }},kind=host,source={{ volumes[name].source }} \
 {%- endfor %}
             --inherit-env=true lol/salt-master:{{ version }}
 {%- for svc in services %}

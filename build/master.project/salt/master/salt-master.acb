@@ -30,13 +30,9 @@ run -- mkdir -p /var/run/dbus /etc/salt /var/cache/salt /var/log/salt /var/run/s
 port add salt-job tcp 4505
 port add salt-result tcp 4506
 
-mount add dbus-socket /var/run/dbus
-
-mount add salt-etc /etc/salt
-mount add salt-cache /var/cache/salt
-mount add salt-logs /var/log/salt
-mount add salt-run /var/run/salt
-mount add salt-srv /srv
+{% for name in volumes %}
+mount add {{ name }} {{ volumes[name].mount }}
+{%- endfor %}
 
 annotation add appc.io/executor/supports-systemd-notify true
 set-exec -- /usr/bin/salt-master
