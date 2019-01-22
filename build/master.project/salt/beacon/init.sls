@@ -10,7 +10,7 @@ Install a default salt-minion beacon highstate:
         - template: jinja
         - source: salt://beacon/default.top-state
         - name: /etc/salt/minion.d/beacon.conf
-        - defaults:
+        - context:
             beacon:
                 inotify:
                     - files:

@@ -51,14 +51,18 @@ Install the salt-toolbox wrapper:
         - template: jinja
         - source: salt://stack/salt-toolbox.command
         - name: {{ Tools.prefix }}/bin/salt-toolbox
+
         - defaults:
             toolbox: /bin/toolbox
+
+        - context:
             mounts:
                 - "/var/run/dbus"
                 - "/etc/systemd"
                 - "/etc/salt"
                 - "/srv"
                 - "{{ Tools.prefix }}"
+
         - mode: 0755
         - makedirs: true
 

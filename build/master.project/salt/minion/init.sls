@@ -55,11 +55,14 @@ Install salt-minion configuration:
         - template: jinja
         - source: salt://minion/salt-minion.conf
         - name: /etc/salt/minion
+
         - context:
             machine_id: {{ MachineId }}
             master: localhost
+
         - use:
             - Install salt-master configuration
+
         - require:
             - sls: etcd
             - sls: master
@@ -69,10 +72,13 @@ Install the script for bootstrapping the master:
         - template: jinja
         - source: salt://master/salt-bootstrap.command
         - name: {{ Tools.prefix }}/bin/salt-bootstrap
-        - defaults:
+
+        - context:
             salt_toolbox: {{ Tools.prefix }}/bin/salt-toolbox
+
         - require:
             - Install the salt-toolbox wrapper
+
         - mode: 0755
         - makedirs: true
 

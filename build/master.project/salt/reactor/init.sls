@@ -19,7 +19,7 @@ Install a default salt-master reactor highstate:
         - template: jinja
         - source: salt://reactor/default.top-state
         - name: /srv/reactor/top.sls
-        - defaults:
+        - context:
             reactor:
                 - 'salt/minion/*/start':
                     - /srv/reactor/minion-status.sls
@@ -51,7 +51,7 @@ Install reactor minion-status state:
         - template: jinja
         - source: salt://reactor/minion.status-state
         - name: /srv/reactor/minion-status.sls
-        - defaults:
+        - context:
             path: {{ SaltContainer.Namespace }}
         - use:
             - Make salt-master reactor directory

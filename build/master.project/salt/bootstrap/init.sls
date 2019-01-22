@@ -21,10 +21,13 @@ Generate bootstrap-environment from machine-id:
         - template: jinja
         - source: salt://bootstrap/bootstrap.env
         - name: {{ Root }}/etc/bootstrap-environment
-        - defaults:
+
+        - context:
             ip4: {{ grains['ip4_interfaces'][Interface] | first }}
             ip6: {{ grains['ip6_interfaces'][Interface] | first }}
             machine_id: {{ MachineId }}
+
         - require:
             - sls: master
+
         - mode: 0664
