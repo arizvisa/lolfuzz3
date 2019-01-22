@@ -16,6 +16,10 @@ bootstrap:
         - minion
         - beacon
 
+    # because salt-stack is fucking garbage and Steve Hajducko is a fucking idiot
+    # that doesn't test his shit
+        - fix-modules
+
     # when being deployed/cloned
     'G@minion-role:master': []
 #        - reset-id          # remove /etc/machine-id and then restart
