@@ -49,7 +49,7 @@ Check firewall rules:
 
 Register the etcd cluster-size for the machine-id with the v2 discovery protocol:
     etcd.set:
-        - name: "/discovery/{{ MachineId }}/_config/size"
+        - name: "{{ pillar['configuration']['etcd']['discovery'] }}/{{ MachineId }}/_config/size"
         - value: {{ pillar['configuration']['etcd']['cluster-size'] }}
         - profile: root_etcd
         - requires:
