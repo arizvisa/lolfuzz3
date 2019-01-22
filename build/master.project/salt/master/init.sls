@@ -118,7 +118,7 @@ Install salt-master configuration:
 
             etcd_returners:
                 - name: "root_etcd"
-                  path: "{{ SaltContainer.Namespace }}"
+                  path: "{{ SaltContainer.Namespace }}/return"
 
             etcd_cache:
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
