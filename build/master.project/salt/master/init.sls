@@ -88,11 +88,11 @@ Install salt-master configuration:
             etcd_hosts:
                 - name: "root_etcd"
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
-                  port: 4001
+                  port: 2379
 
                 - name: "minion_etcd"
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
-                  port: 4001
+                  port: 2379
 
             root_files:
                 - name: "base"
@@ -118,6 +118,12 @@ Install salt-master configuration:
             etcd_returners:
                 - name: "root_etcd"
                   path: "{{ SaltContainer.Namespace }}"
+
+            etcd_cache:
+                  host: {{ grains['ip4_interfaces'][Interface] | first }}
+                  port: 2379
+                  path_prefix: "{{ SaltContainer.Namespace }}/cache"
+
         - require:
             - Make salt config directory
             - Initialize the nodes pillar namespace
@@ -184,7 +190,7 @@ Install salt-master.service:
             run_uuid_path: {{ SaltContainer.UUID }}
             services:
                 - host: 127.0.0.1
-                  port: 4001
+                  port: 2379
             volumes:
                 dbus-socket: /var/run/dbus
                 salt-etc: /etc/salt
@@ -309,3 +315,21 @@ Create the pillar for the salt-master:
         - profile: root_etcd
         - requires:
             - Initialize the nodes pillar namespace
+
+Initialize the nodes cache namespace:
+    etcd.set:
+        - name: "{{ SaltContainer.Namespace }}/cache"
+        - value: null
+        - directory: true
+        - profile: root_etcd
+        - requires:
+            - Register the salt-master namespace
+
+Initialize the nodes minion cache namespace:
+    etcd.set:
+        - name: "{{ SaltContainer.Namespace }}/cache/minions"
+        - value: null
+        - directory: true
+        - profile: root_etcd
+        - requires:
+            - Initialize the nodes cache namespace
