@@ -13,17 +13,23 @@ ifndef OUTPUT
     $(error [!] Build variable path OUTPUT is undefined)
 endif
 
+# convert the parameter for VALIDATE to an integer
+VALIDATE ?= 1
+validate := $(VALIDATE)
+validate := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(validate)))))
+validate := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(validate)))))
+
 ### Check input directory with configuration for master
-ifneq ("$(wildcard ${INPUT})","")
+ifneq ($(wildcard ${INPUT}),)
     # modifications to CoreOS bootstrap
-    ifeq ("$(wildcard ${INPUT}/master-bootstrap/*)","")
+    ifeq ($(wildcard ${INPUT}/master-bootstrap/*),)
         box_config_extra=
     else
         box_config_extra?=${INPUT}/master-bootstrap
     endif
 
    # packer template extra modifications
-    ifeq ("$(wildcard ${INPUT}/master-packer/*)","")
+    ifeq ($(wildcard ${INPUT}/master-packer/*),)
         box_template_extra=
     else
         box_template_extra?=${INPUT}/master-packer
@@ -50,10 +56,15 @@ output_names := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
 
 ### Check output directory
 outdir=${OUTPUT}
-ifeq ("$(wildcard $(boxname_outdir))","")
+ifeq ($(wildcard $(boxname_outdir)),)
     $(info [.] Output path for $(boxname) was specified: $(abspath $(boxname_outdir)))
 else
     $(error [!] Output path for $(boxname) already exists: $(abspath $(boxname_outdir)))
+endif
+
+### Inform the user of any options they've specified
+ifeq ($(validate),0)
+    $(warning [!] User has requested to skip validation of configuration: $(boxname_config))
 endif
 
 ### some utility macros for downloading files
@@ -61,7 +72,7 @@ DOWNLOAD := curl -k -L -C- --progress-bar
 FETCH := curl -k -L -s -S
 PUT := curl -k -L -s -S -X PUT --data-binary
 
-ifneq ("$(wildcard $(ROOTDIR)/github.token)","")
+ifneq ($(wildcard $(ROOTDIR)/github.token),)
 GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
 else
 GH_FETCH := ${FETCH}
@@ -386,8 +397,13 @@ $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 
 ## rules for validating the configuration
 $(boxname_workdir)/$(boxname_config).validate: $(boxname_workdir)/$(boxname_config)
+ifneq ($(validate), 0)
 	$(info [!] Validating ignition configuration $<: $(coreos_validate_url))
 	${PUT} '@$<' '$(coreos_validate_url)' >| '$@'
+else
+	$(info [!] Skipping the validation for the ignition configuration: $<)
+	@jq -n . >| '$@'
+endif
 
 $(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config).validate $(boxname_workdir)/$(boxname_config)	| $(workdir)
 	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$<' | while read y x message; do \
