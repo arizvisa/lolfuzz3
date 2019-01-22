@@ -118,7 +118,7 @@ Install salt-master configuration:
 
             etcd_returner:
                 returner: "root_etcd"
-                returner_root: "{{ SaltContainter.Namespace }}"
+                returner_root: "{{ SaltContainer.Namespace }}"
                 ttl: {{ 60 * 30 }}
 
             etcd_cache:
