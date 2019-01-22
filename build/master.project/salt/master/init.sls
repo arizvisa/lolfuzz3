@@ -327,7 +327,7 @@ Register the salt-master namespace:
 
 Initialize the nodes pillar namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/node"
+        - name: "{{ SaltContainer.Namespace }}/pillar"
         - value: null
         - directory: true
         - profile: root_etcd
@@ -336,27 +336,18 @@ Initialize the nodes pillar namespace:
 
 Create the pillar for the salt-master:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/node/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}"
+        - name: "{{ SaltContainer.Namespace }}/pillar/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}"
         - value: null
         - directory: true
         - profile: root_etcd
         - requires:
             - Initialize the nodes pillar namespace
 
-Initialize the nodes cache namespace:
+Initialize the minion cache namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/cache"
+        - name: "{{ SaltContainer.Namespace }}/minions"
         - value: null
         - directory: true
         - profile: root_etcd
         - requires:
             - Register the salt-master namespace
-
-Initialize the nodes minion cache namespace:
-    etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/cache/minions"
-        - value: null
-        - directory: true
-        - profile: root_etcd
-        - requires:
-            - Initialize the nodes cache namespace
