@@ -354,7 +354,7 @@ $(boxname_template): $(coreos_installer_files) $(boxname_workdir)/$(boxname).jso
 # build json file containing all information about the iso
 $(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso)	| $(boxname_workdir)
 	$(info [-] Calculating $(checksum_type) checksum for $<)
-	$(eval iso_checksum := $(shell openssl dgst -r -$(checksum_type) '$<' | cut -d' ' -f 1))
+	$(eval iso_checksum := $(shell openssl dgst -$(checksum_type) '$<' | rev | cut -d' ' -f 1 | rev))
 	$(info [-] Generating ISO variables for $@: $^)
 	@jq -n '{ "iso-checksum-type": "$(checksum_type)", "iso-url": "file://$<", "iso-checksum": "$(iso_checksum)" }' >| '$@'
 
@@ -472,7 +472,7 @@ $(boxname_workdir)/salt-minion.conf: $(MAKEDIR)salt-minion.conf	| $(boxname_work
 
 $(boxname_workdir)/pillar/acbuild.sls: $(acbuild_files)	| $(boxname_workdir)/pillar
 	$(info [-] Generating default pillar configuration: $^)
-	@printf -- '- Source: %s\n  Algo: %s\n  Hash: %s\n\n' $(foreach f,$^,'$(shell basename $(f))' '$(checksum_type)' "$(shell openssl dgst -r -$(checksum_type) '$(f)' | cut -d' ' -f1)") >| '$@'
+	@printf -- '- Source: %s\n  Algo: %s\n  Hash: %s\n\n' $(foreach f,$^,'$(shell basename $(f))' '$(checksum_type)' "$(shell openssl dgst -$(checksum_type) '$(f)' | rev | cut -d' ' -f1 | rev)") >| '$@'
 
 $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
 	$(info [-] Writing project name into pillar configuration: $@)
