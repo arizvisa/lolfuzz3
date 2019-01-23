@@ -15,9 +15,9 @@
 
 ### States to bootstrap the salt-master container and install it as a service
 include:
-    - stack
     - etcd
     - container
+    - stack
 
 ## standard salt-master directories
 Make salt-master cache directory:
@@ -147,11 +147,10 @@ Install salt-master.service:
                   port: 2379
         - use:
             - Transfer salt-stack container build rules
-
         - require:
-            - Install container load script
             - Install salt-master configuration
             - Finished building the salt-stack image
+            - Install container load script
         - mode: 0664
 
 # systemctl enable the salt-master.service
@@ -160,8 +159,6 @@ Enable systemd multi-user.target wants salt-master.service:
         - name: /etc/systemd/system/multi-user.target.wants/salt-master.service
         - target: /etc/systemd/system/salt-master.service
         - require:
-            - Install salt-master configuration
-            - Finished building the salt-stack image
             - Install salt-master.service
         - makedirs: true
 
@@ -169,7 +166,7 @@ Enable systemd multi-user.target wants salt-master.service:
 Install the script for interacting with salt-master:
     file.managed:
         - template: jinja
-        - source: salt://master/salt.command
+        - source: salt://stack/salt.command
         - name: {{ Tools.prefix }}/bin/salt
 
         - defaults:

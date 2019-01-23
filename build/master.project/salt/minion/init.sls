@@ -114,10 +114,19 @@ Install the script for bootstrapping the master:
         - mode: 0755
         - makedirs: true
 
-Link the script for calling salt-call:
+Install the script for calling salt-call:
     file.symlink:
+        - template: jinja
+        - source: salt://stack/salt.command
         - name: {{ Tools.prefix }}/bin/salt-call
-        - target: salt
+
+        - defaults:
+            rkt: /bin/rkt
+            run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
+
         - require:
-            - Install the script for interacting with salt-master
+            - Finished building the salt-stack image
+            - Install salt-minion.service
+
+        - mode: 0755
         - makedirs: true
