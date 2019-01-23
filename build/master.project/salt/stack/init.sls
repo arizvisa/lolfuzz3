@@ -1,5 +1,4 @@
 {% set Tools = pillar['configuration']['tools'] %}
-{% set ContainerService = pillar['service']['container'] %}
 {% set SaltContainer = pillar['container']['salt-stack'] %}
 
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
@@ -52,7 +51,7 @@ Transfer salt-stack container build rules:
     file.managed:
         - template: jinja
         - source: salt://stack/container.acb
-        - name: "{{ ContainerService.Path }}/build/salt-stack:{{ SaltContainer.Version }}.acb"
+        - name: "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ SaltContainer.Version }}.acb"
 
         - context:
             version: {{ SaltContainer.Version }}
@@ -103,13 +102,13 @@ Install openssh-clients in toolbox:
 
 Build the salt-stack image:
     cmd.run:
-        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ ContainerService.Path }}" -- "{{ ContainerService.Path }}/build.sh" "{{ ContainerService.Path }}/build/salt-stack:{{ SaltContainer.Version }}.acb"
-        - cwd: {{ ContainerService.Path }}
+        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ pillar['service']['container']['path'] }}" -- "{{ pillar['service']['container']['path'] }}/build.sh" "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ SaltContainer.Version }}.acb"
+        - cwd: {{ pillar['service']['container']['path'] }}
         - use_vt: true
         - hide_output: true
-        - creates: "{{ ContainerService.Path }}/image/salt-stack:{{ SaltContainer.Version }}.aci"
+        - creates: "{{ pillar['service']['container']['path'] }}/image/salt-stack:{{ SaltContainer.Version }}.aci"
         - env:
-            - CONTAINER_DIR: {{ ContainerService.Path }}
+            - CONTAINER_DIR: {{ pillar['service']['container']['path'] }}
         - require:
             - Transfer salt-stack container build rules
             - Install openssh-clients in toolbox
@@ -117,7 +116,7 @@ Build the salt-stack image:
 
 Finished building the salt-stack image:
     file.managed:
-        - name: "{{ ContainerService.Path }}/image/salt-stack:{{ SaltContainer.Version }}.aci"
+        - name: "{{ pillar['service']['container']['path'] }}/image/salt-stack:{{ SaltContainer.Version }}.aci"
         - mode: 0664
         - replace: false
         - watch:

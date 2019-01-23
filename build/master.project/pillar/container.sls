@@ -4,8 +4,8 @@
 
 service:
     container:
-        Path: /srv/container
-        Tools:
+        path: /srv/container
+        tools:
             {% for file in acbuild_files -%}
             - {% for attribute in file -%}
               {{ attribute }}: {{ file[attribute] }}
