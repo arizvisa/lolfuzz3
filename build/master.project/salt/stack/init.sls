@@ -1,5 +1,3 @@
-{% set Tools = pillar['configuration']['tools'] %}
-
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
 {% if grains['minion-role'] == 'master-bootstrap' %}
     {% set Root = pillar['configuration']['root'] %}
@@ -126,7 +124,7 @@ Install the salt-toolbox wrapper:
     file.managed:
         - template: jinja
         - source: salt://stack/salt-toolbox.command
-        - name: {{ Tools.prefix }}/bin/salt-toolbox
+        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-toolbox
 
         - defaults:
             toolbox: /bin/toolbox
@@ -135,7 +133,7 @@ Install the salt-toolbox wrapper:
             mounts:
                 - "/var/run/dbus"
                 - "/etc/systemd"
-                - "{{ Tools.prefix }}"
+                - "{{ pillar['configuration']['tools']['prefix'] }}"
                 - "/var/cache/salt"
                 - "/var/run/salt"
                 - "/var/log/salt"

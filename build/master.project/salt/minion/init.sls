@@ -1,5 +1,3 @@
-{% set Tools = pillar['configuration']['tools'] %}
-
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
 {% if grains['minion-role'] == 'master-bootstrap' %}
     {% set Root = pillar['configuration']['root'] %}
@@ -103,10 +101,10 @@ Install the script for bootstrapping the master:
     file.managed:
         - template: jinja
         - source: salt://minion/salt-bootstrap.command
-        - name: {{ Tools.prefix }}/bin/salt-bootstrap
+        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-bootstrap
 
         - context:
-            salt_toolbox: {{ Tools.prefix }}/bin/salt-toolbox
+            salt_toolbox: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-toolbox
 
         - require:
             - Install the salt-toolbox wrapper
@@ -118,7 +116,7 @@ Install the script for calling salt-call:
     file.symlink:
         - template: jinja
         - source: salt://stack/salt.command
-        - name: {{ Tools.prefix }}/bin/salt-call
+        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-call
 
         - defaults:
             rkt: /bin/rkt
