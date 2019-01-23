@@ -52,7 +52,7 @@ Install reactor minion-status state:
         - source: salt://reactor/minion.status-state
         - name: /srv/reactor/minion-status.sls
         - context:
-            path: {{ SaltContainer.Namespace }}
+            pillar_namespace: {{ SaltContainer.Namespace }}/pillar
         - use:
             - Make salt-master reactor directory
         - require:
