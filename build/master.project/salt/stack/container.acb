@@ -1,5 +1,5 @@
 begin --insecure docker://fedora
-set-name lol/salt-master
+set-name lol/salt-stack
 
 label add version {{ version }}
 label add arch amd64
@@ -35,4 +35,4 @@ mount add {{ name }} {{ volumes[name].mount }}
 {%- endfor %}
 
 annotation add appc.io/executor/supports-systemd-notify true
-set-exec -- /usr/bin/salt-master
+set-exec -- /usr/bin/false
