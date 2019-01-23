@@ -2,8 +2,8 @@
 
 service:
     flannel:
-        Namespace: "/coreos.com/network"
-        Configuration:
+        namespace: "/coreos.com/network"
+        configuration:
             Network: 10.1.0.0/16
             SubnetLen: 28
             SubnetMin: 10.1.10.0
