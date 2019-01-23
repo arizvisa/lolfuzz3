@@ -118,13 +118,15 @@ Install salt-master configuration:
 
             etcd_returner:
                 returner: "root_etcd"
-                returner_root: "{{ SaltContainer.Namespace }}"
+                returner_root: "{{ SaltContainer.Namespace }}/return"
                 ttl: {{ 60 * 30 }}
 
             etcd_cache:
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
                   port: 2379
-                  path_prefix: "{{ SaltContainer.Namespace }}"
+                  path_prefix: "{{ SaltContainer.Namespace }}/cache"
+                  allow_reconnect: true
+                  allow_redirect: true
 
         - require:
             - Make salt config directory
@@ -315,8 +317,8 @@ Link the script for calling salt-unity:
             - Install the script for interacting with salt-master
         - makedirs: true
 
-## States for etcd
-Register the salt-master namespace:
+## States for initializing the etcd namespaces
+Initialize the salt namespace:
     etcd.set:
         - name: "{{ SaltContainer.Namespace }}"
         - value: null
@@ -325,29 +327,87 @@ Register the salt-master namespace:
         - requires:
             - sls: etcd
 
+# cache
+Initialize the cache namespace:
+    etcd.set:
+        - name: "{{ SaltContainer.Namespace }}/cache"
+        - value: null
+        - directory: true
+        - use:
+            - Initialize the salt namespace
+        - requires:
+            - Initialize the salt namespace
+
+Initialize the minion cache namespace:
+    etcd.set:
+        - name: "{{ SaltContainer.Namespace }}/cache/minions"
+        - value: null
+        - directory: true
+        - use:
+            - Initialize the cache namespace
+        - requires:
+            - Initialize the cache namespace
+
+# returner
+Initialize the returner namespace:
+    etcd.set:
+        - name: "{{ SaltContainer.Namespace }}/return"
+        - value: null
+        - directory: true
+        - use:
+            - Initialize the salt namespace
+        - requires:
+            - Initialize the salt namespace
+
+Initialize the minion returner namespace:
+    etcd.set:
+        - name: "{{ SaltContainer.Namespace }}/return/minions"
+        - value: null
+        - directory: true
+        - use:
+            - Initialize the returner namespace
+        - requires:
+            - Initialize the returner namespace
+
+Initialize the jobs returner namespace:
+    etcd.set:
+        - name: "{{ SaltContainer.Namespace }}/return/jobs"
+        - value: null
+        - directory: true
+        - use:
+            - Initialize the returner namespace
+        - requires:
+            - Initialize the returner namespace
+
+# events
+Initialize the events returner namespace:
+    etcd.set:
+        - name: "{{ SaltContainer.Namespace }}/return/events"
+        - value: null
+        - directory: true
+        - use:
+            - Initialize the returner namespace
+        - requires:
+            - Initialize the returner namespace
+
+# pillar
 Initialize the nodes pillar namespace:
     etcd.set:
         - name: "{{ SaltContainer.Namespace }}/pillar"
         - value: null
         - directory: true
-        - profile: root_etcd
+        - use:
+            - Initialize the salt namespace
         - requires:
-            - Register the salt-master namespace
+            - Initialize the salt namespace
 
-Create the pillar for the salt-master:
+Register the pillar for the salt-master:
     etcd.set:
         - name: "{{ SaltContainer.Namespace }}/pillar/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}"
         - value: null
         - directory: true
-        - profile: root_etcd
+        - use:
+            - Initialize the nodes pillar namespace
         - requires:
             - Initialize the nodes pillar namespace
 
-Initialize the minion cache namespace:
-    etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/minions"
-        - value: null
-        - directory: true
-        - profile: root_etcd
-        - requires:
-            - Register the salt-master namespace
