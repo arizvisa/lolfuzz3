@@ -59,9 +59,12 @@ Install the salt-toolbox wrapper:
             mounts:
                 - "/var/run/dbus"
                 - "/etc/systemd"
+                - "{{ Tools.prefix }}"
+                - "/var/cache/salt"
+                - "/var/run/salt"
+                - "/var/log/salt"
                 - "/etc/salt"
                 - "/srv"
-                - "{{ Tools.prefix }}"
 
         - mode: 0755
         - makedirs: true
