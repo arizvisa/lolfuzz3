@@ -7,6 +7,7 @@ bootstrap:
         - container         # create container-directory and build-scripts
         - flannel           # enable the flanneld service
         - stack             # common salt-stack configuration
+        - fix-modules       # because Steve Hajducko is a fucking idiot that doesn't test his shit
 
     # salt-master container and services
         - master
@@ -15,10 +16,6 @@ bootstrap:
     # salt-minion configuration
         - minion
         - beacon
-
-    # because salt-stack is fucking garbage and Steve Hajducko is a fucking idiot
-    # that doesn't test his shit
-        - fix-modules
 
     # when being deployed/cloned
     'G@minion-role:master': []
