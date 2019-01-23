@@ -68,9 +68,9 @@ ifeq ($(validate),0)
 endif
 
 ### some utility macros for downloading files
-DOWNLOAD := curl -k -L -C- --progress-bar
-FETCH := curl -k -L -s -S
-PUT := curl -k -L -s -S -X PUT --data-binary
+DOWNLOAD := curl -L -C- --progress-bar
+FETCH := curl -L -s -S
+PUT := curl -L -s -S -X PUT --data-binary
 
 ifneq ($(wildcard $(ROOTDIR)/github.token),)
 GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
