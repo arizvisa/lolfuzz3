@@ -4,8 +4,7 @@ bootstrap:
     'G@minion-role:master-bootstrap':
         - project
         - container
-        - saltstack
-        - master
+        - salt
         - flannel
 
     # master that has joined the project
