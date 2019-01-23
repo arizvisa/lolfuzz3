@@ -1,9 +1,9 @@
 # configuration of the salt-stack image
 container:
     salt-stack:
-        Version: 2019.2
-        Python: python2
-        Pip: pip2
+        version: 2019.2
+        python: python2
+        pip: pip2
 
 # configuration of the salt-stack services
 service:

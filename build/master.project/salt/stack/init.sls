@@ -1,5 +1,4 @@
 {% set Tools = pillar['configuration']['tools'] %}
-{% set SaltContainer = pillar['container']['salt-stack'] %}
 
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
 {% if grains['minion-role'] == 'master-bootstrap' %}
@@ -51,12 +50,12 @@ Transfer salt-stack container build rules:
     file.managed:
         - template: jinja
         - source: salt://stack/container.acb
-        - name: "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ SaltContainer.Version }}.acb"
+        - name: "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.acb"
 
         - context:
-            version: {{ SaltContainer.Version }}
-            python: {{ SaltContainer.Python }}
-            pip: {{ SaltContainer.Pip }}
+            version: {{ pillar['container']['salt-stack']['version'] }}
+            python: {{ pillar['container']['salt-stack']['python'] }}
+            pip: {{ pillar['container']['salt-stack']['pip'] }}
 
         - defaults:
             volumes:
@@ -102,11 +101,11 @@ Install openssh-clients in toolbox:
 
 Build the salt-stack image:
     cmd.run:
-        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ pillar['service']['container']['path'] }}" -- "{{ pillar['service']['container']['path'] }}/build.sh" "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ SaltContainer.Version }}.acb"
+        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ pillar['service']['container']['path'] }}" -- "{{ pillar['service']['container']['path'] }}/build.sh" "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.acb"
         - cwd: {{ pillar['service']['container']['path'] }}
         - use_vt: true
         - hide_output: true
-        - creates: "{{ pillar['service']['container']['path'] }}/image/salt-stack:{{ SaltContainer.Version }}.aci"
+        - creates: "{{ pillar['service']['container']['path'] }}/image/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci"
         - env:
             - CONTAINER_DIR: {{ pillar['service']['container']['path'] }}
         - require:
@@ -116,7 +115,7 @@ Build the salt-stack image:
 
 Finished building the salt-stack image:
     file.managed:
-        - name: "{{ pillar['service']['container']['path'] }}/image/salt-stack:{{ SaltContainer.Version }}.aci"
+        - name: "{{ pillar['service']['container']['path'] }}/image/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci"
         - mode: 0664
         - replace: false
         - watch:
