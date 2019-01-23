@@ -1,5 +1,3 @@
-{% set SaltContainer = pillar['service']['salt-master'] %}
-
 include:
     - stack
     - master
@@ -52,7 +50,7 @@ Install reactor minion-status state:
         - source: salt://reactor/minion.status-state
         - name: /srv/reactor/minion-status.sls
         - context:
-            pillar_namespace: {{ SaltContainer.Namespace }}/pillar
+            pillar_namespace: {{ pillar['configuration']['salt']['namespace'] }}/pillar
         - use:
             - Make salt-master reactor directory
         - require:

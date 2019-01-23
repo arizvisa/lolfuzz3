@@ -3,8 +3,9 @@ bootstrap:
     # bootstrapping a master
     'G@minion-role:master-bootstrap':
         - project
-        - master
         - container
+        - saltstack
+        - master
         - flannel
 
     # master that has joined the project

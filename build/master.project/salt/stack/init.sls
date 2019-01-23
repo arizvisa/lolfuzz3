@@ -1,6 +1,6 @@
 {% set Tools = pillar['configuration']['tools'] %}
 {% set ContainerService = pillar['service']['container'] %}
-{% set SaltContainer = pillar['service']['salt-master'] %}
+{% set SaltContainer = pillar['container']['salt-stack'] %}
 
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
 {% if grains['minion-role'] == 'master-bootstrap' %}

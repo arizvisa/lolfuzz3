@@ -1,6 +1,4 @@
 {% set Tools = pillar['configuration']['tools'] %}
-{% set ContainerService = pillar['service']['container'] %}
-{% set SaltContainer = pillar['service']['salt-master'] %}
 
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
 {% if grains['minion-role'] == 'master-bootstrap' %}
@@ -114,17 +112,17 @@ Install salt-master configuration:
                   path: "/config"
 
                 - name: "minion_etcd"
-                  path: "{{ SaltContainer.Namespace }}/pillar/%(minion_id)s"
+                  path: "{{ pillar['configuration']['salt']['namespace'] }}/pillar/%(minion_id)s"
 
             etcd_returner:
                 returner: "root_etcd"
-                returner_root: "{{ SaltContainer.Namespace }}/return"
+                returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
                 ttl: {{ 60 * 30 }}
 
             etcd_cache:
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
                   port: 2379
-                  path_prefix: "{{ SaltContainer.Namespace }}/cache"
+                  path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
                   allow_reconnect: true
                   allow_redirect: true
 
@@ -140,10 +138,10 @@ Install salt-master.service:
         - name: /etc/systemd/system/salt-master.service
 
         - context:
-            version: {{ SaltContainer.Version }}
-            container_path: {{ ContainerService.Path }}
-            image_uuid_path: {{ ContainerService.Path }}/image/salt-stack:{{ SaltContainer.Version }}.aci.id
-            run_uuid_path: {{ SaltContainer.UUID }}
+            version: {{ pillar['container']['salt-stack']['Version'] }}
+            container_path: {{ pillar['service']['container']['Path'] }}
+            image_uuid_path: {{ pillar['service']['container']['Path'] }}/image/salt-stack:{{ pillar['container']['salt-stack']['Version'] }}.aci.id
+            run_uuid_path: {{ pillar['service']['salt-master']['UUID'] }}
             services:
                 - host: 127.0.0.1
                   port: 2379
@@ -176,7 +174,7 @@ Install the script for interacting with salt-master:
 
         - defaults:
             rkt: /bin/rkt
-            run_uuid_path: {{ SaltContainer.UUID }}
+            run_uuid_path: {{ pillar['service']['salt-master']['UUID'] }}
 
         - require:
             - Finished building the salt-stack image
@@ -245,7 +243,7 @@ Link the script for calling salt-unity:
 ## States for initializing the etcd namespaces
 Initialize the salt namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}"
+        - name: "{{ pillar['configuration']['salt']['namespace'] }}"
         - value: null
         - directory: true
         - profile: root_etcd
@@ -255,7 +253,7 @@ Initialize the salt namespace:
 # cache
 Initialize the cache namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/cache"
+        - name: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
         - value: null
         - directory: true
         - use:
@@ -265,7 +263,7 @@ Initialize the cache namespace:
 
 Initialize the minion cache namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/cache/minions"
+        - name: "{{ pillar['configuration']['salt']['namespace'] }}/cache/minions"
         - value: null
         - directory: true
         - use:
@@ -276,7 +274,7 @@ Initialize the minion cache namespace:
 # returner
 Initialize the returner namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/return"
+        - name: "{{ pillar['configuration']['salt']['namespace'] }}/return"
         - value: null
         - directory: true
         - use:
@@ -286,7 +284,7 @@ Initialize the returner namespace:
 
 Initialize the minion returner namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/return/minions"
+        - name: "{{ pillar['configuration']['salt']['namespace'] }}/return/minions"
         - value: null
         - directory: true
         - use:
@@ -296,7 +294,7 @@ Initialize the minion returner namespace:
 
 Initialize the jobs returner namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/return/jobs"
+        - name: "{{ pillar['configuration']['salt']['namespace'] }}/return/jobs"
         - value: null
         - directory: true
         - use:
@@ -307,7 +305,7 @@ Initialize the jobs returner namespace:
 # events
 Initialize the events returner namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/return/events"
+        - name: "{{ pillar['configuration']['salt']['namespace'] }}/return/events"
         - value: null
         - directory: true
         - use:
@@ -318,7 +316,7 @@ Initialize the events returner namespace:
 # pillar
 Initialize the nodes pillar namespace:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/pillar"
+        - name: "{{ pillar['configuration']['salt']['namespace'] }}/pillar"
         - value: null
         - directory: true
         - use:
@@ -328,7 +326,7 @@ Initialize the nodes pillar namespace:
 
 Register the pillar for the salt-master:
     etcd.set:
-        - name: "{{ SaltContainer.Namespace }}/pillar/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}"
+        - name: "{{ pillar['configuration']['salt']['namespace'] }}/pillar/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}"
         - value: null
         - directory: true
         - use:

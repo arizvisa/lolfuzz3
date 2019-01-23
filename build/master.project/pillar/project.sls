@@ -6,6 +6,10 @@ configuration:
     # project name
     project: {{ project_name }}
 
+    # service configurations
+    salt:
+        namespace: "/coreos.com/salt"
+
     # project namespace configuration
     defaults:
         repository: "git://path/to/{{ project_name }}/repository"
