@@ -1,4 +1,6 @@
 {% set Tools = pillar['configuration']['tools'] %}
+{% set ContainerService = pillar['service']['container'] %}
+{% set SaltContainer = pillar['service']['salt-master'] %}
 
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
 {% if grains['minion-role'] == 'master-bootstrap' %}
@@ -16,7 +18,7 @@ Make service directory:
         - mode: 0775
         - makedirs: True
 
-### Standard directories that saltstack uses for various things
+### Standard directories that salt-stack uses for various things
 Make salt log directory:
     file.directory:
         - name: /var/log/salt
@@ -45,7 +47,83 @@ Make salt run directory:
         - name: /var/run/salt
         - mode: 0770
 
-### Scripts for interacting with saltstack
+### Salt-stack container
+Transfer salt-stack container build rules:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/container.acb
+        - name: "{{ ContainerService.Path }}/build/salt-stack:{{ SaltContainer.Version }}.acb"
+
+        - context:
+            version: {{ SaltContainer.Version }}
+            python: {{ SaltContainer.Python }}
+            pip: {{ SaltContainer.Pip }}
+
+        - defaults:
+            volumes:
+                dbus-socket:
+                    source: /var/run/dbus
+                    mount: /var/run/dbus
+                media-root:
+                    source: /
+                    mount: /media/root
+                salt-cache:
+                    source: /var/cache/salt
+                    mount: /var/cache/salt
+                salt-logs:
+                    source: /var/log/salt
+                    mount: /var/log/salt
+                salt-run:
+                    source: /var/run/salt
+                    mount: /var/run/salt
+                salt-etc:
+                    source: /etc/salt
+                    mount: /etc/salt
+                salt-srv:
+                    source: /srv
+                    mount: /srv
+
+        - require:
+            - Make container-root build directory
+            - Install container-build.service
+        - mode: 0664
+
+# building the salt-stack container
+Install openssh-clients in toolbox:
+    pkg.installed:
+        - pkgs:
+            - openssh-clients
+
+    file.symlink:
+        - name: {{ salt['user.info'](grains['username']).home }}/.ssh/id_rsa
+        - target: {{ Root }}{{ pillar['configuration']['remote']['key'] }}
+        - force: true
+        - mode: 0400
+        - makedirs : true
+
+Build the salt-stack image:
+    cmd.run:
+        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ ContainerService.Path }}" -- "{{ ContainerService.Path }}/build.sh" "{{ ContainerService.Path }}/build/salt-stack:{{ SaltContainer.Version }}.acb"
+        - cwd: {{ ContainerService.Path }}
+        - use_vt: true
+        - hide_output: true
+        - creates: "{{ ContainerService.Path }}/image/salt-stack:{{ SaltContainer.Version }}.aci"
+        - env:
+            - CONTAINER_DIR: {{ ContainerService.Path }}
+        - require:
+            - Transfer salt-stack container build rules
+            - Install openssh-clients in toolbox
+            - Install container build script
+
+Finished building the salt-stack image:
+    file.managed:
+        - name: "{{ ContainerService.Path }}/image/salt-stack:{{ SaltContainer.Version }}.aci"
+        - mode: 0664
+        - replace: false
+        - watch:
+            - Build the salt-stack image
+
+### Scripts for interacting with salt-stack
 Install the salt-toolbox wrapper:
     file.managed:
         - template: jinja

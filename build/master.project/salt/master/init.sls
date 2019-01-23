@@ -71,7 +71,7 @@ Make salt-master configuration directory:
         - require:
             - Make salt config directory
 
-## saltstack master
+## salt-stack master
 Install salt-master configuration:
     file.managed:
         - template: jinja
@@ -133,81 +133,6 @@ Install salt-master configuration:
             - Initialize the nodes pillar namespace
         - mode: 0664
 
-Transfer salt-master build rules:
-    file.managed:
-        - template: jinja
-        - source: salt://master/salt-master.acb
-        - name: "{{ ContainerService.Path }}/build/salt-master:{{ SaltContainer.Version }}.acb"
-
-        - context:
-            version: {{ SaltContainer.Version }}
-            python: {{ SaltContainer.Python }}
-            pip: {{ SaltContainer.Pip }}
-
-        - defaults:
-            volumes:
-                dbus-socket:
-                    source: /var/run/dbus
-                    mount: /var/run/dbus
-                media-root:
-                    source: /
-                    mount: /media/root
-                salt-cache:
-                    source: /var/cache/salt
-                    mount: /var/cache/salt
-                salt-logs:
-                    source: /var/log/salt
-                    mount: /var/log/salt
-                salt-run:
-                    source: /var/run/salt
-                    mount: /var/run/salt
-                salt-etc:
-                    source: /etc/salt
-                    mount: /etc/salt
-                salt-srv:
-                    source: /srv
-                    mount: /srv
-
-        - require:
-            - Make container-root build directory
-            - Install container-build.service
-        - mode: 0664
-
-# building the salt-master container
-Install openssh-clients in toolbox:
-    pkg.installed:
-        - pkgs:
-            - openssh-clients
-
-    file.symlink:
-        - name: {{ salt['user.info'](grains['username']).home }}/.ssh/id_rsa
-        - target: {{ Root }}{{ pillar['configuration']['remote']['key'] }}
-        - force: true
-        - mode: 0400
-        - makedirs : true
-
-Build salt-master image:
-    cmd.run:
-        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ ContainerService.Path }}" -- "{{ ContainerService.Path }}/build.sh" "{{ ContainerService.Path }}/build/salt-master:{{ SaltContainer.Version }}.acb"
-        - cwd: {{ ContainerService.Path }}
-        - use_vt: true
-        - hide_output: true
-        - creates: "{{ ContainerService.Path }}/image/salt-master:{{ SaltContainer.Version }}.aci"
-        - env:
-            - CONTAINER_DIR: {{ ContainerService.Path }}
-        - require:
-            - Transfer salt-master build rules
-            - Install openssh-clients in toolbox
-            - Install container build script
-
-Finished building the salt-master image:
-    file.managed:
-        - name: "{{ ContainerService.Path }}/image/salt-master:{{ SaltContainer.Version }}.aci"
-        - mode: 0664
-        - replace: false
-        - watch:
-            - Build salt-master image
-
 Install salt-master.service:
     file.managed:
         - template: jinja
@@ -217,18 +142,18 @@ Install salt-master.service:
         - context:
             version: {{ SaltContainer.Version }}
             container_path: {{ ContainerService.Path }}
-            image_uuid_path: {{ ContainerService.Path }}/image/salt-master:{{ SaltContainer.Version }}.aci.id
+            image_uuid_path: {{ ContainerService.Path }}/image/salt-stack:{{ SaltContainer.Version }}.aci.id
             run_uuid_path: {{ SaltContainer.UUID }}
             services:
                 - host: 127.0.0.1
                   port: 2379
         - use:
-            - Transfer salt-master build rules
+            - Transfer salt-stack container build rules
 
         - require:
             - Install container load script
             - Install salt-master configuration
-            - Finished building the salt-master image
+            - Finished building the salt-stack image
         - mode: 0664
 
 # systemctl enable the salt-master.service
@@ -238,7 +163,7 @@ Enable systemd multi-user.target wants salt-master.service:
         - target: /etc/systemd/system/salt-master.service
         - require:
             - Install salt-master configuration
-            - Finished building the salt-master image
+            - Finished building the salt-stack image
             - Install salt-master.service
         - makedirs: true
 
@@ -254,7 +179,7 @@ Install the script for interacting with salt-master:
             run_uuid_path: {{ SaltContainer.UUID }}
 
         - require:
-            - Finished building the salt-master image
+            - Finished building the salt-stack image
             - Install salt-master.service
 
         - mode: 0755
