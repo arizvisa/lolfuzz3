@@ -1,4 +1,3 @@
-
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
 {% if grains['minion-role'] == 'master-bootstrap' %}
     {% set Root = pillar['configuration']['root'] %}
