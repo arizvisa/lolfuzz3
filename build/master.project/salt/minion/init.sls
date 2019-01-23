@@ -12,8 +12,9 @@
 ### States to build the salt-minion configuration for managing the salt-master
 
 include:
-    - stack
     - etcd
+    - container
+    - stack
     - master
 
 Make salt-minion cache directory:
@@ -63,9 +64,41 @@ Install salt-minion configuration:
             - Install salt-master configuration
 
         - require:
-            - sls: etcd
-            - sls: master
+            - Make salt config directory
+            - Initialize the nodes pillar namespace
 
+Install salt-minion.service:
+    file.managed:
+        - template: jinja
+        - source: salt://minion/salt-minion.service
+        - name: /etc/systemd/system/salt-minion.service
+
+        - context:
+            version: {{ pillar['container']['salt-stack']['Version'] }}
+            container_path: {{ pillar['service']['container']['Path'] }}
+            image_uuid_path: {{ pillar['service']['container']['Path'] }}/image/salt-stack:{{ pillar['container']['salt-stack']['Version'] }}.aci.id
+            run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
+            services:
+                - host: 127.0.0.1
+                  port: 2379
+        - use:
+            - Transfer salt-stack container build rules
+        - require:
+            - Install salt-minion configuration
+            - Finished building the salt-stack image
+            - Install container load script
+        - mode: 0664
+
+# systemctl enable the salt-master.service
+Enable systemd multi-user.target wants salt-master.service:
+    file.symlink:
+        - name: /etc/systemd/system/multi-user.target.wants/salt-minion.service
+        - target: /etc/systemd/system/salt-minion.service
+        - require:
+            - Install salt-minion.service
+        - makedirs: true
+
+## scripts for interacting with the salt-minion
 Install the script for bootstrapping the master:
     file.managed:
         - template: jinja
