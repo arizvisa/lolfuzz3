@@ -12,7 +12,7 @@ Type=notify
 NotifyAccess=all
 TimeoutStartSec=infinity
 
-ExecStartPre=-/usr/bin/mkdir -p /var/cache/salt /var/log/salt /var/run/salt /srv
+ExecStartPre=-/usr/bin/mkdir -p {%- for name in volumes %} {{ volumes[name].source }}{% endfor %}
 ExecStartPre=/usr/bin/bash -c \
     "{{ container_path }}/load.sh {{ container_path }}/image/salt-master:{{ version }}.aci | tee >( cut -d$'\t' -f3 >| {{ image_uuid_path }} )"
 ExecStart=/usr/bin/rkt run \
