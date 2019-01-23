@@ -96,6 +96,8 @@
 
             "hard_drive_interface" : "scsi",
             "disk_size" : "{{user `guest-disk-size`}}",
+
+            "guest_os_type": "Other_64",
             "guest_additions_mode" : "disable"
         },
         { "type" : "vmware-iso",
