@@ -18,7 +18,7 @@ run -- {{pip}} --retries=65536 install --upgrade pip
 run -- {{pip}} --retries=65536 install MarkupSafe backports_abc psutil requests
 run -- {{pip}} --retries=65536 install cffi python-dateutil gitdb gitpython ioflo Jinja2 libnacl Mako msgpack-python pycparser pycryptodome pygit2 smmap timelib tornado PyYAML
 run -- {{pip}} --retries=65536 install pyzmq raet python-etcd
-run -- {{pip}} --retries=65536 install systemd dnspython tldextract click pyvmomi impacket trollius certifi singledispatch twilio pyinotify pyroute2 PyOpenSSL netmiko ldap textfsm ClusterShell paramiko setproctitle
+run -- {{pip}} --retries=65536 install systemd dnspython tldextract click pyvmomi impacket trollius certifi singledispatch twilio pyinotify pyroute2 PyOpenSSL netmiko textfsm ClusterShell paramiko setproctitle
 
 run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 upgrade
