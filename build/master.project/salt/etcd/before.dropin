@@ -1,2 +1,2 @@
 [Unit]
-Before={%- for service in units %} {{ service }}{% endfor %}
+Before={{ units | join(' ') }}
