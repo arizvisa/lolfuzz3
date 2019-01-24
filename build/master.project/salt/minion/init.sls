@@ -55,7 +55,7 @@ Install salt-minion configuration:
 
         - context:
             machine_id: {{ MachineId }}
-            master: 127.0.0.1
+            master: localhost
 
             etcd_hosts:
                 - name: "root_etcd"
@@ -94,7 +94,16 @@ Install salt-minion.service:
             image_name: lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}
             image_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci
             network: host
-            services: []
+            services:
+                - host: 127.0.0.1   # salt-job
+                  port: 4505
+
+                - host: 127.0.0.1   # salt-result
+                  port: 4506
+
+                - host: 127.0.0.1   # etcd-client
+                  port: 2379
+
             exposed: []
             image_uuid_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
             run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}

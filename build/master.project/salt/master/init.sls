@@ -143,7 +143,7 @@ Install salt-master.service:
 
             network: default
             services:
-                - host: 127.0.0.1
+                - host: 127.0.0.1   # etcd
                   port: 2379
 
             exposed:
