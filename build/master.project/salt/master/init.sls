@@ -82,15 +82,6 @@ Install salt-master configuration:
             pillarenv: base
             rootfs: {{ Root }}
 
-            etcd_hosts:
-                - name: "root_etcd"
-                  host: {{ grains['ip4_interfaces'][Interface] | first }}
-                  port: 2379
-
-                - name: "minion_etcd"
-                  host: {{ grains['ip4_interfaces'][Interface] | first }}
-                  port: 2379
-
             root_files:
                 - name: "base"
                   path: "/srv/salt"
@@ -116,6 +107,16 @@ Install salt-master configuration:
                 returner: "root_etcd"
                 returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
                 ttl: {{ 60 * 30 }}
+
+        - context:
+            etcd_hosts:
+                - name: "root_etcd"
+                  host: {{ grains['ip4_interfaces'][Interface] | first }}
+                  port: 2379
+
+                - name: "minion_etcd"
+                  host: {{ grains['ip4_interfaces'][Interface] | first }}
+                  port: 2379
 
             etcd_cache:
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
