@@ -105,7 +105,7 @@ Dropin a before requisite to etcd-master.service:
     file.managed:
         - template: jinja
         - source: salt://etcd/before.dropin
-        - name: /etc/systemd/system/salt-minion.service.d/15-requisite-before.conf
+        - name: /etc/systemd/system/etcd-master.service.d/15-requisite-before.conf
         - defaults:
             units:
                 - flanneld.service
