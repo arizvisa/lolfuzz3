@@ -114,7 +114,7 @@ Install the script for bootstrapping the master:
         - makedirs: true
 
 Install the script for calling salt-call:
-    file.symlink:
+    file.managed:
         - template: jinja
         - source: salt://stack/salt.command
         - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-call
