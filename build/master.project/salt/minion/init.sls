@@ -72,9 +72,9 @@ Install salt-minion.service:
         - name: /etc/systemd/system/salt-minion.service
 
         - context:
-            version: {{ pillar['container']['salt-stack']['Version'] }}
-            container_path: {{ pillar['service']['container']['Path'] }}
-            image_uuid_path: {{ pillar['service']['container']['Path'] }}/image/salt-stack:{{ pillar['container']['salt-stack']['Version'] }}.aci.id
+            version: {{ pillar['container']['salt-stack']['version'] }}
+            container_path: {{ pillar['service']['container']['path'] }}
+            image_uuid_path: {{ pillar['service']['container']['path'] }}/image/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
             run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
             services:
                 - host: 127.0.0.1
