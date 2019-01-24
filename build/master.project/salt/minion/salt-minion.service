@@ -3,7 +3,7 @@ Description=Salt-Minion
 ConditionPathExists={{ container_path }}/image/salt-stack:{{ version }}.aci
 ConditionPathExists=/etc/salt/minion
 Wants=network.target
-After=flanneld.service salt-master.service
+After=flanneld.service
 Requires=flanneld.service salt-master.service
 
 [Service]
