@@ -79,11 +79,13 @@ Project key {{ ProjectRoot | join('.') }}:
 ### Systemd Services
 
 # systemctl enable the etcd-member.service
-Enable systemd multi-user.target wants etcd-member.service:
+Enable systemd multi-user.target wants etcd.serice:
     file.symlink:
         - name: /etc/systemd/system/multi-user.target.wants/etcd.service
         - target: /etc/systemd/system/etcd.service
         - makedirs: true
+        - require:
+            - Dropin a before requisite to etcd.service
 
 # systemctl enable the etcd-master.service
 Enable systemd multi-user.target wants etcd-master.service:
@@ -91,29 +93,10 @@ Enable systemd multi-user.target wants etcd-master.service:
         - name: /etc/systemd/system/multi-user.target.wants/etcd-master.service
         - target: /etc/systemd/system/etcd-master.service
         - makedirs: true
+        - require:
+            - Dropin a before requisite to etcd-master.service
 
 ### Etcd requisites
-
-## etcd-master.service
-Make dropin directory for etcd-master.service:
-    file.directory:
-        - name: /etc/systemd/system/etcd-master.service.d
-        - mode: 0755
-        - makedirs: true
-
-Dropin a before requisite to etcd-master.service:
-    file.managed:
-        - template: jinja
-        - source: salt://etcd/before.dropin
-        - name: /etc/systemd/system/etcd-master.service.d/15-requisite-before.conf
-        - defaults:
-            units:
-                - flanneld.service
-                - etcd-master.service
-                - etcd.service
-        - require:
-            - Make dropin directory for etcd-master.service
-        - mode: 0644
 
 ## etcd.service
 Make dropin directory for etcd.service:
@@ -125,13 +108,34 @@ Make dropin directory for etcd.service:
 Dropin a before requisite to etcd.service:
     file.managed:
         - template: jinja
-        - source: salt://etcd/before.dropin
+        - source: salt://etcd/requisite-before.dropin
         - name: /etc/systemd/system/etcd.service.d/15-requisite-before.conf
         - defaults:
             units:
                 - flanneld.service
-                - etcd-master.service
-                - etcd.service
+                - salt-master.service
+                - salt-minion.service
         - require:
             - Make dropin directory for etcd.service
+        - mode: 0644
+
+## etcd-master.service
+Make dropin directory for etcd-master.service:
+    file.directory:
+        - name: /etc/systemd/system/etcd-master.service.d
+        - mode: 0755
+        - makedirs: true
+
+Dropin a before requisite to etcd-master.service:
+    file.managed:
+        - template: jinja
+        - source: salt://etcd/requisite-before.dropin
+        - name: /etc/systemd/system/etcd-master.service.d/15-requisite-before.conf
+        - defaults:
+            units:
+                - flanneld.service
+                - salt-master.service
+                - salt-minion.service
+        - require:
+            - Make dropin directory for etcd-master.service
         - mode: 0644
