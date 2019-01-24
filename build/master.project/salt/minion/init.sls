@@ -64,6 +64,7 @@ Install salt-minion configuration:
 
         - require:
             - Make salt config directory
+            - Build the salt-stack image
             - Initialize the nodes pillar namespace
 
 Install salt-minion.service:
