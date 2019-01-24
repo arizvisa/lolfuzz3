@@ -14,8 +14,6 @@ Documentation=https://github.com/coreos/etcd
 
 [Service]
 Type=notify
-Restart=on-failure
-RestartSec=10s
 LimitNOFILE=40000
 TimeoutStartSec=0
 
