@@ -47,7 +47,6 @@ Make salt-minion configuration directory:
         - require:
             - Make salt config directory
 
-# once we're sure the salt-master.service will run, we can install the salt-minion configuration
 Install salt-minion configuration:
     file.managed:
         - template: jinja
@@ -58,6 +57,8 @@ Install salt-minion configuration:
             machine_id: {{ MachineId }}
             master: localhost
 
+        # once we're sure the salt-master.service is configured, we can
+        # install the salt-minion configuration....
         - use:
             - Install salt-master configuration
 
@@ -87,8 +88,8 @@ Install salt-minion.service:
             - Install container load script
         - mode: 0664
 
-# systemctl enable the salt-master.service
-Enable systemd multi-user.target wants salt-master.service:
+# systemctl enable the salt-minion.service
+Enable systemd multi-user.target wants salt-minion.service:
     file.symlink:
         - name: /etc/systemd/system/multi-user.target.wants/salt-minion.service
         - target: /etc/systemd/system/salt-minion.service
