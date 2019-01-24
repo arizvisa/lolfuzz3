@@ -64,8 +64,8 @@ Install salt-minion configuration:
 
         - require:
             - Make salt config directory
-            - Build the salt-stack image
             - Initialize the nodes pillar namespace
+            - Enable systemd multi-user.target wants salt-master.service
 
 Install salt-minion.service:
     file.managed:
