@@ -169,6 +169,7 @@ Install the script for interacting with salt-master:
 
         - defaults:
             rkt: /bin/rkt
+            unit: salt-master.service
             run_uuid_path: {{ pillar['service']['salt-master']['UUID'] }}
 
         - require:

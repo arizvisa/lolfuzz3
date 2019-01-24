@@ -122,6 +122,7 @@ Install the script for calling salt-call:
 
         - defaults:
             rkt: /bin/rkt
+            unit: salt-minion.service
             run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
 
         - require:
