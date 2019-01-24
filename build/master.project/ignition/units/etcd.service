@@ -24,3 +24,4 @@ ExecStartPre=-/usr/bin/mkdir --parents /var/lib/etcd /var/lib/coreos
 ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/lib/coreos/etcd-member.uuid
 ExecStart=/usr/lib/coreos/etcd-wrapper $ETCD_OPTS
 ExecStop=-/usr/bin/rkt stop --uuid-file=/var/lib/coreos/etcd-member.uuid
+ExecStopPost=-/usr/bin/rm /var/lib/coreos/etcd-member.uuid
