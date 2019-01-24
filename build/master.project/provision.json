@@ -234,6 +234,16 @@
         },
 
         { "type" : "shell-local",
+            "command" : "echo [-] Cleaning up etcd-schema.service"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "inline" : [
+                "systemctl stop etcd-schema.service"
+            ]
+        },
+
+        { "type" : "shell-local",
             "command" : "echo [*] Done!"
         }
     ]
