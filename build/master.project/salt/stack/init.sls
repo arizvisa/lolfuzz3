@@ -60,6 +60,9 @@ Generate salt-stack container build rules:
                 dbus-socket:
                     source: /var/run/dbus
                     mount: /var/run/dbus
+                run-systemd:
+                    source: /var/run/systemd
+                    mount: /var/run/systemd
                 media-root:
                     source: /
                     mount: /media/root
