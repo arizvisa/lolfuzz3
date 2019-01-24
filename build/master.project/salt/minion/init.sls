@@ -57,6 +57,22 @@ Install salt-minion configuration:
             machine_id: {{ MachineId }}
             master: 127.0.0.1
 
+            etcd_hosts:
+                - name: "root_etcd"
+                  host: 127.0.0.1
+                  port: 2379
+
+                - name: "minion_etcd"
+                  host: 127.0.0.1
+                  port: 2379
+
+            etcd_cache:
+                  host: 127.0.0.1
+                  port: 2379
+                  path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
+                  allow_reconnect: true
+                  allow_redirect: true
+
         # once we're sure the salt-master.service is configured, we can
         # install the salt-minion configuration....
         - use:
