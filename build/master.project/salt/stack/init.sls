@@ -44,7 +44,7 @@ Make salt run directory:
         - mode: 0770
 
 ### Salt-stack container
-Transfer salt-stack container build rules:
+Generate salt-stack container build rules:
     file.managed:
         - template: jinja
         - source: salt://stack/container.acb
@@ -107,7 +107,7 @@ Build the salt-stack image:
         - env:
             - CONTAINER_DIR: {{ pillar['service']['container']['path'] }}
         - require:
-            - Transfer salt-stack container build rules
+            - Generate salt-stack container build rules
             - Install openssh-clients in toolbox
             - Install container build script
 

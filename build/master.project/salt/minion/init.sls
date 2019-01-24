@@ -108,7 +108,7 @@ Install salt-minion.service:
             image_uuid_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
             run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
         - use:
-            - Transfer salt-stack container build rules
+            - Generate salt-stack container build rules
         - require:
             - Install salt-minion configuration
             - Finished building the salt-stack image
