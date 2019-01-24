@@ -6,34 +6,56 @@ label add arch amd64
 label add os linux
 label add distro fedora
 
+### Software installation
+
+## Binary packages used by the stack
+# Commands needed by the container
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 update
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils chkconfig procps-ng net-tools git
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}} {{python}}-devel
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pip {{python}}-six {{python}}-requests {{python}}-urllib3
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 libgit2-devel libsodium libsodium-devel libyaml libyaml-devel zeromq zeromq-devel
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pycurl {{python}}-Cython
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 groupinstall "Development Tools"
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils systemd chkconfig procps-ng net-tools git
 
+# Python
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}
+
+# Python libraries needed to install packages
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pip {{python}}-setuptools {{python}}-six {{python}}-requests {{python}}-urllib3
+
+# Binary libraries needed for various packages
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 libsodium libyaml zeromq
+
+# Python dependencies containing some binaries which are needed by Salt
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pycurl {{python}}-Cython {{python}}-systemd {{python}}-markupsafe {{python}}-msgpack {{python}}-tornado {{python}}-zmq
+
+# Python dependencies containing binaries which are used some of the available different modules in Salt
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-gitdb {{python}}-psutil {{python}}-cffi {{python}}-pycryptodomex {{python}}-pygit2 {{python}}-pyyaml {{python}}-impacket {{python}}-ldap {{python}}-setproctitle
+
+## Python packages used by the stack
 run -- {{pip}} --retries=65536 install --upgrade pip
-run -- {{pip}} --retries=65536 install MarkupSafe backports_abc psutil requests
-run -- {{pip}} --retries=65536 install cffi python-dateutil gitdb gitpython ioflo Jinja2 libnacl Mako msgpack-python pycparser pycryptodome pygit2 smmap timelib tornado PyYAML
-run -- {{pip}} --retries=65536 install pyzmq raet python-etcd
-run -- {{pip}} --retries=65536 install systemd dnspython tldextract click pyvmomi impacket trollius certifi singledispatch twilio pyinotify pyroute2 PyOpenSSL netmiko textfsm ClusterShell paramiko setproctitle
+run -- {{pip}} --retries=65536 install backports_abc python-dateutil gitpython ioflo Jinja2 libnacl Mako pycparser smmap
+run -- {{pip}} --retries=65536 install raet python-etcd
 
+# Optional modules which are used by Salt
+run -- {{pip}} --retries=65536 install dnspython tldextract click pyvmomi trollius certifi singledispatch twilio pyinotify textfsm netmiko paramiko pyroute2 pyOpenSSL
+
+### Installation of the stack (via bootstrap)
 run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 upgrade
 run -- bash /root/install-salt.sh -b -x {{python}} -L -F -P -X -N -M git {{ version }}
 
+## Final package upgrade and clean up
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 upgrade
 run -- dnf -y clean all --enablerepo='*'
 
-run -- mkdir -p {%- for name in volumes %} {{ volumes[name].mount }}{% endfor %}
-
+### Miscellaneous configuration
+# Exposed tcp ports for services provided
 port add salt-job tcp 4505
 port add salt-result tcp 4506
+
+# Filesystems that need to be created and mounted
+run -- mkdir -p {%- for name in volumes %} {{ volumes[name].mount }}{% endfor %}
 
 {% for name in volumes %}
 mount add {{ name }} {{ volumes[name].mount }}
 {%- endfor %}
 
+### Container options
 annotation add appc.io/executor/supports-systemd-notify true
 set-exec -- /usr/bin/false
