@@ -136,13 +136,25 @@ Install salt-master.service:
         - name: /etc/systemd/system/salt-master.service
 
         - context:
-            version: {{ pillar['container']['salt-stack']['version'] }}
             container_path: {{ pillar['service']['container']['path'] }}
-            image_uuid_path: {{ pillar['service']['container']['path'] }}/image/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
-            run_uuid_path: {{ pillar['service']['salt-master']['UUID'] }}
+            image_name: lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}
+            image_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci
+
+            network: default
             services:
                 - host: 127.0.0.1
                   port: 2379
+
+            exposed:
+                - name: salt-job
+                  number: 4505
+
+                - name: salt-result
+                  number: 4506
+
+            image_uuid_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
+            run_uuid_path: {{ pillar['service']['salt-master']['UUID'] }}
+
         - use:
             - Transfer salt-stack container build rules
         - require:

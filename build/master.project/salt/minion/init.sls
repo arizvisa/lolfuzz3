@@ -55,7 +55,7 @@ Install salt-minion configuration:
 
         - context:
             machine_id: {{ MachineId }}
-            master: localhost
+            master: 127.0.0.1
 
         # once we're sure the salt-master.service is configured, we can
         # install the salt-minion configuration....
@@ -74,13 +74,14 @@ Install salt-minion.service:
         - name: /etc/systemd/system/salt-minion.service
 
         - context:
-            version: {{ pillar['container']['salt-stack']['version'] }}
             container_path: {{ pillar['service']['container']['path'] }}
-            image_uuid_path: {{ pillar['service']['container']['path'] }}/image/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
+            image_name: lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}
+            image_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci
+            network: host
+            services: []
+            exposed: []
+            image_uuid_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
             run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
-            services:
-                - host: 127.0.0.1
-                  port: 2379
         - use:
             - Transfer salt-stack container build rules
         - require:

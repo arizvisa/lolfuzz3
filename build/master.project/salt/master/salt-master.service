@@ -1,6 +1,6 @@
 [Unit]
 Description=Salt-Master
-ConditionPathExists={{ container_path }}/image/salt-stack:{{ version }}.aci
+ConditionPathExists={{ container_path }}/image/{{ image_path }}
 ConditionPathExists=/etc/salt/master
 Wants=network.target
 After=flanneld.service
@@ -14,17 +14,18 @@ TimeoutStartSec=infinity
 
 ExecStartPre=-/usr/bin/mkdir -p {%- for name in volumes %} {{ volumes[name].source }}{% endfor %}
 ExecStartPre=/usr/bin/bash -c \
-    "{{ container_path }}/load.sh {{ container_path }}/image/salt-stack:{{ version }}.aci | tee >( cut -d$'\t' -f3 >| {{ image_uuid_path }} )"
+    "{{ container_path }}/load.sh {{ container_path }}/image/{{ image_path }} | tee >( cut -d$'\t' -f3 >| {{ container_path }}/image/{{ image_uuid_path }} )"
 ExecStart=/usr/bin/rkt run \
             --uuid-file-save={{ run_uuid_path }} \
-            --net=default \
-            --port=salt-job:4505 \
-            --port=salt-result:4506 \
+            --net={{ network }} \
+{%- for port in exposed %}
+            --port={{ port.name }}:{{ port.number }} \
+{%- endfor %}
 {%- for name in volumes %}
             --volume {{ name }},kind=host,source={{ volumes[name].source }} \
 {%- endfor %}
             --inherit-env=true \
-            -- lol/salt-stack:{{ version }} --- --exec=/usr/bin/salt-master
+            -- {{ image_name }} --- --exec=/usr/bin/salt-master
 {%- for svc in services %}
 ExecStartPost=/usr/bin/bash -c \
                 "iptables -t nat -A PREROUTING -p tcp -s "`/usr/bin/rkt list --format=json | jq -r --slurpfile uuid <( jq -Rs . "{{ run_uuid_path }}" ) '.[] | select(.name == $uuid[0]) | .networks[0].ip'`" --dport {{ svc.port }} -j DNAT --to-destination {{ svc.host }}:{{ svc.port }}"
