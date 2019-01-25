@@ -31,14 +31,6 @@ Install salt-cloud profiles directory:
             - Make salt configuration directory
             - Make salt-cloud profiles directory
 
-Install default cloud configuration:
-    file.managed:
-        - source: salt://cloud/default.conf
-        - name: /srv/cloud/default.conf
-        - mode: 0664
-        - require:
-            - Make salt-cloud profiles directory
-
 Install saltify cloud configuration:
     file.managed:
         - template: jinja
