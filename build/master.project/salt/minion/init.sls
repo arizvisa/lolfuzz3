@@ -93,6 +93,7 @@ Install salt-minion.service:
             description: Salt-Minion
             configuration: /etc/salt/master
             execute: /usr/bin/salt-minion
+            kill_mode: control-group
             after:
                 - flanneld.service
             requires:

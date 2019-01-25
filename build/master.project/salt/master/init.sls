@@ -140,6 +140,7 @@ Install salt-master.service:
             description: Salt-Master
             configuration: /etc/salt/minion
             execute: /usr/bin/salt-master
+            kill_mode: process
             after:
                 - flanneld.service
             requires:
