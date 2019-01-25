@@ -338,13 +338,3 @@ Initialize the nodes pillar namespace:
         - requires:
             - Initialize the salt namespace
 
-Register the pillar for the salt-master:
-    etcd.set:
-        - name: "{{ pillar['configuration']['salt']['namespace'] }}/pillar/{{ MachineId }}.master.{{ pillar['configuration']['project'] }}"
-        - value: null
-        - directory: true
-        - use:
-            - Initialize the nodes pillar namespace
-        - requires:
-            - Initialize the nodes pillar namespace
-
