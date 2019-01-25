@@ -139,21 +139,15 @@ Install salt-master.service:
         - context:
             description: Salt-Master
             configuration: /etc/salt/minion
+
             execute: /usr/bin/salt-master
             kill_mode: process
             after:
                 - flanneld.service
             requires:
                 - flanneld.service
-            container_path: {{ pillar['service']['container']['path'] }}
-            image_name: lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}
-            image_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci
 
             network: default
-            services:
-                - host: 127.0.0.1   # etcd
-                  port: 2379
-
             exposed:
                 - name: salt-job
                   number: 4505
@@ -161,9 +155,11 @@ Install salt-master.service:
                 - name: salt-result
                   number: 4506
 
+            container_path: {{ pillar['service']['container']['path'] }}
+            image_name: lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}
+            image_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci
             image_uuid_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
             run_uuid_path: {{ pillar['service']['salt-master']['UUID'] }}
-            run_address_path: {{ pillar['service']['salt-master']['Address'] }}
 
         - use:
             - Generate salt-stack container build rules

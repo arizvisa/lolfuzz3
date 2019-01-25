@@ -92,6 +92,7 @@ Install salt-minion.service:
         - context:
             description: Salt-Minion
             configuration: /etc/salt/master
+
             execute: /usr/bin/salt-minion
             kill_mode: control-group
             after:
@@ -99,15 +100,16 @@ Install salt-minion.service:
             requires:
                 - flanneld.service
                 - salt-master.service
+
+            network: host
+            exposed: []
+
             container_path: {{ pillar['service']['container']['path'] }}
             image_name: lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}
             image_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci
-            network: host
-            services: []
-            exposed: []
             image_uuid_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
             run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
-            run_address_path: {{ pillar['service']['salt-minion']['Address'] }}
+
         - use:
             - Generate salt-stack container build rules
         - require:
