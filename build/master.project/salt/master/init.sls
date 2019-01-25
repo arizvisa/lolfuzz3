@@ -63,9 +63,9 @@ Make salt-master configuration directory:
     file.directory:
         - name: /etc/salt/master.d
         - use:
-            - Make salt config directory
+            - Make salt configuration directory
         - require:
-            - Make salt config directory
+            - Make salt configuration directory
 
 ## salt-stack master
 Install salt-master configuration:
@@ -126,7 +126,7 @@ Install salt-master configuration:
                   allow_redirect: true
 
         - require:
-            - Make salt config directory
+            - Make salt configuration directory
             - Initialize the nodes pillar namespace
         - mode: 0664
 

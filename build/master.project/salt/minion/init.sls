@@ -43,9 +43,9 @@ Make salt-minion configuration directory:
     file.directory:
         - name: /etc/salt/minion.d
         - use:
-            - Make salt config directory
+            - Make salt configuration directory
         - require:
-            - Make salt config directory
+            - Make salt configuration directory
 
 Install salt-minion configuration:
     file.managed:
@@ -79,7 +79,7 @@ Install salt-minion configuration:
             - Install salt-master configuration
 
         - require:
-            - Make salt config directory
+            - Make salt configuration directory
             - Initialize the nodes pillar namespace
             - Enable systemd multi-user.target wants salt-master.service
 

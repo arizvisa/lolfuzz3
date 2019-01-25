@@ -20,7 +20,7 @@ Make salt log directory:
         - name: /var/log/salt
         - mode: 0770
 
-Make salt config directory:
+Make salt configuration directory:
     file.directory:
         - name: /etc/salt
         - mode: 0770
@@ -29,9 +29,9 @@ Make salt pki directory:
     file.directory:
         - name: /etc/salt/pki
         - use:
-            - Make salt config directory
+            - Make salt configuration directory
         - require:
-            - Make salt config directory
+            - Make salt configuration directory
 
 Make salt cache directory:
     file.directory:

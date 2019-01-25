@@ -25,5 +25,4 @@ Install a default salt-minion beacon highstate:
         - use:
             - Make salt-minion configuration directory
         - requires:
-            - Make salt-minion beacon directory
             - Make salt-minion configuration directory
