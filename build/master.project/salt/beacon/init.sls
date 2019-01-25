@@ -13,9 +13,18 @@ Install a default salt-minion beacon highstate:
                 inotify:
                     - files:
                         {{ pillar['service']['container']['path']}}/build:
-                            auto_add: true
+                            mask:
+                                - create
+                                - delete
+                                - modify
+                            recurse: true
                         {{ pillar['service']['container']['path']}}/image:
-                            auto_add: true
+                            mask:
+                                - create
+                                - delete
+                                - modify
+                            recurse: true
+                    - disable_during_state_run: true
                 service:
                     - services:
                         {% for name in pillar['service'] %}
