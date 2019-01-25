@@ -1,6 +1,6 @@
 bootstrap:
 
-    # from packer image
+# first (only) master in cluster
     'G@minion-role:master-bootstrap':
         - bootstrap         # create /etc/bootstrap-environment
         - etcd              # seed etcd with /etc/machine-id
@@ -17,7 +17,10 @@ bootstrap:
         - minion
         - beacon
 
-    # when being deployed/cloned
+    # salt-cloud configuration
+        - cloud
+
+# when master is re-deployed or cloned
     'G@minion-role:master': []
 #        - reset-id          # remove /etc/machine-id and then restart
 #                            # systemd-machine-id-commit.service or call
