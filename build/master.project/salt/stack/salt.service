@@ -10,7 +10,7 @@ Requires={{ requires | join(' ') }}
 Type=notify
 Restart=always
 NotifyAccess=all
-KillMode=mixed
+KillMode=process
 LimitNOFILE=16384
 TimeoutStartSec=infinity
 
@@ -36,7 +36,7 @@ ExecStartPost=/usr/bin/bash -c \
                 "iptables -t nat -A PREROUTING -p tcp -s `cat '{{ run_address_path }}'` --dport {{ svc.port }} -j DNAT --to-destination {{ svc.host }}:{{ svc.port }}"
 {%- endfor %}
 
-ExecStop=/usr/bin/rkt stop --uuid-file={{ run_uuid_path }}
+# ExecStop=/usr/bin/rkt stop --uuid-file={{ run_uuid_path }}
 ExecStopPost=/usr/bin/rkt gc --grace-period=0s --mark-only
 
 {%- for svc in services %}
