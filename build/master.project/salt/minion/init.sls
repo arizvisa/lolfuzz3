@@ -115,7 +115,7 @@ Install salt-minion.service:
             exposed: []
             image_uuid_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
             run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
-            run_address_path: {{ pillar['service']['salt-master']['Address'] }}
+            run_address_path: {{ pillar['service']['salt-minion']['Address'] }}
         - use:
             - Generate salt-stack container build rules
         - require:
