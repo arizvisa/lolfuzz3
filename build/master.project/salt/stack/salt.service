@@ -1,10 +1,10 @@
 [Unit]
-Description=Salt-Master
+Description={{ description }}
 ConditionPathExists={{ container_path }}/image/{{ image_path }}
-ConditionPathExists=/etc/salt/master
+ConditionPathExists={{ configuration }}
 Wants=network.target
-After=flanneld.service
-Requires=flanneld.service
+After={{ after | join(' ') }}
+Requires={{ requires | join(' ') }}
 
 [Service]
 Type=notify
@@ -27,7 +27,7 @@ ExecStart=/usr/bin/rkt run \
             --volume {{ name }},kind=host,source={{ volumes[name].source }} \
 {%- endfor %}
             --inherit-env=true \
-            -- {{ image_name }} --- --exec=/usr/bin/salt-master
+            -- {{ image_name }} --- --exec={{ execute }}
 
 ExecStartPost=/usr/bin/bash -c \
                 "/usr/bin/rkt list --format=json | jq -e -r --arg state 'running' --slurpfile uuid <( jq -Rs . '{{ run_uuid_path }}' ) '.[] | select((.state | startswith($state)) and .name == $uuid[0]) | .networks[0].ip' >| '{{ run_address_path }}'"

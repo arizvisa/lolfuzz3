@@ -133,10 +133,17 @@ Install salt-master configuration:
 Install salt-master.service:
     file.managed:
         - template: jinja
-        - source: salt://master/salt-master.service
+        - source: salt://stack/salt.service
         - name: /etc/systemd/system/salt-master.service
 
         - context:
+            description: Salt-Master
+            configuration: /etc/salt/minion
+            execute: /usr/bin/salt-master
+            after:
+                - flanneld.service
+            requires:
+                - flanneld.service
             container_path: {{ pillar['service']['container']['path'] }}
             image_name: lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}
             image_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci
