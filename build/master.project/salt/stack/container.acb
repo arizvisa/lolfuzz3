@@ -11,7 +11,9 @@ label add distro fedora
 ## Binary packages used by the stack
 # Commands needed by the container
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 update
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils systemd chkconfig procps-ng net-tools iproute virt-what git
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils systemd chkconfig procps-ng git
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install net-tools iproute bind-utils ldns-utils
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install sysstat hdparm virt-what
 
 # Python
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}
@@ -25,8 +27,9 @@ run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 lib
 # Python dependencies containing some binaries which are needed by Salt
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pycurl {{python}}-Cython {{python}}-systemd {{python}}-markupsafe {{python}}-msgpack {{python}}-tornado {{python}}-zmq
 
-# Python dependencies containing binaries which are used some of the available different modules in Salt
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-gitdb {{python}}-psutil {{python}}-cffi {{python}}-pycryptodomex {{python}}-pygit2 {{python}}-pyyaml {{python}}-impacket {{python}}-ldap {{python}}-setproctitle
+# Python dependencies containing binaries which are used some of the different available modules in Salt
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-gitdb {{python}}-psutil {{python}}-cffi {{python}}-pycryptodomex {{python}}-pygit2 {{python}}-pyyaml {{python}}-impacket {{python}}-setproctitle
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-ldap {{python}}-kerberos {{python}}-dbus {{python}}-backports-lzma {{python}}-lxml {{python}}-celery {{python}}-cryptography {{python}}-gssapi
 
 ## Python packages used by the stack
 run -- {{pip}} --retries=65536 install --upgrade pip
@@ -35,6 +38,10 @@ run -- {{pip}} --retries=65536 install raet python-etcd
 
 # Optional modules which are used by Salt
 run -- {{pip}} --retries=65536 install dnspython tldextract click pyvmomi trollius certifi singledispatch twilio pyinotify textfsm netmiko paramiko pyroute2 pyOpenSSL
+run -- {{pip}} --retries=65536 install pywinrm pywinrm[kerberos] pywinrm[credssp] IPy netaddr jsonschema python-augeas progressbar fernet json5 smbprotocol
+
+# XXX: Disabled because timelib requires compilation and there's no distro package for it
+# run -- {{pip }} -- retries=65536 install timelib
 
 ### Installation of the stack (via bootstrap)
 run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
