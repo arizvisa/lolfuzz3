@@ -5,7 +5,7 @@ Make container-root directory:
         - name: {{ pillar['service']['container']['path'] }}
         - dir_mode: 1755
         - file_mode: 0664
-        - makedirs: True
+        - makedirs: true
 
 Make container-root build directory:
     file.directory:

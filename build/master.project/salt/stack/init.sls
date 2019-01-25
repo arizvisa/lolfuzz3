@@ -12,7 +12,7 @@ Make service directory:
     file.directory:
         - name: /srv
         - mode: 0775
-        - makedirs: True
+        - makedirs: true
 
 ### Standard directories that salt-stack uses for various things
 Make salt log directory:
