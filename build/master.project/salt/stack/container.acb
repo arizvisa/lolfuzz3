@@ -29,7 +29,7 @@ run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-
 
 # Python dependencies containing binaries which are used some of the different available modules in Salt
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-gitdb {{python}}-psutil {{python}}-cffi {{python}}-pycryptodomex {{python}}-cryptography {{python}}-pygit2 {{python}}-pyyaml {{python}}-setproctitle
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-gssapi {{python}}-ldap {{python}}-kerberos {{python}}-backports-lzma {{python}}-lxml {{python}}-impacket {{python}}-augeas {{python}}-celery
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-ldap {{python}}-kerberos {{python}}-backports-lzma {{python}}-lxml {{python}}-impacket {{python}}-augeas {{python}}-celery
 
 ## Python packages used by the stack
 run -- {{pip}} --retries=65536 install --upgrade pip
@@ -40,8 +40,12 @@ run -- {{pip}} --retries=65536 install raet python-etcd
 run -- {{pip}} --retries=65536 install dnspython tldextract click pyvmomi trollius certifi singledispatch twilio pyinotify textfsm netmiko paramiko pyroute2 pyOpenSSL
 run -- {{pip}} --retries=65536 install pywinrm pywinrm[kerberos] pywinrm[credssp] IPy netaddr jsonschema progressbar fernet json5 smbprotocol
 
-# XXX: Disabled because timelib requires compilation and there's no distro package for it
+# XXX: Disabled because timelib requires compilation and there's no distro package for it.
 # run -- {{pip }} -- retries=65536 install timelib
+
+# XXX: Disabled because python-gssapi requires compilation and yet paramiko depends on it.
+#      paramiko has a fix to use a newer library, but it hasn't been merged yet.
+# run -- {{pip }} -- retries=65536 install python-gssapi
 
 ### Installation of the stack (via bootstrap)
 run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
