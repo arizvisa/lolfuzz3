@@ -14,7 +14,22 @@
 include:
     - stack
 
-Make salt-cloud profiles directory:
+### salt-cloud configuration
+Install salt-cloud configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://cloud/cloud.conf
+        - name: /etc/salt/cloud
+        - defaults:
+            pool_size: 10
+            minion:
+                master: {{ grains['ip4_interfaces'][Interface] | first }}
+        - require:
+            - Make salt configuration directory
+        - mode: 0664                
+
+### Service directories
+Make salt-cloud configuration directory:
     file.directory:
         - name: /srv/cloud
         - mode: 1775
@@ -23,32 +38,60 @@ Make salt-cloud profiles directory:
         - use:
             - Make service directory
 
+Make salt-cloud providers directory:
+    file.directory:
+        - name: /srv/cloud/providers
+        - require:
+            - Make salt-cloud configuration directory
+        - use:
+            - Make salt-cloud configuration directory
+
+Make salt-cloud profiles directory:
+    file.directory:
+        - name: /srv/cloud/profiles
+        - require:
+            - Make salt-cloud configuration directory
+        - use:
+            - Make salt-cloud configuration directory
+
+## Installation of service directories
+Install salt-cloud providers directory:
+    file.symlink:
+        - name: /etc/salt/cloud.providers.d
+        - target: /srv/cloud/providers
+        - require:
+            - Make salt configuration directory
+            - Make salt-cloud providers directory
+
 Install salt-cloud profiles directory:
     file.symlink:
         - name: /etc/salt/cloud.profiles.d
-        - target: /srv/cloud
+        - target: /srv/cloud/profiles
         - require:
             - Make salt configuration directory
             - Make salt-cloud profiles directory
 
-Install saltify cloud configuration:
+### Example configurations
+Install an example cloud provider:
     file.managed:
         - template: jinja
-        - source: salt://cloud/profiles.conf
-        - name: /srv/cloud/profiles.conf
+        - source: salt://cloud/provider.conf
+        - name: /srv/cloud/providers/default.conf
         - defaults:
-            profiles:
-                - name: base
-                  configuration:
-                      minion:
-                          master: {{ grains['ip4_interfaces'][Interface] | first }}
-                      driver: saltify
-                      force_minion_config: true
-                      delete_sshkeys: true
-                      ssh_agent: true
-                      sync_after_install: all
-                      shutdown_on_destroy: true
-                      remove_config_on_destroy: true
+              providers:
+                  {}
+        - require:
+            - Make salt-cloud providers directory
+        - mode: 0664
+
+Install an example cloud profile:
+    file.managed:
+        - template: jinja
+        - source: salt://cloud/profile.conf
+        - name: /srv/cloud/profiles/default.conf
+        - defaults:
+              profiles:
+                  {}
         - require:
             - Make salt-cloud profiles directory
         - mode: 0664
