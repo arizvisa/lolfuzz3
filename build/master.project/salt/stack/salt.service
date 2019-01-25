@@ -29,8 +29,10 @@ ExecStart=/usr/bin/rkt run \
             --inherit-env=true \
             -- {{ image_name }} --- --exec={{ execute }}
 
+{%- if services %}
 ExecStartPost=/usr/bin/bash -c \
                 "/usr/bin/rkt list --format=json | jq -e -r --arg state 'running' --slurpfile uuid <( jq -Rs . '{{ run_uuid_path }}' ) '.[] | select((.state | startswith($state)) and .name == $uuid[0]) | .networks[0].ip' >| '{{ run_address_path }}'"
+{% endif -%}
 {%- for svc in services %}
 ExecStartPost=/usr/bin/bash -c \
                 "iptables -t nat -A PREROUTING -p tcp -s `cat '{{ run_address_path }}'` --dport {{ svc.port }} -j DNAT --to-destination {{ svc.host }}:{{ svc.port }}"
@@ -43,7 +45,9 @@ ExecStopPost=/usr/bin/rkt gc --grace-period=0s --mark-only
 ExecStopPost=/usr/bin/bash -c \
                 "iptables -t nat -D PREROUTING -p tcp -s `cat '{{ run_address_path }}'` --dport {{ svc.port }} -j DNAT --to-destination {{ svc.host }}:{{ svc.port }}"
 {%- endfor %}
+{%- if services %}
 ExecStopPost=/usr/bin/rm -f {{ run_address_path }}
+{% endif -%}
 ExecStopPost=/usr/bin/rm -f {{ run_uuid_path }}
 
 [Install]
