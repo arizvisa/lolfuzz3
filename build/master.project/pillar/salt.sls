@@ -9,6 +9,8 @@ container:
 service:
     salt-master:
         UUID: /var/lib/coreos/salt-master.uuid
+        Address: /var/lib/coreos/salt-master.address
 
     salt-minion:
         UUID: /var/lib/coreos/salt-minion.uuid
+        Address: /var/lib/coreos/salt-minion.address
