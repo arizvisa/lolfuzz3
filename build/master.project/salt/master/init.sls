@@ -155,6 +155,7 @@ Install salt-master.service:
 
             image_uuid_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
             run_uuid_path: {{ pillar['service']['salt-master']['UUID'] }}
+            run_address_path: {{ pillar['service']['salt-master']['Address'] }}
 
         - use:
             - Generate salt-stack container build rules
