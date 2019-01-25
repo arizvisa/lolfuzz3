@@ -11,7 +11,7 @@ label add distro fedora
 ## Binary packages used by the stack
 # Commands needed by the container
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 update
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils systemd chkconfig procps-ng net-tools git
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils systemd chkconfig procps-ng net-tools iproute git
 
 # Python
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}
