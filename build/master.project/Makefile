@@ -207,8 +207,8 @@ $(1): $(2)
 	@jq '[., inputs]' $(2) >| '$(1)'
 endef
 
-# ignition_unit_dropin_file '$filename.conf' '$dropin.conf' '$target.json'
-define ignition_unit_dropins_file
+# ignition_dropin_file '$filename' '$contents' '$target.json'
+define ignition_dropin_file
 $(3): $(2)	| $(patsubst %/,%,$(dir $(3)))
 	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", contents: $$$$contents[0] }' >| '$(3)'
 endef
@@ -509,7 +509,7 @@ $(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(boxname_workd
 $(foreach name,$(ignition_units_names),$(eval $(call ignition_unit_file,$(name),$(boxname_workdir)/ignition-units.json-$(name).json-raw,$(boxname_workdir)/ignition-units.json-$(name))))
 
 # making the ignition unit dropins files
-$(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)/dropins/$(name)/*.conf),$(eval $(call ignition_unit_dropins_file,$(notdir $(f)),$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f))))))
+$(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)/dropins/$(name)/*.conf),$(eval $(call ignition_dropin_file,$(notdir $(f)),$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f))))))
 
 # making the ignition unit dropins list
 $(foreach name,$(ignition_dropins_names),$(eval $(call ignition_unit_dropins,$(boxname_workdir)/ignition-dropins.json-$(name),$(foreach f,$(wildcard $(ignition_config)/dropins/$(name)/*.conf),$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f))))))
