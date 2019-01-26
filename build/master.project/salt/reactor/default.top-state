@@ -1,2 +1,6 @@
 reactor:
+    {% if reactor -%}
     {{ reactor | yaml(False) | indent(4) }}
+    {%- else -%}
+    []
+    {%- endif -%}

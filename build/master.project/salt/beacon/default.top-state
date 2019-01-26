@@ -1,3 +1,6 @@
 beacon:
+    {% if beacon -%}
     {{ beacon | yaml(False) | indent(4) }}
-
+    {%- else -%}
+    {}
+    {%- endif -%}
