@@ -59,6 +59,48 @@ Make salt-master pillar directory:
         - require:
             - Make service directory
 
+Install an example state topfile:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/default-top-state
+        - name: /srv/salt/top.sls
+        - defaults:
+            environments:
+                base:
+                    '*': []
+
+            description:
+                base: Base environment
+
+            target:
+                base:
+                    '*': All minions
+        - require:
+            - Make salt-master files directory
+        - mode: 0755
+        - makedirs: true
+
+Install an example pillar topfile:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/default-top-state
+        - name: /srv/pillar/top.sls
+        - defaults:
+            environments:
+                base:
+                    '*': []
+
+            description:
+                base: Base environment
+
+            target:
+                base:
+                    '*': All minions
+        - require:
+            - Make salt-master pillar directory
+        - mode: 0755
+        - makedirs: true
+
 Make salt-master configuration directory:
     file.directory:
         - name: /etc/salt/master.d
