@@ -1,0 +1,36 @@
+{%- if environments -%}
+{%- for env in environments -%}
+{%- if env in description -%}
+# {{ description[env] }}
+{{ env }}:
+    {% if environments[env] -%}
+{%- for tgt in environments[env] -%}
+    {% if env in target and tgt in target[env] -%} # {{ target[env][tgt] }}
+    {{ tgt }}:
+        {{ environments[env][tgt] | yaml(False) | indent(8) }}
+    {% else -%}
+    {{ tgt }}:
+        {{ environments[env][tgt] | yaml(False) | indent(8) }}
+    {% endif -%}
+{% endfor -%}
+    {% else -%}{}
+    {% endif %}
+{% else -%}
+{{ env }}:
+    {% if environments[env] -%}
+{%- for tgt in environments[env] -%}
+    {% if env in target and tgt in target[env] -%} # {{ target[env][tgt] }}
+    {{ tgt }}:
+        {{ environments[env][tgt] | yaml(False) | indent(8) }}
+    {% else -%}
+    {{ tgt }}:
+        {{ environments[env][tgt] | yaml(False) | indent(8) }}
+    {%- endif %}
+{% endfor -%}
+    {% else -%}{}
+    {% endif %}
+{% endif -%}
+{% endfor -%}
+{% else -%}
+{}
+{%- endif -%}
