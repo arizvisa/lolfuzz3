@@ -393,7 +393,7 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 
 # generate ssh public/private key
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 	$(info [-] Generating public/private keypair: $@)
-	ssh-keygen -t rsa -C 'builder-generated public key' -f '$@' -N ''
+	ssh-keygen -t rsa -C 'builder-generated public key' -f '$(workdir)/$(boxname).id_rsa' -N ''
 
 ### rules for building the bootstrap configuration
 
