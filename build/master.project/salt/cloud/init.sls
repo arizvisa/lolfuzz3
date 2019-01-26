@@ -75,7 +75,7 @@ Install salt-cloud profiles directory:
 Install an example cloud provider:
     file.managed:
         - template: jinja
-        - source: salt://cloud/provider.conf
+        - source: salt://cloud/providers.conf
         - name: /srv/cloud/providers/default.conf
         - defaults:
               providers:
@@ -87,7 +87,7 @@ Install an example cloud provider:
 Install an example cloud profile:
     file.managed:
         - template: jinja
-        - source: salt://cloud/profile.conf
+        - source: salt://cloud/profiles.conf
         - name: /srv/cloud/profiles/default.conf
         - defaults:
               profiles:
