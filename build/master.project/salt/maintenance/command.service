@@ -1,0 +1,6 @@
+[Unit]
+Description={{ description }}
+
+[Service]
+Type=oneshot
+ExecStart={{ command }}

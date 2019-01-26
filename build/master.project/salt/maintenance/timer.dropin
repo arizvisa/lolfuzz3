@@ -1,0 +1,4 @@
+[Timer]
+{% for key in timer -%}
+{{ key }}={{ timer[key }}
+{% endfor -%}
