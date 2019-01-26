@@ -140,6 +140,7 @@ salt_bootstrap_pillar_files := acbuild.sls project-name.sls
 ignition_template := $(MAKEDIR)default.json
 ignition_sysctl_files := $(wildcard $(ignition_config)/sysctl/*.conf)
 ignition_users_files := $(wildcard $(ignition_config)/users/*)
+ignition_network_files := $(wildcard $(ignition_config)/network/*.network)
 
 ignition_units_names := $(foreach f,$(wildcard $(ignition_config)/units/*),$(notdir $(f)))
 ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$(notdir $(f)))
@@ -310,6 +311,7 @@ clean-ignition:
 	$(info [!] Erasing temporary files for building ignition: $(boxname_workdir)/ignition-*)
 	-rm -f $(foreach f,$(ignition_sysctl_files),'$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f))'{,.json-raw})
 	-rm -f $(foreach f,$(ignition_users_files),'$(boxname_workdir)/ignition-user.json-$(notdir $(f))')
+	-rm -f $(foreach f,$(ignition_network_files),'$(boxname_workdir)/ignition-network.json-$(notdir $(f))'{,.json-raw})
 	-rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-unit.json-$(name)'-*)
 	-rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-unit.json-$(name)')
 	-rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-units.json-$(name)'-*)
@@ -318,8 +320,8 @@ clean-ignition:
 	-rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)' '$(boxname_workdir)/ignition-dropins.json-$(name)')
 	$(info [!] Erasing temporary files for ssh keys: $(boxname_workdir)/$(boxname).id_rsa*)
 	-rm -f '$(boxname_workdir)/$(boxname).id_rsa'*
-	$(info [!] Erasing temporary files for building config: $(foreach name,original files units users hostname sysctl pubkey,$(boxname_workdir)/$(boxname_config)-$(name)))
-	-rm -f $(foreach name,original files units users hostname sysctl pubkey,'$(boxname_workdir)/$(boxname_config)-$(name)')
+	$(info [!] Erasing temporary files for building config: $(foreach name,original files units users hostname sysctl pubkey network,$(boxname_workdir)/$(boxname_config)-$(name)))
+	-rm -f $(foreach name,original files units users hostname sysctl pubkey network,'$(boxname_workdir)/$(boxname_config)-$(name)')
 	$(info [!] Erasing temporary configuration files: $(boxname_workdir)/$(boxname_config) $(boxname_workdir)/$(boxname_config).validate)
 	-rm -f '$(boxname_workdir)/$(boxname_config)' '$(boxname_workdir)/$(boxname_config).validate'
 
@@ -422,9 +424,9 @@ $(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-origi
 	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
 
 # combine all ignition jsons into the template
-$(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users
+$(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users $(boxname_workdir)/$(boxname_config)-network
 	$(info [*] Making the ignition configuration $@ from the template $<)
-	@jq --slurpfile files '$(boxname_workdir)/$(boxname_config)-files' --slurpfile units '$(boxname_workdir)/$(boxname_config)-units' --slurpfile users '$(boxname_workdir)/$(boxname_config)-users' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0]' '$(ignition_template)' >| '$@'
+	@jq --slurpfile files '$(boxname_workdir)/$(boxname_config)-files' --slurpfile units '$(boxname_workdir)/$(boxname_config)-units' --slurpfile users '$(boxname_workdir)/$(boxname_config)-users' --slurpfile networks '$(boxname_workdir)/$(boxname_config)-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
 
 # set the hostname using $(boxname)
 $(boxname_workdir)/$(boxname_config)-hostname:	| $(boxname_workdir)
@@ -455,6 +457,11 @@ $(boxname_workdir)/$(boxname_config)-pubkey: $(boxname_workdir)/$(boxname).id_rs
 # combine all joined user objects into a single list
 $(boxname_workdir)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(boxname_workdir)/ignition-user.json-$(notdir $(f)))
 	$(info [*] Merging the ignition user section into $@: $^)
+	@jq '[., inputs]' $^ >| '$@'
+
+# combine all joined network dropins into a single list
+$(boxname_workdir)/$(boxname_config)-network: $(foreach f,$(ignition_network_files),$(boxname_workdir)/ignition-network.json-$(notdir $(f)))
+	$(info [*] Merging all ignition network files into $@: $^)
 	@jq '[., inputs]' $^ >| '$@'
 
 ### rules for provisioning with saltstack
@@ -505,6 +512,9 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 # making the ignition sysctl list (the permission 0644 is 420 in decimal)
 $(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),$(notdir $(f)),420)))
 
+# making the ignition network list (the permission 0644 is 420 in decimal)
+$(foreach f,$(ignition_network_files),$(eval $(call ignition_dropin_file,$(notdir $(f)),$(boxname_workdir)/ignition-network.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-network.json-$(notdir $(f)))))
+
 # making the ignition units list
 $(foreach name,$(ignition_units_names),$(eval $(call ignition_unit_file,$(name),$(boxname_workdir)/ignition-units.json-$(name).json-raw,$(boxname_workdir)/ignition-units.json-$(name))))
 
@@ -528,6 +538,9 @@ $(foreach f,$(ignition_users_files),$(eval $(call ignition_user,$(boxname_workdi
 
 # raw ignition_sysctl_files contents
 $(foreach f,$(ignition_sysctl_files),$(eval $(call json_rawfile,$(f),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw)))
+
+# raw ignition_network_files contents
+$(foreach f,$(ignition_network_files),$(eval $(call json_rawfile,$(f),$(boxname_workdir)/ignition-network.json-$(notdir $(f)).json-raw)))
 
 # raw ignition_unit_files contents
 $(foreach name,$(ignition_units_names),$(eval $(call json_rawfile,$(ignition_config)/units/$(name),$(boxname_workdir)/ignition-units.json-$(name).json-raw)))
