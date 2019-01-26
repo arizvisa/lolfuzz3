@@ -15,7 +15,7 @@ Make salt-master reactor directory:
 Install a default salt-master reactor highstate:
     file.managed:
         - template: jinja
-        - source: salt://reactor/default.top-state
+        - source: salt://reactor/default-top-state
         - name: /srv/reactor/top.sls
         - context:
             reactor:

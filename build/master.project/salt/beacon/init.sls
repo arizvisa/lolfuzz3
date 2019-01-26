@@ -6,7 +6,7 @@ include:
 Install a default salt-minion beacon highstate:
     file.managed:
         - template: jinja
-        - source: salt://beacon/default.top-state
+        - source: salt://beacon/default-top-state
         - name: /etc/salt/minion.d/beacon.conf
         - context:
             beacon:
