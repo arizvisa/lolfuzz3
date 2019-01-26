@@ -186,11 +186,11 @@ endef
 
 # XXX: because fuck CoreOS for breaking cloud-init right before deprecating it
 
-# ignition_file '$infile.json' '$target.json' '$decimal-mode'
+# ignition_file '$contents.json' '$target.json' '$filename' '$decimal-mode'
 define ignition_file
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	$$(info [-] Building ignition file $(2) from contents at $(1))
-	@jq -n --slurpfile contents '$(1)' '{ filesystem: "root", path: "/etc/sysctl.d/$$(notdir $(1))", mode: $(3), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
+	@jq -n --slurpfile contents '$(1)' '{ filesystem: "root", path: "/etc/sysctl.d/$(3)", mode: $(4), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
 
 # ignition_unit_file '$unit.service' '$source.service.json-raw' '$output.json'
@@ -503,7 +503,7 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 ## ignition components
 
 # making the ignition sysctl list (the permission 0644 is 420 in decimal)
-$(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),420)))
+$(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),$(notdir $(f)),420)))
 
 # making the ignition units list
 $(foreach name,$(ignition_units_names),$(eval $(call ignition_unit_file,$(name),$(boxname_workdir)/ignition-units.json-$(name).json-raw,$(boxname_workdir)/ignition-units.json-$(name))))
