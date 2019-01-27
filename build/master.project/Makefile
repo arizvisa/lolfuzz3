@@ -3,16 +3,25 @@ ROOTDIR := $(realpath $(MAKEDIR)../..)
 
 ### Parameters that the user can supply
 
+# mandatory parameters
 ifndef PROJECT
-    $(error [!] Build variable name PROJECT is undefined)
-endif
-ifndef INPUT
-    $(error [!] Build variable path INPUT is undefined)
-endif
-ifndef OUTPUT
-    $(error [!] Build variable path OUTPUT is undefined)
+    $(error [!] Required build variable PROJECT is not specified)
 endif
 
+# optional parameters
+ifndef INPUT
+    $(warning [!] Optional build variable INPUT was not specified)
+    $(info [!] Setting default value for INPUT: $(ROOTDIR)/config/master.project)
+    INPUT := $(ROOTDIR)/config/master.project
+endif
+
+ifndef OUTPUT
+    $(warning [!] Optional build variable OUTPUT was not specified)
+    $(info [!] Setting default value for OUTPUT: $(ROOTDIR)/deploy)
+    OUTPUT := $(ROOTDIR)/deploy
+endif
+
+## configurable parameters
 # convert the following parameters to an integer
 VALIDATE ?= 1
 validate := $(VALIDATE)
@@ -24,25 +33,19 @@ build := $(BUILD)
 build := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(build)))))
 build := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(build)))))
 
-### Check input directory with configuration for master
+### Check input directory for optional configuration to provision master.project
 ifneq ($(wildcard ${INPUT}),)
-    # modifications to CoreOS bootstrap
-    ifeq ($(wildcard ${INPUT}/master-bootstrap/*),)
-        box_config_extra=
+    # modifications to CoreOS ignition
+    ifeq ($(wildcard ${INPUT}/*),)
+        box_config_optional=
     else
-        box_config_extra?=${INPUT}/master-bootstrap
+        box_config_optional=$(wildcard $(patsubst %/,%,${INPUT})/*)
     endif
+endif
 
-   # packer template extra modifications
-    ifeq ($(wildcard ${INPUT}/master-packer/*),)
-        box_template_extra=
-    else
-        box_template_extra?=${INPUT}/master-packer
-    endif
-
-    $(info [.] Project "${PROJECT}" using configuration: "$(abspath ${INPUT})")
-else
-    $(error [!] Specified path for build variable INPUT does not exist: $(abspath ${INPUT}))
+# nodify user if any extra configuration was specified
+ifneq ($(box_config_optional),)
+    $(info [.] Building project "${PROJECT}" with extra configuration: $(box_config_optional))
 endif
 
 ### user variables
@@ -407,7 +410,7 @@ $(boxname_workdir)/$(boxname)-vars.json.salt: $(boxname_workdir)/salt $(boxname_
 	@jq -n '{ "salt-bootstrap-config": "$(boxname_workdir)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_workdir)/salt", "salt-bootstrap-pillar": "$(boxname_workdir)/pillar", "salt-bootstrap-version": "$(salt_bootstrap_version)", "salt-bootstrap-patches": "$(salt_patches)" }' >| '$@'
 
 # concatenate json template into a single .json file together with plugins
-$(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json $(if $(box_template_extra),$(wildcard $(box_template_extra)/*))	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 	| $(boxname_workdir)
 	@printf '[*] Merging box with enabled plugins into %s: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
 
@@ -440,7 +443,7 @@ $(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config).validate $(bo
 	cp -f '$(boxname_workdir)/$(boxname_config)' '$@'
 
 # combine the result ignition json with any other configurations
-$(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(if $(box_config_extra),$(foreach d,$(box_config_extra)/*,$(d)),)
+$(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(foreach opt,$(box_config_optional),$(opt))
 	@printf '[*] Merging the ignition configuration %s using the result json and extra configurations: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
 
