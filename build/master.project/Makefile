@@ -172,10 +172,10 @@ endef
 
 ## github
 
-# gh_download '$filename'
+# gh_download '$target' '$url'
 define gh_download
 $(1):	| $(patsubst %/,%,$(dir $(1)))
-	@printf '[!] Downloading %s from %s\n' '$$(notdir $(1))' '$(2)'
+	@printf '[!] Downloading %s: %s\n' '$(2)' '$$(notdir $(1))'
 	$${GH_FETCH} -o '$$@' '$(2)'
 endef
 
@@ -207,7 +207,7 @@ endef
 # ignition_file '$contents.json' '$target.json' '$filename' '$decimal-mode'
 define ignition_file
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
-	@printf '[-] Building ignition file %s from contents at %s\n' '$(2)' '$(1)'
+	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
 	@jq -n --slurpfile contents '$(1)' '{ filesystem: "root", path: "/etc/sysctl.d/$(3)", mode: $(4), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
 
@@ -253,17 +253,17 @@ $(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
 endef
 
 ### general utility rules
-.PHONY: master-image
-master-image: $(patsubst %/,%,$(OUTPUT))/$(boxname)
-	@printf '[!] Wrote output template to %s\n' '$<'
+.PHONY: master-template
+master-template: $(patsubst %/,%,$(OUTPUT))/$(boxname)
+	@printf '[!] Wrote completed template: %s\n' '$<'
 
 .PHONY: clean
-clean: clean-ignition clean-json clean-provisioning clean-build clean-image
+clean: clean-ignition clean-json clean-provisioning clean-build clean-template
 	rmdir '$(boxname_workdir)'
 
 .PHONY: all
-all: download-installer master-image master-output
-	@printf '[!] Successfully built image and deployed files\n'
+all: download-installer master-template master-output
+	@printf '[!] Successfully built template and deployed files\n'
 
 ## downloading
 .PHONY: download-installer
@@ -285,7 +285,7 @@ master-output: $(foreach f,$(output_names),$(patsubst %/,%,$(OUTPUT))/$(f))
 ## cleaning up files
 .PHONY: clean-output
 clean-output:
-	@printf '[!] Erasing image at %s\n' '$(patsubst %/,%,$(OUTPUT))/$(boxname)'
+	@printf '[!] Erasing template: %s\n' '$(patsubst %/,%,$(OUTPUT))/$(boxname)'
 	-rm -rf '$(patsubst %/,%,$(OUTPUT))/$(boxname)'
 	@printf '[!] Erasing output files from %s\n' '$(patsubst %/,%,$(OUTPUT))'
 	-rm -f $(foreach f,$(output_names),'$(patsubst %/,%,$(OUTPUT))/$(f)')
@@ -295,9 +295,9 @@ clean-installer:
 	@printf '[!] Removing CoreOS installer files\n'
 	-rm -f $(foreach f,$(coreos_installer_files),'$(f)')
 
-.PHONY: clean-image
-clean-image:
-	@printf '[!] Erasing temporary image at %s\n' '$(boxname_template)'
+.PHONY: clean-template
+clean-template:
+	@printf '[!] Erasing temporary template: %s\n' '$(boxname_template)'
 	-rm -rf '$(boxname_template)'
 
 .PHONY: clean-build
@@ -362,13 +362,13 @@ $(filesdir) $(toolsdir) $(toolsdir)/bin: $(workdir)
 
 ### rules for actual output of the template and its related files
 $(patsubst %/,%,$(OUTPUT))/$(boxname): $(boxname_template)	| $(patsubst %/,%,$(OUTPUT))
-	@printf '[*] Moving image %s: %s\n' '$<' '$(dir $@)'
+	@printf '[*] Moving template %s: %s\n' '$<' '$(dir $@)'
 	mv '$<' '$@'
 
 ### rules that actually build the box
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files)
 ifneq ($(build),0)
-	@printf '[!] Building template from %s using variables %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
+	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
 	packer build -only=vmware-iso -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
@@ -446,7 +446,7 @@ $(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-origi
 
 # combine all ignition jsons into the template
 $(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users $(boxname_workdir)/$(boxname_config)-network
-	@printf '[*] Making the ignition configuration %s from the template %s\n' '$@' '$<'
+	@printf '[*] Making ignition configuration with template %s: %s\n' '$<' '$@'
 	@jq --slurpfile files '$(boxname_workdir)/$(boxname_config)-files' --slurpfile units '$(boxname_workdir)/$(boxname_config)-units' --slurpfile users '$(boxname_workdir)/$(boxname_config)-users' --slurpfile networks '$(boxname_workdir)/$(boxname_config)-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
 
 # set the hostname using $(boxname)
