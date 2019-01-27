@@ -50,10 +50,9 @@ endif
 
 ### user variables
 boxname?=master.${PROJECT}
-workdir?=build.dir
-
 boxname_config=$(boxname).config
 
+workdir?=build.dir
 boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
@@ -211,14 +210,14 @@ endef
 define ignition_file
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
-	@jq -n --slurpfile contents '$(1)' '{ filesystem: "root", path: "/etc/sysctl.d/$(3)", mode: $(4), contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
+	@jq -n --arg path '/etc/sysctl.d/$(3)' --arg mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: $$$$path, mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
 
 # ignition_unit_file '$unit.service' '$source.service.json-raw' '$output.json'
 define ignition_unit_file
 $(3): $(2)
 	@printf '[-] Creating ignition unit file %s: %s\n' '$(3)' '$(2)'
-	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", enable: false, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
+	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, enable: false, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
 endef
 
 # ignition_unit_dropins '$target.json' '$space-separated-dropins'
@@ -231,7 +230,7 @@ endef
 # ignition_dropin_file '$filename' '$contents' '$target.json'
 define ignition_dropin_file
 $(3): $(2)	| $(patsubst %/,%,$(dir $(3)))
-	@jq -n --slurpfile contents '$(2)' '{ name: "$(1)", contents: $$$$contents[0] }' >| '$(3)'
+	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, contents: $$$$contents[0] }' >| '$(3)'
 endef
 
 # ignition_unit '$target.json' '$unit.json' '$dropins.json'
@@ -245,7 +244,7 @@ endef
 define ignition_unit_missing
 $(2): $(3)	| $(patsubst %/,%,$(dir $(2)))
 	@printf '[*] Combining (missing) ignition unit %s: %s\n' '$(2)' '$(3)'
-	@jq -n --slurpfile dropins '$(3)' '{ name: "$(1)", dropins: $$$$dropins[0] }' >| '$(2)'
+	@jq -n --arg name '$(1)' --slurpfile dropins '$(3)' '{ name: $$$$name, dropins: $$$$dropins[0] }' >| '$(2)'
 endef
 
 # ignition_user '$target.json' '$source.json' '$list-of-json-files'
@@ -382,17 +381,17 @@ endif
 # build json file containing all information about the iso
 $(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
 	@printf '[-] Generating ISO variables for %s: %s\n' '$@' '$<'
-	@jq -n --slurpfile iso_checksum '$(workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": "$(checksum_type)", "iso-url": "file://$<", "iso-checksum": $$iso_checksum[0] }' >| '$@'
+	@jq -n --arg checksum_type '$(checksum_type)' --arg url 'file://$<' --slurpfile iso_checksum '$(workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": $$checksum_type, "iso-url": $$url, "iso-checksum": $$iso_checksum[0] }' >| '$@'
 
 # build json file containing all information for ssh'ing to the box
 $(boxname_workdir)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa	| $(boxname_workdir)
 	@printf '[-] Generating SSH variables %s: %s\n' '$@' '$^'
-	@jq -n '{ "provision-key": "$<" }' >| '$@'
+	@jq -n --arg key '$<' '{ "provision-key": $$key }' >| '$@'
 
 # build json file containing build-specific variables
 $(boxname_workdir)/$(boxname)-vars.json.base:	| $(boxname_workdir)
 	@printf '[-] Generating build variables: %s\n' '$@'
-	@jq -n '{ "guest-name": "$(boxname)", "install-input": "$(workdir)", "install-output": "$(boxname_template)" }' >| '$@'
+	@jq -n --arg name '$(boxname)' --arg input '$(workdir)' --arg output '$(boxname_template)' '{ "guest-name": $$name, "install-input": $$input, "install-output": $$output }' >| '$@'
 
 # concatenate entire template configuration into a single .json file
 $(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workdir)/$(boxname)-vars.json.iso $(boxname_workdir)/$(boxname)-vars.json.ssh $(boxname_workdir)/$(boxname)-vars.json.salt $(boxname_workdir)/$(boxname)-vars.json.tools $(boxname_workdir)/$(boxname)-vars.json.base
@@ -402,12 +401,12 @@ $(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workd
 # grab all the specified tools into the tools directory and build a json for it
 $(boxname_workdir)/$(boxname)-vars.json.tools: $(setup_network_environment_files) $(extra_tools_files)	| $(boxname_workdir)
 	@printf '[-] Generating variables for miscellaneous CoreOS tools\n'
-	@jq -n '{ "tools-directory": "$(toolsdir)" }' >| '$@'
+	@jq -n --arg tools '$(toolsdir)' '{ "tools-directory": $$tools }' >| '$@'
 
 # generate necessary configuration variables for salt-stack
 $(boxname_workdir)/$(boxname)-vars.json.salt: $(boxname_workdir)/salt $(boxname_workdir)/pillar $(foreach name,$(salt_bootstrap_pillar_files),$(boxname_workdir)/pillar/$(name)) $(boxname_workdir)/salt-minion.conf $(workdir)/$(salt_bootstrap_file) $(salt_patches)
 	@printf '[-] Generating bootstrap variables for salt-bootstrap: %s\n' '$^'
-	@jq -n '{ "salt-bootstrap-config": "$(boxname_workdir)/salt-minion.conf", "salt-bootstrap-installer": "$(workdir)/$(salt_bootstrap_file)", "salt-bootstrap-files": "$(boxname_workdir)/salt", "salt-bootstrap-pillar": "$(boxname_workdir)/pillar", "salt-bootstrap-version": "$(salt_bootstrap_version)", "salt-bootstrap-patches": "$(salt_patches)" }' >| '$@'
+	@jq -n --arg configuration '$(boxname_workdir)/salt-minion.conf' --arg installer '$(workdir)/$(salt_bootstrap_file)' --arg saltdir '$(boxname_workdir)/salt' --arg pillardir '$(boxname_workdir)/pillar' --arg version '$(salt_bootstrap_version)' --arg patchdir '$(salt_patches)' '{ "salt-bootstrap-config": $$configuration, "salt-bootstrap-installer": $$installer, "salt-bootstrap-files": $$saltdir, "salt-bootstrap-pillar": $$pillardir, "salt-bootstrap-version": $$version, "salt-bootstrap-patches": $$patchdir }' >| '$@'
 
 # concatenate json template into a single .json file together with plugins
 $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 	| $(boxname_workdir)
@@ -456,7 +455,7 @@ $(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_wo
 $(boxname_workdir)/$(boxname_config)-hostname:	| $(boxname_workdir)
 	@printf '[-] Building the ignition configuration file for the hostname: %s\n' '$(boxname)'
 	# mode 0644 == 420
-	@jq -n '[ { filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ("$(boxname)" | @uri)) } } ]' >| '$@'
+	@jq -n --arg content '$(boxname)' '[{ filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ($$content | @uri)) } }]' >| '$@'
 
 # bootstrap for ignition/sysctl directory
 $(boxname_workdir)/$(boxname_config)-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)))
@@ -476,7 +475,7 @@ $(boxname_workdir)/$(boxname_config)-units: $(foreach name,$(ignition_units_name
 # generate a json containing the sshAuthorizedKeys field in an object
 $(boxname_workdir)/$(boxname_config)-pubkey: $(boxname_workdir)/$(boxname).id_rsa.pub.json-raw
 	@printf '[-] Generating a json with the public key in %s: %s\n' '$@' '$^'
-	@jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0] | rtrimstr("\n") ] }' >| '$@'
+	@jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0] | rtrimstr("\n")] }' >| '$@'
 
 # combine all joined user objects into a single list
 $(boxname_workdir)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(boxname_workdir)/ignition-user.json-$(notdir $(f)))
