@@ -171,11 +171,18 @@ endef
 
 ## CoreOS components
 
-# coreos_download '$filename'
+# coreos_download '$target' '$filename'
 define coreos_download
-$(workdir)/$$(notdir $(1)):	| $(workdir)
-	@printf '[!] Downloading CoreOS Installer %s\n' '$(coreos_url)/$(1)'
-	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(1)'
+$(1):	| $(dir $(1))
+	@printf '[!] Downloading CoreOS Installer %s\n' '$(coreos_url)/$(2)'
+	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(2)'
+endef
+
+# checksum '$filename' '$checksum' '$checksum_filename'
+define checksum
+$(3): $(1)
+	@printf '[-] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
+	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev >| '$$@'
 endef
 
 # coreos_tool '$target' '$source'
@@ -354,11 +361,9 @@ $(boxname_template): $(coreos_installer_files) $(boxname_workdir)/$(boxname).jso
 	packer build -only=vmware-iso -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' '$(boxname_workdir)/$(boxname).json'
 
 # build json file containing all information about the iso
-$(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso)	| $(boxname_workdir)
-	@printf '[-] Calculating %s checksum for %s\n' '$(checksum_type)' '$<'
-	$(eval iso_checksum := $(shell openssl dgst -$(checksum_type) '$<' | rev | cut -d' ' -f 1 | rev))
-	@printf '[-] Generating ISO variables for %s: %s\n' '$@' '$^'
-	@jq -n '{ "iso-checksum-type": "$(checksum_type)", "iso-url": "file://$<", "iso-checksum": "$(iso_checksum)" }' >| '$@'
+$(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
+	@printf '[-] Generating ISO variables for %s: %s\n' '$@' '$<'
+	@jq -n --slurpfile iso_checksum '$(workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": "$(checksum_type)", "iso-url": "file://$<", "iso-checksum": $$iso_checksum[0] }' >| '$@'
 
 # build json file containing all information for ssh'ing to the box
 $(boxname_workdir)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa	| $(boxname_workdir)
@@ -493,7 +498,11 @@ $(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(outdir))
 ## coreos installation and provisioning
 
 # download the coreos installer
-$(foreach f,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(f))))
+$(foreach f,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(workdir)/$(f),$(f))))
+
+# generate hashes for downloaded files
+$(foreach f,$(file <$(in_coreos_files)),$(eval $(call checksum,$(workdir)/$(f),$(checksum_type),$(workdir)/$(f).$(checksum_type))))
+$(foreach f,$(file <$(in_coreos_files)),$(eval $(call json_rawfile,$(workdir)/$(f).$(checksum_type),$(workdir)/$(f).$(checksum_type).json-raw)))
 
 # fetch the acbuild tool
 $(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(filesdir)/$(notdir $(u)),$(u))))
