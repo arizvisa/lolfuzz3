@@ -296,6 +296,8 @@ clean-output:
 clean-installer:
 	@printf '[!] Removing CoreOS installer files\n'
 	-rm -f $(foreach f,$(coreos_installer_files),'$(f)')
+	@printf '[!] Removing CoreOS installer checksum files\n'
+	-rm -f $(foreach f,$(coreos_installer_files),'$(f).$(checksum_type)')
 
 .PHONY: clean-template
 clean-template:
@@ -351,6 +353,7 @@ clean-json:
 	@printf '[!] Erasing temporary files for building packer template: %s\n' '$(foreach suffix,base iso salt ssh tools,$(boxname_workdir)/$(boxname)-vars.json.$(suffix))'
 	-rm -f '$(boxname_workdir)/$(boxname)-vars.json'{,.base,.iso,.salt,.ssh,.tools}
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
+	-rm -f $(foreach f,$(coreos_installer_files),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)
 
 ### rules for required directories
 $(patsubst %/,%,$(OUTPUT)) $(workdir):
