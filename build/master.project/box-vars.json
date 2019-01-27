@@ -4,6 +4,8 @@
     "salt-bootstrap-installer-stage" : "/home/core",
     "site-packages-stage" : "/home/core/patches",
 
+    "dnf-options": "--nodocs --setopt=fastestmirror=true --setopt=retries=0",
+
     "salt-bootstrap-installer" : "path-to-bootstrap-sh",
     "salt-bootstrap-config" : "path-to-bootstrap-config",
     "salt-bootstrap-pillars" : "path-to-bootstrap-pillar",

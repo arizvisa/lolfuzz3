@@ -69,7 +69,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 upgrade 2>&1 | tee \"$ROOT/$LOGFILE\""
+                "dnf -y {{user `dnf-options`}} upgrade 2>&1 | tee \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -83,7 +83,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install casync jq 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "dnf -y {{user `dnf-options`}} install casync jq 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -95,6 +95,27 @@
             "destination" : "{{user `salt-bootstrap-installer-stage`}}/install-salt.sh"
         },
 
+        { "type" : "shell-local",
+            "command" : "echo [*] Installing salt-minion dependencies into toolbox"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/media/root",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
+            "inline" : [
+                "dnf -y {{user `dnf-options`}} install ca-certificates procps-ng net-tools git 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y {{user `dnf-options`}} install systemd-container m2crypto PyYAML 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y {{user `dnf-options`}} install dnf-utils libyaml procps-ng python2-crypto python2-jinja2 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y {{user `dnf-options`}} install python2-msgpack python2-requests python2-zmq 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y {{user `dnf-options`}} install python2-etcd 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [*] Installing salt-minion into toolbox"
+        },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
@@ -104,23 +125,18 @@
                 "MASTER_ID={{user `guest-name`}}"
             ],
             "inline" : [
-                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install ca-certificates procps-ng net-tools git 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install systemd-container m2crypto PyYAML 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils libyaml procps-ng python2-crypto python2-jinja2 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install python2-msgpack python2-requests python2-zmq 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "dnf -y --nodocs --setopt=fastestmirror=true --setopt=retries=0 install python2-etcd 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "/usr/bin/bash \"$ROOT/$STAGE\"/install-salt.sh -X -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "sh \"$ROOT/$STAGE\"/install-salt.sh -X -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -f \"$ROOT/$STAGE\"/install-salt.sh"
             ]
         },
 
         { "type" : "shell-local",
-            "command": "echo [-] Cleaning temporary files leftover from installing packages"
+            "command": "echo [*] Cleaning temporary files leftover from installing packages"
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "inline" : [
-                "dnf -y clean all --enablerepo='*'"
+                "dnf -y --enablerepo='*' clean all"
             ]
         },
 
@@ -143,7 +159,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "dnf -y install patch 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "dnf -y {{user `dnf-options`}} install patch 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "cd /usr/lib/python2*/site-packages 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "for fix in \"$ROOT/$STAGE\"/*.patch; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -rf \"$ROOT/$STAGE\""
