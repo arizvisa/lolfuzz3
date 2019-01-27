@@ -194,7 +194,7 @@ endef
 define checksum
 $(3): $(1)
 	@printf '[-] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
-	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev >| '$$@'
+	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\n' >| '$$@'
 endef
 
 # coreos_tool '$target' '$source'
@@ -379,9 +379,9 @@ else
 endif
 
 # build json file containing all information about the iso
-$(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
 	@printf '[-] Generating ISO variables for %s: %s\n' '$@' '$<'
-	@jq -n --arg checksum_type '$(checksum_type)' --arg url 'file://$<' --slurpfile iso_checksum '$(workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": $$checksum_type, "iso-url": $$url, "iso-checksum": $$iso_checksum[0] }' >| '$@'
+	@jq -n --arg checksum_type '$(checksum_type)' --arg url 'file://$<' --slurpfile iso_checksum '$(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": $$checksum_type, "iso-url": $$url, "iso-checksum": $$iso_checksum[0] }' >| '$@'
 
 # build json file containing all information for ssh'ing to the box
 $(boxname_workdir)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa	| $(boxname_workdir)
@@ -520,7 +520,7 @@ $(foreach name,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(workd
 
 # generate hashes for downloaded files
 $(foreach f,$(coreos_installer_files),$(eval $(call checksum,$(f),$(checksum_type),$(f).$(checksum_type))))
-$(foreach f,$(coreos_installer_files),$(eval $(call json_rawfile,$(f).$(checksum_type),$(f).$(checksum_type).json-raw)))
+$(foreach f,$(coreos_installer_files),$(eval $(call json_rawfile,$(f).$(checksum_type),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)))
 
 # fetch the acbuild tool
 $(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(filesdir)/$(notdir $(u)),$(u))))
