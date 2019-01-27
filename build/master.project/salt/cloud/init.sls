@@ -78,6 +78,7 @@ Download Salt-Minion windows installer:
         - source: {{ pillar['cloud']['windows']['url'] }}
         - name: /srv/cloud/{{ pillar['cloud']['windows']['installer'] }}
         - source_hash: {{ pillar['cloud']['windows']['checksum'] }}
+        - skip_verify: true
         - mode: 0664
 
 Install an example cloud provider:
