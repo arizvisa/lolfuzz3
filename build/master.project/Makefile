@@ -10,14 +10,14 @@ endif
 
 # optional parameters
 ifndef INPUT
-    $(warning [!] Optional build variable INPUT was not specified)
-    $(info [!] Setting default value for INPUT: $(ROOTDIR)/config/master.project)
+    $(info [!] Optional build variable INPUT was not specified)
+    $(info [*] Setting default value for INPUT: $(ROOTDIR)/config/master.project)
     INPUT := $(ROOTDIR)/config/master.project
 endif
 
 ifndef OUTPUT
-    $(warning [!] Optional build variable OUTPUT was not specified)
-    $(info [!] Setting default value for OUTPUT: $(ROOTDIR)/deploy)
+    $(info [!] Optional build variable OUTPUT was not specified)
+    $(info [*] Setting default value for OUTPUT: $(ROOTDIR)/deploy)
     OUTPUT := $(ROOTDIR)/deploy
 endif
 
@@ -37,15 +37,15 @@ build := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(build
 ifneq ($(wildcard ${INPUT}),)
     # modifications to CoreOS ignition
     ifeq ($(wildcard ${INPUT}/*),)
-        box_config_optional=
+        box_config_custom=
     else
-        box_config_optional=$(wildcard $(patsubst %/,%,${INPUT})/*)
+        box_config_custom=$(wildcard $(patsubst %/,%,${INPUT})/*)
     endif
 endif
 
-# nodify user if any extra configuration was specified
-ifneq ($(box_config_optional),)
-    $(info [.] Building project "${PROJECT}" with extra configuration: $(box_config_optional))
+# nodify user if any custom configuration was specified
+ifneq ($(box_config_custom),)
+    $(info [-] Building project "${PROJECT}" with custom configuration: $(box_config_custom))
 endif
 
 ### user variables
@@ -61,18 +61,20 @@ output_names := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
 
 ### Check output directory
 ifeq ($(wildcard $(patsubst %/,%,$(OUTPUT))/$(boxname)),)
-    $(info [.] Output path for $(boxname) was specified: $(abspath $(patsubst %/,%,$(OUTPUT))/$(boxname)))
+    $(info [-] Using the following output path for $(boxname): $(abspath $(patsubst %/,%,$(OUTPUT))/$(boxname)))
 else
-    $(warning [!] Output path for $(boxname) already exists: $(abspath $(patsubst %/,%,$(OUTPUT))/$(boxname)))
+    $(info [!] The output path for $(boxname) already exists (output will fail): $(abspath $(patsubst %/,%,$(OUTPUT))/$(boxname)))
 endif
+
+$(info [-] Using the following work directory: $(abspath $(workdir)))
 
 ### Inform the user of any options they've specified
 ifeq ($(validate),0)
-    $(warning [!] User has requested to skip validation of configuration: $(boxname_config))
+    $(info [!] User has requested to skip validation of configuration: $(boxname_config))
 endif
 
 ifeq ($(build),0)
-    $(warning [!] User has requested to skip building the target: $(boxname_template))
+    $(info [!] User has requested to skip building the target: $(boxname_template))
 endif
 
 ### some utility macros for downloading files
@@ -153,7 +155,7 @@ ignition_network_files := $(wildcard $(ignition_config)/network/*.network)
 ignition_units_names := $(foreach f,$(wildcard $(ignition_config)/units/*),$(notdir $(f)))
 ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$(notdir $(f)))
 
-### definitions for generating rules
+### definitions for generating recipes
 
 # output_file '$file' '$directory'
 define output_file
@@ -163,7 +165,7 @@ $(2)/$(notdir $(1)): $(1)	| $(2)
 	    false; \
 	fi
 	@printf '[*] Copying output file to %s: %s\n' '$(2)' '$$<'
-	cp '$$<' '$$@'
+	@cp '$$<' '$$@'
 endef
 
 # json_rawfile '$source.raw' '$target.json'
@@ -186,14 +188,14 @@ endef
 # coreos_download '$target' '$filename'
 define coreos_download
 $(1):	| $(dir $(1))
-	@printf '[!] Downloading CoreOS Installer %s\n' '$(coreos_url)/$(2)'
+	@printf '[!] Downloading CoreOS Installer file: %s\n' '$(coreos_url)/$(2)'
 	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(2)'
 endef
 
 # checksum '$filename' '$checksum' '$checksum_filename'
 define checksum
 $(3): $(1)
-	@printf '[-] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
+	@printf '[*] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
 	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\r\n' >| '$$@'
 endef
 
@@ -201,7 +203,7 @@ endef
 define coreos_tool
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@printf '[!] Staging file %s in %s\n' '$(1)' '$(2)'
-	cp -f '$(1)' '$(2)'
+	@cp -f '$(1)' '$(2)'
 endef
 
 # XXX: because fuck CoreOS for breaking cloud-init right before deprecating it
@@ -254,18 +256,33 @@ $(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
 	@jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
 endef
 
-### general utility rules
-.PHONY: master-template
-master-template: $(patsubst %/,%,$(OUTPUT))/$(boxname)
+### general utility recipes
+.DEFAULT_GOAL := help
+
+.PHONY: help
+help:
+	$(info [*] User requested help to build template)
+	@printf '\nThe following recipes are available:\n'
+	@printf '\t%s\n' 'all' 'output' 'template' 'clean' 'download'
+	@printf '\nTo pre-download an individual class of files needed to build:\n'
+	@printf '\t%s\n' 'download-installer' 'download-tools'
+	@printf '\nTo clean any intermediary files that were needed a specific component:\n'
+	@printf '\t%s\n' 'clean-output' 'clean-template' 'clean-build' 'clean-provisioning' 'clean-json' 'clean-ignition' 'clean-tools' 'clean-installer' 'clean-tools'
+	@printf '\nThanks for playing!\n'
+
+.PHONY: template
+template: $(patsubst %/,%,$(OUTPUT))/$(boxname)
 	@printf '[!] Wrote completed template: %s\n' '$<'
 
 .PHONY: clean
 clean: clean-ignition clean-json clean-provisioning clean-build clean-template
+	@printf '[*] Successfully cleaned all intermediary files for building template\n'
+	@printf '[-] Attempting to remove directory: %s\n' '$(boxname_workdir)'
 	rmdir '$(boxname_workdir)'
 
 .PHONY: all
-all: download-installer master-template master-output
-	@printf '[!] Successfully built template and deployed files\n'
+all: download template output
+	@printf '[*] Successfully built everything\n'
 
 ## downloading
 .PHONY: download-installer
@@ -280,9 +297,9 @@ download-tools: $(acbuild_files) $(setup_network_environment_files) $(workdir)/$
 download: download-installer download-tools
 	@printf '[*] Successfully downloaded all required files\n'
 
-.PHONY: master-output
-master-output: $(foreach f,$(output_names),$(patsubst %/,%,$(OUTPUT))/$(f))
-	@printf '[!] Wrote output files to %s: %s\n' '$(patsubst %/,%,$(OUTPUT)))' '$^'
+.PHONY: output
+output: $(patsubst %/,%,$(OUTPUT))/$(boxname) $(foreach f,$(output_names),$(patsubst %/,%,$(OUTPUT))/$(f))
+	@printf '[!] Sucessfully wrote output files to %s: %s\n' '$(patsubst %/,%,$(OUTPUT)))' '$^'
 
 ## cleaning up files
 .PHONY: clean-output
@@ -355,22 +372,22 @@ clean-json:
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
 	-rm -f $(foreach f,$(coreos_installer_files),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)
 
-### rules for required directories
+### recipes for required directories
 $(patsubst %/,%,$(OUTPUT)) $(workdir):
-	test -d '$@' || mkdir -p '$@'
+	@test -d '$@' || mkdir -p '$@'
 
 $(boxname_workdir):	$(workdir)
-	test -d '$@' || mkdir -p '$@'
+	@test -d '$@' || mkdir -p '$@'
 
 $(filesdir) $(toolsdir) $(toolsdir)/bin: $(workdir)
-	test -d '$@' || mkdir -p '$@'
+	@test -d '$@' || mkdir -p '$@'
 
-### rules for actual output of the template and its related files
+### recipes for actual output of the template and its related files
 $(patsubst %/,%,$(OUTPUT))/$(boxname): $(boxname_template)	| $(patsubst %/,%,$(OUTPUT))
 	@printf '[*] Moving template %s: %s\n' '$<' '$(dir $@)'
 	mv '$<' '$@'
 
-### rules that actually build the box
+### recipes that actually build the box
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
@@ -419,11 +436,11 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 
 # generate ssh public/private key
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
-	ssh-keygen -t rsa -C 'builder-generated public key' -f '$(workdir)/$(boxname).id_rsa' -N ''
+	ssh-keygen -q -t rsa -C 'builder-generated public key' -f '$(workdir)/$(boxname).id_rsa' -N ''
 
-### rules for building the bootstrap configuration
+### recipes for building the bootstrap configuration
 
-## rules for validating the configuration
+## recipes for validating the configuration
 $(boxname_workdir)/$(boxname_config).validate: $(boxname_workdir)/$(boxname_config)
 ifneq ($(validate),0)
 	@printf '[!] Validating ignition configuration %s: %s\n' '$<' '$(coreos_validate_url)'
@@ -442,10 +459,10 @@ $(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config).validate $(bo
 		exit 1; \
 	done
 	@printf '[*] Successfully validated ignition configuration: %s\n' '$@'
-	cp -f '$(boxname_workdir)/$(boxname_config)' '$@'
+	@cp -f '$(boxname_workdir)/$(boxname_config)' '$@'
 
 # combine the result ignition json with any other configurations
-$(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(foreach opt,$(box_config_optional),$(opt))
+$(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(foreach opt,$(box_config_custom),$(opt))
 	@printf '[*] Merging the ignition configuration %s using the result json and extra configurations: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
 
@@ -454,10 +471,9 @@ $(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_wo
 	@printf '[*] Making ignition configuration with template %s: %s\n' '$<' '$@'
 	@jq --slurpfile files '$(boxname_workdir)/$(boxname_config)-files' --slurpfile units '$(boxname_workdir)/$(boxname_config)-units' --slurpfile users '$(boxname_workdir)/$(boxname_config)-users' --slurpfile networks '$(boxname_workdir)/$(boxname_config)-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
 
-# set the hostname using $(boxname)
+# set the hostname using $(boxname) with the mode 420 (0644 in octal)
 $(boxname_workdir)/$(boxname_config)-hostname:	| $(boxname_workdir)
 	@printf '[-] Building the ignition configuration file for the hostname: %s\n' '$(boxname)'
-	# mode 0644 == 420
 	@jq -n --arg content '$(boxname)' '[{ filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ($$content | @uri)) } }]' >| '$@'
 
 # bootstrap for ignition/sysctl directory
@@ -490,18 +506,18 @@ $(boxname_workdir)/$(boxname_config)-network: $(foreach f,$(ignition_network_fil
 	@printf '[*] Merging all ignition network files into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $^ >| '$@'
 
-### rules for provisioning with saltstack
+### recipes for provisioning with saltstack
 $(boxname_workdir)/salt $(boxname_workdir)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files)	| $(boxname_workdir)
 	@printf '[*] Copying states for bootstrapping %s: %s\n' '$(boxname)' '$(boxname_workdir)/salt'
-	cp -r '$(salt_config)' '$(boxname_workdir)'/
+	@cp -r '$(salt_config)' '$(boxname_workdir)'/
 	@printf '[*] Copying bootstrap pillar: %s\n' '$(boxname_workdir)/pillar'
-	cp -r '$(salt_pillar)' '$(boxname_workdir)'/
+	@cp -r '$(salt_pillar)' '$(boxname_workdir)'/
 	@printf '[*] Copying extra files from %s into states: %s\n' '$(filesdir)' '$(boxname_workdir)/salt'
-	cp -r '$(filesdir)' '$(boxname_workdir)/salt'/
+	@cp -r '$(filesdir)' '$(boxname_workdir)/salt'/
 
 $(boxname_workdir)/salt-minion.conf: $(MAKEDIR)salt-minion.conf	| $(boxname_workdir)
 	@printf '[*] Copying in bootstrap configuration: %s\n' '$@'
-	cp '$<' '$@'
+	@cp '$<' '$@'
 
 $(boxname_workdir)/pillar/acbuild.sls: $(acbuild_files)	| $(boxname_workdir)/pillar
 	@printf '[-] Generating default pillar configuration: %s\n' '$^'
@@ -511,7 +527,7 @@ $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
 	@printf '[-] Writing project name into pillar configuration: %s\n' '$@'
 	@printf -- '%s\n' '$(PROJECT)' >| '$@'
 
-### rules that are automatically generated
+### recipes that are automatically generated
 
 # output results into the output directory
 $(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(patsubst %/,%,$(OUTPUT)))))
@@ -554,13 +570,13 @@ $(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_confi
 # making the ignition unit dropins list
 $(foreach name,$(ignition_dropins_names),$(eval $(call ignition_unit_dropins,$(boxname_workdir)/ignition-dropins.json-$(name),$(foreach f,$(wildcard $(ignition_config)/dropins/$(name)/*.conf),$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f))))))
 
-# rules that compose the unit with all of its dropins
+# recipes that compose the unit with all of its dropins
 $(foreach name,$(filter $(ignition_dropins_names),$(ignition_units_names)),$(eval $(call ignition_unit,$(boxname_workdir)/ignition-unit.json-$(name),$(boxname_workdir)/ignition-units.json-$(name),$(boxname_workdir)/ignition-dropins.json-$(name))))
 
-# rules that compose the unit without any dropins
+# recipes that compose the unit without any dropins
 $(foreach name,$(filter-out $(ignition_dropins_names),$(ignition_units_names)),$(eval $(call ignition_unit,$(boxname_workdir)/ignition-unit.json-$(name),$(boxname_workdir)/ignition-units.json-$(name))))
 
-# rules that compose a missing unit with all dropins
+# recipes that compose a missing unit with all dropins
 $(foreach name,$(filter-out $(ignition_units_names),$(ignition_dropins_names)),$(eval $(call ignition_unit_missing,$(name),$(boxname_workdir)/ignition-unit.json-$(name),$(boxname_workdir)/ignition-dropins.json-$(name))))
 
 # combining each user with the sshAuthorizedKeys (FIXME: allow unique ssh keys per-user)
