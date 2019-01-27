@@ -229,7 +229,7 @@
                 "LOGFILE=/root/bootstrap.state.log"
             ],
             "inline" : [
-                "until salt-call --retcode-passthrough --local state.apply; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "until salt-call --retcode-passthrough --local state.apply saltenv=bootstrap pillarenv=bootstrap; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
