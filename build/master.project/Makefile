@@ -194,7 +194,7 @@ endef
 define checksum
 $(3): $(1)
 	@printf '[-] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
-	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\n' >| '$$@'
+	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\r\n' >| '$$@'
 endef
 
 # coreos_tool '$target' '$source'
