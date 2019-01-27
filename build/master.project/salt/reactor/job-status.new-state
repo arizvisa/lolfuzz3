@@ -1,6 +1,6 @@
 Log a new job message:
     runner.salt.cmd:
-        - fun: log.info
         - args:
+            - fun: log.info
             - message: "A new job {{ data.jid }} was created for {{ data.tgt }} by {{ data.user }} using {{ data.fun }}."
 

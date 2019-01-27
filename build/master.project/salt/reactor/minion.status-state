@@ -1,7 +1,7 @@
 Make a pillar for the new minion:
     runner.salt.cmd:
-        - fun: etcd.set
         - args:
+            - fun: etcd.set
             - key: {{ pillar_namespace }}/{{ '{{ data.id }}' }}
             - value: null
             - directory: true
