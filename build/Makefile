@@ -1,10 +1,13 @@
 MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
 
-.PHONY: master-image
-master-image:
-	$(MAKE) -f $(MAKEDIR)master.project/Makefile download-installer master-image master-output
-	$(info "Successfully built master image.")
+.DEFAULT_GOAL := help
 
-.PHONY: all
-all:
-	$(info "Please specify one of the following: master-image")
+.PHONY: master-template
+master-template:
+	$(MAKE) -f $(MAKEDIR)master.project/Makefile all
+	@printf 'Successfully built master template.\n'
+
+.PHONY: help
+help:
+	@printf 'Please specify one of the following:\n'
+	@printf '\t%s\n' 'master-template'
