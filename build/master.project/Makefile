@@ -13,11 +13,16 @@ ifndef OUTPUT
     $(error [!] Build variable path OUTPUT is undefined)
 endif
 
-# convert the parameter for VALIDATE to an integer
+# convert the following parameters to an integer
 VALIDATE ?= 1
 validate := $(VALIDATE)
 validate := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(validate)))))
 validate := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(validate)))))
+
+DRY ?= 1
+dry_run := $(DRY)
+dry_run := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(dry_run)))))
+dry_run := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(dry_run)))))
 
 ### Check input directory with configuration for master
 ifneq ($(wildcard ${INPUT}),)
@@ -65,6 +70,10 @@ endif
 ### Inform the user of any options they've specified
 ifeq ($(validate),0)
     $(warning [!] User has requested to skip validation of configuration: $(boxname_config))
+endif
+
+ifneq ($(dry),0)
+    $(warning [!] User has requested to not actually execute the build the target: $(boxname_template))
 endif
 
 ### some utility macros for downloading files
@@ -166,7 +175,7 @@ endef
 define gh_download
 $(1):	| $(patsubst %/,%,$(dir $(1)))
 	@printf '[!] Downloading %s from %s\n' '$$(notdir $(1))' '$(2)'
-	$${DOWNLOAD} -o '$$@' '$(2)'
+	$${GH_FETCH} -o '$$@' '$(2)'
 endef
 
 ## CoreOS components
@@ -356,9 +365,15 @@ $(boxname_outdir): $(boxname_template)	| $(dir $(boxname_outdir))
 	mv '$<' '$@'
 
 ### rules that actually build the box
-$(boxname_template): $(coreos_installer_files) $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config)
+$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files)
+ifeq ($(dry_run),0)
 	@printf '[!] Building template from %s using variables %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
 	packer build -only=vmware-iso -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' '$(boxname_workdir)/$(boxname).json'
+else
+	@printf '[!] Refusing to build template %s due to DRY_RUN being set to %d\n' '$@' '$(dry_run)'
+	@printf 'packer build -only=vmware-iso -var-file %c%s%c -var %cguest-config=%s%c %c%s%c\n' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@false
+endif
 
 # build json file containing all information about the iso
 $(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
@@ -404,7 +419,7 @@ $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 
 ## rules for validating the configuration
 $(boxname_workdir)/$(boxname_config).validate: $(boxname_workdir)/$(boxname_config)
-ifneq ($(validate), 0)
+ifneq ($(validate),0)
 	@printf '[!] Validating ignition configuration %s: %s\n' '$<' '$(coreos_validate_url)'
 	${PUT} '@$<' '$(coreos_validate_url)' >| '$@'
 else
@@ -498,11 +513,11 @@ $(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(outdir))
 ## coreos installation and provisioning
 
 # download the coreos installer
-$(foreach f,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(workdir)/$(f),$(f))))
+$(foreach name,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(workdir)/$(name),$(name))))
 
 # generate hashes for downloaded files
-$(foreach f,$(file <$(in_coreos_files)),$(eval $(call checksum,$(workdir)/$(f),$(checksum_type),$(workdir)/$(f).$(checksum_type))))
-$(foreach f,$(file <$(in_coreos_files)),$(eval $(call json_rawfile,$(workdir)/$(f).$(checksum_type),$(workdir)/$(f).$(checksum_type).json-raw)))
+$(foreach f,$(coreos_installer_files),$(eval $(call checksum,$(f),$(checksum_type),$(f).$(checksum_type))))
+$(foreach f,$(coreos_installer_files),$(eval $(call json_rawfile,$(f).$(checksum_type),$(f).$(checksum_type).json-raw)))
 
 # fetch the acbuild tool
 $(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(filesdir)/$(notdir $(u)),$(u))))
