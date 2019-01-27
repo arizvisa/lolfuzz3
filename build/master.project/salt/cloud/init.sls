@@ -27,7 +27,7 @@ Install salt-cloud configuration:
                 master: {{ grains['ip4_interfaces'][Interface] | first }}
         - require:
             - Make salt configuration directory
-        - mode: 0664                
+        - mode: 0664
 
 ### Service directories
 Make salt-cloud configuration directory:
@@ -73,6 +73,13 @@ Install salt-cloud profiles directory:
             - Make salt-cloud profiles directory
 
 ### Example configurations
+Download Salt-Minion windows installer:
+    file.managed:
+        - source: {{ pillar['cloud']['windows']['url'] }}
+        - name: /srv/cloud/{{ pillar['cloud']['windows']['installer'] }}
+        - source_hash: {{ pillar['cloud']['windows']['checksum'] }}
+        - mode: 0664
+
 Install an example cloud provider:
     file.managed:
         - template: jinja
@@ -80,9 +87,35 @@ Install an example cloud provider:
         - name: /srv/cloud/providers/default.conf
         - defaults:
               providers:
-                  {}
+                  saltify-windows:
+                      minion:
+                          master: {{ grains['ip4_interfaces'][Interface] | first }}
+                      driver: saltify
+
+                      deploy: true
+                      force_minion_config: true
+                      remove_config_on_destroy: true
+                      shutdown_on_destroy: true
+
+                      use_winrm: true
+                      winrm_use_ssl: false
+                      winrm_verify_ssl: false
+                      winrm_port: 5985
+                      win_installer: /srv/cloud/{{ pillar['cloud']['windows']['installer'] }}
+
+                  saltify-linux:
+                      minion:
+                          master: {{ grains['ip4_interfaces'][Interface] | first }}
+                      driver: saltify
+
+                      deploy: true
+                      force_minion_config: true
+                      remove_config_on_destroy: true
+                      shutdown_on_destroy: true
+
         - require:
             - Make salt-cloud providers directory
+            - Download Salt-Minion windows installer
         - mode: 0664
 
 Install an example cloud profile:
