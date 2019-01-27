@@ -19,10 +19,10 @@ validate := $(VALIDATE)
 validate := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(validate)))))
 validate := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(validate)))))
 
-DRY ?= 1
-dry_run := $(DRY)
-dry_run := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(dry_run)))))
-dry_run := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(dry_run)))))
+BUILD ?= 1
+build := $(BUILD)
+build := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(build)))))
+build := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(build)))))
 
 ### Check input directory with configuration for master
 ifneq ($(wildcard ${INPUT}),)
@@ -72,8 +72,8 @@ ifeq ($(validate),0)
     $(warning [!] User has requested to skip validation of configuration: $(boxname_config))
 endif
 
-ifneq ($(dry),0)
-    $(warning [!] User has requested to not actually execute the build the target: $(boxname_template))
+ifeq ($(build),0)
+    $(warning [!] User has requested to skip building the target: $(boxname_template))
 endif
 
 ### some utility macros for downloading files
@@ -366,11 +366,11 @@ $(boxname_outdir): $(boxname_template)	| $(dir $(boxname_outdir))
 
 ### rules that actually build the box
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files)
-ifeq ($(dry_run),0)
+ifneq ($(build),0)
 	@printf '[!] Building template from %s using variables %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
 	packer build -only=vmware-iso -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' '$(boxname_workdir)/$(boxname).json'
 else
-	@printf '[!] Refusing to build template %s due to DRY_RUN being set to %d\n' '$@' '$(dry_run)'
+	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
 	@printf 'packer build -only=vmware-iso -var-file %c%s%c -var %cguest-config=%s%c %c%s%c\n' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
