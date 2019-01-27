@@ -6,10 +6,10 @@
     {% if environments[env] -%}
 {%- for tgt in environments[env] -%}
     {% if env in target and tgt in target[env] -%} # {{ target[env][tgt] }}
-    {{ tgt }}:
+    "{{ tgt }}":
         {{ environments[env][tgt] | yaml(False) | indent(8) }}
     {% else -%}
-    {{ tgt }}:
+    "{{ tgt }}":
         {{ environments[env][tgt] | yaml(False) | indent(8) }}
     {% endif -%}
 {% endfor -%}
@@ -20,10 +20,10 @@
     {% if environments[env] -%}
 {%- for tgt in environments[env] -%}
     {% if env in target and tgt in target[env] -%} # {{ target[env][tgt] }}
-    {{ tgt }}:
+    "{{ tgt }}":
         {{ environments[env][tgt] | yaml(False) | indent(8) }}
     {% else -%}
-    {{ tgt }}:
+    "{{ tgt }}":
         {{ environments[env][tgt] | yaml(False) | indent(8) }}
     {%- endif %}
 {% endfor -%}
@@ -33,4 +33,4 @@
 {% endfor -%}
 {% else -%}
 {}
-{%- endif -%}
+{%- endif -%"}
