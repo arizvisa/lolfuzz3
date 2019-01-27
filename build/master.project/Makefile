@@ -212,7 +212,7 @@ endef
 define ignition_file
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
-	@jq -n --arg name '$(3)' --arg mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/etc/sysctl.d/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
+	@jq -n --arg name '$(3)' --argjson mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/etc/sysctl.d/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
 
 # ignition_unit_file '$unit.service' '$source.service.json-raw' '$output.json'
