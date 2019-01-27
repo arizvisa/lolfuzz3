@@ -21,6 +21,7 @@ Install salt-cloud configuration:
         - source: salt://cloud/cloud.conf
         - name: /etc/salt/cloud
         - defaults:
+            log_level: info
             pool_size: 10
             minion:
                 master: {{ grains['ip4_interfaces'][Interface] | first }}
