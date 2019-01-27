@@ -47,12 +47,10 @@ endif
 
 ### user variables
 boxname?=master.${PROJECT}
-outdir?=${ROOTDIR}/template
 workdir?=build.dir
 
 boxname_config=$(boxname).config
 
-boxname_outdir=$(outdir)/$(boxname)
 boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
@@ -60,11 +58,10 @@ boxname_template=$(boxname_workdir)/template
 output_names := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
 
 ### Check output directory
-outdir=${OUTPUT}
-ifeq ($(wildcard $(boxname_outdir)),)
-    $(info [.] Output path for $(boxname) was specified: $(abspath $(boxname_outdir)))
+ifeq ($(wildcard $(patsubst %/,%,$(OUTPUT))/$(boxname)),)
+    $(info [.] Output path for $(boxname) was specified: $(abspath $(patsubst %/,%,$(OUTPUT))/$(boxname)))
 else
-    $(error [!] Output path for $(boxname) already exists: $(abspath $(boxname_outdir)))
+    $(warning [!] Output path for $(boxname) already exists: $(abspath $(patsubst %/,%,$(OUTPUT))/$(boxname)))
 endif
 
 ### Inform the user of any options they've specified
@@ -159,6 +156,10 @@ ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$
 # output_file '$file' '$directory'
 define output_file
 $(2)/$(notdir $(1)): $(1)	| $(2)
+	@if [ -e '$$@' ]; then \
+	    printf '[!] Refusing to deploy over already existing file: %s\n' '$$@'; \
+	    false; \
+	fi
 	@printf '[*] Copying output file to %s: %s\n' '$(2)' '$$<'
 	cp '$$<' '$$@'
 endef
@@ -253,8 +254,8 @@ endef
 
 ### general utility rules
 .PHONY: master-image
-master-image: $(boxname_outdir)
-	@printf '[!] Wrote output image to %s\n' '$(boxname_outdir)'
+master-image: $(patsubst %/,%,$(OUTPUT))/$(boxname)
+	@printf '[!] Wrote output template to %s\n' '$<'
 
 .PHONY: clean
 clean: clean-ignition clean-json clean-provisioning clean-build clean-image
@@ -278,16 +279,16 @@ download: download-installer download-tools
 	@printf '[*] Successfully downloaded all required files\n'
 
 .PHONY: master-output
-master-output: $(foreach f,$(output_names),$(outdir)/$(f))
-	@printf '[!] Wrote output files to %s: %s\n' '$(outdir)' '$^'
+master-output: $(foreach f,$(output_names),$(patsubst %/,%,$(OUTPUT))/$(f))
+	@printf '[!] Wrote output files to %s: %s\n' '$(patsubst %/,%,$(OUTPUT)))' '$^'
 
 ## cleaning up files
 .PHONY: clean-output
 clean-output:
-	@printf '[!] Erasing image at %s\n' '$(boxname_outdir)'
-	-rm -rf '$(boxname_outdir)'
-	@printf '[!] Erasing output files from %s\n' '$(outdir)'
-	-rm -f $(foreach f,$(output_names),'$(outdir)/$(f)')
+	@printf '[!] Erasing image at %s\n' '$(patsubst %/,%,$(OUTPUT))/$(boxname)'
+	-rm -rf '$(patsubst %/,%,$(OUTPUT))/$(boxname)'
+	@printf '[!] Erasing output files from %s\n' '$(patsubst %/,%,$(OUTPUT))'
+	-rm -f $(foreach f,$(output_names),'$(patsubst %/,%,$(OUTPUT))/$(f)')
 
 .PHONY: clean-installer
 clean-installer:
@@ -350,7 +351,7 @@ clean-json:
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
 
 ### rules for required directories
-$(outdir) $(workdir):
+$(patsubst %/,%,$(OUTPUT)) $(workdir):
 	test -d '$@' || mkdir -p '$@'
 
 $(boxname_workdir):	$(workdir)
@@ -360,8 +361,8 @@ $(filesdir) $(toolsdir) $(toolsdir)/bin: $(workdir)
 	test -d '$@' || mkdir -p '$@'
 
 ### rules for actual output of the template and its related files
-$(boxname_outdir): $(boxname_template)	| $(dir $(boxname_outdir))
-	@printf '[*] Moving output template into %s: %s\n' '$(outdir)' '$<'
+$(patsubst %/,%,$(OUTPUT))/$(boxname): $(boxname_template)	| $(patsubst %/,%,$(OUTPUT))
+	@printf '[*] Moving image %s: %s\n' '$<' '$(dir $@)'
 	mv '$<' '$@'
 
 ### rules that actually build the box
@@ -508,7 +509,7 @@ $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
 ### rules that are automatically generated
 
 # output results into the output directory
-$(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(outdir))))
+$(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(patsubst %/,%,$(OUTPUT)))))
 
 ## coreos installation and provisioning
 
