@@ -20,7 +20,7 @@ Install a default salt-master reactor highstate:
         - context:
             reactor:
                 - 'salt/minion/*/start':
-                    - /srv/reactor/minion-status.sls
+                    - /srv/reactor/minion-pillar.sls
 
                 - 'salt/job/*/new':
                     - /srv/reactor/job-status.new.sls
@@ -51,8 +51,8 @@ Add salt-master reactor highstate into master configuration:
 Install reactor minion-status state:
     file.managed:
         - template: jinja
-        - source: salt://reactor/minion.status-state
-        - name: /srv/reactor/minion-status.sls
+        - source: salt://reactor/minion-pillar.state
+        - name: /srv/reactor/minion-pillar.sls
         - context:
             pillar_namespace: {{ pillar['configuration']['salt']['namespace'] }}/pillar
         - use:
@@ -62,7 +62,7 @@ Install reactor minion-status state:
 
 Install reactor job-status.new state:
     file.managed:
-        - source: salt://reactor/job-status.new-state
+        - source: salt://reactor/job-status-new.state
         - name: /srv/reactor/job-status.new.sls
         - use:
             - Make salt-master reactor directory
@@ -71,7 +71,7 @@ Install reactor job-status.new state:
 
 Install reactor job-status.ret state:
     file.managed:
-        - source: salt://reactor/job-status.ret-state
+        - source: salt://reactor/job-status-ret.state
         - name: /srv/reactor/job-status.ret.sls
         - use:
             - Make salt-master reactor directory
@@ -80,7 +80,7 @@ Install reactor job-status.ret state:
 
 Install reactor run-status.new state:
     file.managed:
-        - source: salt://reactor/run-status.new-state
+        - source: salt://reactor/run-status-new.state
         - name: /srv/reactor/run-status.new.sls
         - use:
             - Make salt-master reactor directory
@@ -89,7 +89,7 @@ Install reactor run-status.new state:
 
 Install reactor run-status.ret state:
     file.managed:
-        - source: salt://reactor/run-status.ret-state
+        - source: salt://reactor/run-status-ret.state
         - name: /srv/reactor/run-status.ret.sls
         - use:
             - Make salt-master reactor directory
