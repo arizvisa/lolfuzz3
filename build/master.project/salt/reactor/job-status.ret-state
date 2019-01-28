@@ -2,5 +2,5 @@ Log a completed job message:
     runner.salt.cmd:
         - args:
             - fun: log.info
-            - message: "The minion {{ data.id }} running job {{ data.jid }} for {{ data.fun }} returned {{ data.retcode }}."
+            - message: "Job {{ data.jid }} from {{ data.id }} calling {{ data.fun }} returned {{ data.retcode }}."
 
