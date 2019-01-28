@@ -77,6 +77,10 @@ ifeq ($(build),0)
     $(info [!] User has requested to skip building the target: $(boxname_template))
 endif
 
+ifdef TIMEOUT
+    $(info [*] User has specified an initial boot timeout of $(TIMEOUT))
+endif
+
 ### some utility macros for downloading files
 DOWNLOAD := curl -L -C- --progress-bar
 FETCH := curl -L -s -S
@@ -259,6 +263,10 @@ endef
 ### general utility recipes
 .DEFAULT_GOAL := help
 
+# dependency to use when a target needs to always be rebuilt
+FORCE:
+
+## regular recipes
 .PHONY: help
 help:
 	$(info [*] User requested help to build template)
@@ -409,9 +417,15 @@ $(boxname_workdir)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa	| $(bo
 	@jq -n --arg key '$<' '{ "provision-key": $$key }' >| '$@'
 
 # build json file containing build-specific variables
-$(boxname_workdir)/$(boxname)-vars.json.base:	| $(boxname_workdir)
+ifndef TIMEOUT
+$(boxname_workdir)/$(boxname)-vars.json.base: FORCE	| $(boxname_workdir)
 	@printf '[-] Generating build variables: %s\n' '$@'
 	@jq -n --arg name '$(boxname)' --arg input '$(workdir)' --arg output '$(boxname_template)' '{ "guest-name": $$name, "install-input": $$input, "install-output": $$output }' >| '$@'
+else
+$(boxname_workdir)/$(boxname)-vars.json.base: FORCE	| $(boxname_workdir)
+	@printf '[-] Generating build variables: %s\n' '$@'
+	@jq -n --arg name '$(boxname)' --arg input '$(workdir)' --arg output '$(boxname_template)' --arg timeout '$(TIMEOUT)' '{ "guest-name": $$name, "install-input": $$input, "install-output": $$output, "timeout-boot": $$timeout }' >| '$@'
+endif
 
 # concatenate entire template configuration into a single .json file
 $(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workdir)/$(boxname)-vars.json.iso $(boxname_workdir)/$(boxname)-vars.json.ssh $(boxname_workdir)/$(boxname)-vars.json.salt $(boxname_workdir)/$(boxname)-vars.json.tools $(boxname_workdir)/$(boxname)-vars.json.base
