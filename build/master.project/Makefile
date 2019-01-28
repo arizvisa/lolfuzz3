@@ -276,6 +276,28 @@ help:
 	@printf '\t%s\n' 'download-installer' 'download-tools'
 	@printf '\nTo clean any intermediary files that were needed a specific component:\n'
 	@printf '\t%s\n' 'clean-output' 'clean-template' 'clean-build' 'clean-provisioning' 'clean-json' 'clean-ignition' 'clean-tools' 'clean-installer' 'clean-tools'
+
+	@printf '\nThis makefile can take a couple of parameters. These are as follows:\n'
+	@printf '\tPROJECT: This is the name of the project (also used as the cluster domain)\n'
+	@printf '\tOUTPUT: This variable represents the directory to move the completed template\n'
+	@printf '\t        into. After building, the configuration for the template, its public\n'
+	@printf '\t        and private keypair, and the template itself are moved into this\n'
+	@printf '\t        directory.\n'
+	@printf '\tINPUT: This variable points to a directory of extra optional configuration\n'
+	@printf '\t       to provision the box with. The contents of this directory is merged\n'
+	@printf '\t       together to be combined with the ignition configuration of the template\n'
+	@printf '\t       and thus can be used to provision the template before the salt states\n'
+	@printf '\t       are applied.\n'
+	@printf '\tTIMEOUT: This parameter is a measurement of time which controls the amount\n'
+	@printf '\t         of time that `packer` should wait for the operating system to\n'
+	@printf '\t         initially boot up. By default this is "1m30s".\n'
+	@printf '\tBUILD: This is a boolean (which defaults to true) that specifies whether\n'
+	@printf '\t       to call `packer` directly in order to build the template. If this\n'
+	@printf '\t       is set to false, `make` will terminate right before the build.\n'
+	@printf '\tVALIDATE: This boolean (defaults to true) specifies whether to validate\n'
+	@printf '\t          the ignition configuration via "https://coreos.com/validate/".\n'
+	@printf '\t          This is done by making a POST to the site via `curl`.\n'
+
 	@printf '\nThanks for playing!\n'
 
 .PHONY: template
