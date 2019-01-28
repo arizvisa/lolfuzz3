@@ -1,6 +1,8 @@
-Log a new job message:
+{%- for tgt in data.tgt -%}
+Log a new job message for {{ tgt }}:
     runner.salt.cmd:
         - args:
             - fun: log.info
-            - message: "A new job {{ data.jid }} was created for {{ data.tgt }} by {{ data.user }} using {{ data.fun }}."
+            - message: "Job {{ data.jid }} was created for {{ tgt }} by {{ data.user }} using {{ data.fun }}."
 
+{% endfor -%}
