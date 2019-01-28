@@ -269,15 +269,15 @@ FORCE:
 ## regular recipes
 .PHONY: help
 help:
-	$(info [*] User requested help to build template)
+	$(info [*] User requested help for the makefile)
 	@printf '\nThe following recipes are available:\n'
 	@printf '\t%s\n' 'all' 'output' 'template' 'clean' 'download'
-	@printf '\nTo pre-download an individual class of files needed to build:\n'
+	@printf '\nTo pre-download an individual class of files needed for the build:\n'
 	@printf '\t%s\n' 'download-installer' 'download-tools'
-	@printf '\nTo clean any intermediary files that were needed a specific component:\n'
+	@printf '\nTo clean up any intermediary files that were needed for building a specific component:\n'
 	@printf '\t%s\n' 'clean-output' 'clean-template' 'clean-build' 'clean-provisioning' 'clean-json' 'clean-ignition' 'clean-tools' 'clean-installer' 'clean-tools'
 
-	@printf '\nThis makefile can take a couple of parameters. These are as follows:\n'
+	@printf '\nParameters that are available:\n'
 	@printf '\tPROJECT: (mandatory) Name of the project (also used as the cluster%cs domain)\n' "'"
 	@printf '\tOUTPUT: (default /deploy) Path to move the template, its config, and auth keypair to\n'
 	@printf '\tINPUT: Path of optional config that is combined with the template%cs before build\n' "'"
