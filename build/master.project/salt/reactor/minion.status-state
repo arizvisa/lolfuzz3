@@ -1,9 +1,8 @@
-Make a pillar for the new minion:
-    runner.salt.cmd:
+Ensure a pillar exists for the started minion:
+    local.state.single:
+        - tgt: {{ opts.master_id }}
         - args:
-            - fun: etcd.set
-            - key: {{ pillar_namespace }}/{{ '{{ data.id }}' }}
-            - value: null
-            - directory: true
-            - profile: root_etcd
-
+            - fun: etcd.directory
+            - name: {{ pillar_namespace }}/{{ '{{ data.id }}' }}
+            - args:
+                - profile: root_etcd
