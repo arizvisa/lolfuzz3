@@ -344,6 +344,9 @@ clean-provisioning:
 	-rm -rf '$(boxname_workdir)/salt'
 	-rm -rf '$(boxname_workdir)/pillar'
 	-rm -f '$(boxname_workdir)/salt-minion.conf'
+ifndef INPUT
+	-rmdir '$(custom)'
+endif
 
 .PHONY: clean-tools
 clean-tools:
