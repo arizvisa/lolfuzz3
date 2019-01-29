@@ -11,8 +11,6 @@ endif
 # optional parameters
 ifndef INPUT
     $(info [!] Optional build variable INPUT was not specified)
-    $(info [*] Setting default value for INPUT: $(ROOTDIR)/config/master.project)
-    INPUT := $(ROOTDIR)/config/master.project
 endif
 
 ifndef OUTPUT
@@ -32,21 +30,6 @@ BUILD ?= 1
 build := $(BUILD)
 build := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(build)))))
 build := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(build)))))
-
-### Check input directory for optional configuration to provision master.project
-ifneq ($(wildcard ${INPUT}),)
-    # modifications to CoreOS ignition
-    ifeq ($(wildcard ${INPUT}/*),)
-        box_config_custom=
-    else
-        box_config_custom=$(wildcard $(patsubst %/,%,${INPUT})/*)
-    endif
-endif
-
-# nodify user if any custom configuration was specified
-ifneq ($(box_config_custom),)
-    $(info [-] Building project "${PROJECT}" with custom configuration: $(box_config_custom))
-endif
 
 ### user variables
 boxname?=master.${PROJECT}
@@ -79,6 +62,18 @@ endif
 
 ifdef TIMEOUT
     $(info [*] User has specified an initial boot timeout of $(TIMEOUT))
+endif
+
+# nodify user if any custom configuration was specified
+ifndef INPUT
+    custom := $(boxname_workdir)/empty
+else
+    ifneq ($(wildcard $(INPUT)/*),)
+        $(info [*] Using custom configuration specified by user: $(patsubst %/,%,$(INPUT)))
+        custom := $(patsubst %/,%,$(INPUT))
+    else
+        $(error [*] No custom configuration found in path specified by user: $(patsubst %/,%,$(INPUT)))
+    endif
 endif
 
 ### some utility macros for downloading files
@@ -280,7 +275,7 @@ help:
 	@printf '\nParameters that are available:\n'
 	@printf '\tPROJECT: (mandatory) Name of the project (also used as the cluster%cs domain)\n' "'"
 	@printf '\tOUTPUT: (default /deploy) Path to move the template, its config, and auth keypair to\n'
-	@printf '\tINPUT: Path of optional config that is combined with the template%cs before build\n' "'"
+	@printf '\tINPUT: Path of /srv configuration that is deployed to the template after installation of salt\n'
 	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
 	@printf '\tBUILD: (default true) Whether to actually build the template, or to just generate the config\n'
 	@printf '\tVALIDATE: (default true) Whether to validate the config via "%s"\n' "https://coreos.com/validate/"
@@ -399,19 +394,22 @@ $(boxname_workdir):	$(workdir)
 $(filesdir) $(toolsdir) $(toolsdir)/bin: $(workdir)
 	@test -d '$@' || mkdir -p '$@'
 
+$(custom):
+	@test -d '$@' || mkdir -p '$@'
+
 ### recipes for actual output of the template and its related files
 $(patsubst %/,%,$(OUTPUT))/$(boxname): $(boxname_template)	| $(patsubst %/,%,$(OUTPUT))
 	@printf '[*] Moving template %s: %s\n' '$<' '$(dir $@)'
 	mv '$<' '$@'
 
 ### recipes that actually build the box
-$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files)
+$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files) $(custom)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build -only=vmware-iso -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' '$(boxname_workdir)/$(boxname).json'
+	packer build -only=vmware-iso -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build -only=vmware-iso -var-file %c%s%c -var %cguest-config=%s%c %c%s%c\n' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build -only=vmware-iso -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
@@ -444,7 +442,7 @@ $(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workd
 # grab all the specified tools into the tools directory and build a json for it
 $(boxname_workdir)/$(boxname)-vars.json.tools: $(setup_network_environment_files) $(extra_tools_files)	| $(boxname_workdir)
 	@printf '[-] Generating variables for miscellaneous CoreOS tools\n'
-	@jq -n --arg tools '$(toolsdir)' '{ "tools-directory": $$tools }' >| '$@'
+	@jq -n --arg tools '$(toolsdir)' '{ "coreos-tools-directory": $$tools }' >| '$@'
 
 # generate necessary configuration variables for salt-stack
 $(boxname_workdir)/$(boxname)-vars.json.salt: $(boxname_workdir)/salt $(boxname_workdir)/pillar $(foreach name,$(salt_bootstrap_pillar_files),$(boxname_workdir)/pillar/$(name)) $(boxname_workdir)/salt-minion.conf $(workdir)/$(salt_bootstrap_file) $(salt_patches)
@@ -484,13 +482,8 @@ $(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config).validate $(bo
 	@printf '[*] Successfully validated ignition configuration: %s\n' '$@'
 	@cp -f '$(boxname_workdir)/$(boxname_config)' '$@'
 
-# combine the result ignition json with any other configurations
-$(boxname_workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config)-original $(foreach opt,$(box_config_custom),$(opt))
-	@printf '[*] Merging the ignition configuration %s using the result json and extra configurations: %s\n' '$@' '$^'
-	@jq 'reduce inputs as $$item (.; . * $$item)' $^ >| '$@'
-
 # combine all ignition jsons into the template
-$(boxname_workdir)/$(boxname_config)-original: $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users $(boxname_workdir)/$(boxname_config)-network
+$(boxname_workdir)/$(boxname_config): $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users $(boxname_workdir)/$(boxname_config)-network
 	@printf '[*] Making ignition configuration with template %s: %s\n' '$<' '$@'
 	@jq --slurpfile files '$(boxname_workdir)/$(boxname_config)-files' --slurpfile units '$(boxname_workdir)/$(boxname_config)-units' --slurpfile users '$(boxname_workdir)/$(boxname_config)-users' --slurpfile networks '$(boxname_workdir)/$(boxname_config)-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
 

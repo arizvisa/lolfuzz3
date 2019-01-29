@@ -1,5 +1,7 @@
 {
     "coreos-tools-stage" : "/home/core/coreos",
+    "coreos-tools-directory" : "path-to-coreos-tools",
+
     "salt-bootstrap-stage" : "/home/core/bootstrap",
     "salt-bootstrap-installer-stage" : "/home/core",
     "site-packages-stage" : "/home/core/patches",
@@ -13,5 +15,6 @@
     "salt-bootstrap-version" : "git-version-tag-to-install",
     "salt-bootstrap-patches" : "path-to-python-patches",
 
-    "tools-directory" : "path-to-coreos-tools"
+    "custom-config-stage" : "/home/coreos/custom",
+    "custom-config-directory" : "path-to-extra-configuration"
 }

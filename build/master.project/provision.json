@@ -34,7 +34,7 @@
             "command" : "echo [*] Staging general CoreOS tools at {{user `coreos-tools-stage`}} and deploying in /opt/coreos"
         },
         { "type" : "file",
-            "source" : "{{user `tools-directory`}}",
+            "source" : "{{user `coreos-tools-directory`}}",
             "destination" : "{{user `coreos-tools-stage`}}"
         },
         { "type" : "shell",
@@ -195,7 +195,7 @@
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
-                "ROOT=/",
+                "DEPLOY=/",
                 "STAGE={{user `salt-bootstrap-stage`}}"
             ],
             "inline" : [
@@ -203,9 +203,9 @@
                 "chown -R root:root \"$STAGE\"",
                 "find \"$STAGE\" -type f -exec chmod 0644 {} +",
                 "find \"$STAGE\" -type d -exec chmod 0755 {} +",
-                "tar -C \"$STAGE\" -cpf- . | tar -xpf- -C \"$ROOT\"",
+                "tar -C \"$STAGE\" -cpf- . | tar -xpf- -C \"$DEPLOY\"",
                 "rm -rf \"$STAGE\"",
-                "mkdir -p \"$ROOT/var/cache/salt\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\""
+                "mkdir -p \"$DEPLOY/var/cache/salt\" \"$DEPLOY/var/run/salt\" \"$DEPLOY/var/log/salt\""
             ]
         },
 
@@ -256,6 +256,33 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "inline" : [
                 "systemctl stop etcd-schema.service"
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [-] Staging the custom configuration"
+        },
+        { "type" : "file",
+            "source" : "{{user `custom-config-directory`}}",
+            "destination" : "{{user `custom-config-stage`}}"
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo [-] Deploying the custom configuration into /srv"
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "DEPLOY=/srv",
+                "STAGE={{user `salt-bootstrap-stage`}}"
+            ],
+            "inline" : [
+                "umask 022",
+                "chown -R root:root \"$STAGE\"",
+                "find \"$STAGE\" -type f -exec chmod 0644 {} +",
+                "find \"$STAGE\" -type d -exec chmod 0755 {} +",
+                "tar -C \"$STAGE\" -cpf- . | tar -xpf- -C \"$DEPLOY\"",
+                "rm -rf \"$STAGE\""
             ]
         },
 
