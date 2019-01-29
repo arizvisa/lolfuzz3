@@ -28,10 +28,9 @@ Install minion-pillar reaction:
         - name: /srv/bootstrap/reactor/minion-pillar.sls
         - context:
             pillar_namespace: {{ pillar['configuration']['salt']['namespace'] }}/pillar
-        - use:
-            - Make bootstrap reactor directory
         - require:
             - Make bootstrap reactor directory
+        - mode: 0664
 
 Install a salt-master reactor hightstate for creating the pillar for a minion:
     file.managed:
@@ -41,13 +40,11 @@ Install a salt-master reactor hightstate for creating the pillar for a minion:
         - context:
             reactor:
                 - 'salt/minion/*/start':
-                    - /srv/reactor/minion-pillar.sls
-        - use:
-            - Make salt-master reactor directory
+                    - /srv/bootstrap/reactor/minion-pillar.sls
         - require:
             - Make salt-master configuration directory
             - Install minion-pillar reaction
-        - makedirs: true
+        - mode: 0664
 
 ## salt reactor example states
 Add salt-master reactor highstate into master configuration:
@@ -67,7 +64,6 @@ Install an example salt-master reactor highstate:
         - context:
             reactor:
                 []
-        - use:
-            - Make salt-master reactor directory
         - require:
             - Make salt-master reactor directory
+        - mode: 0664
