@@ -274,7 +274,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
                 "DEPLOY=/srv",
-                "STAGE={{user `salt-bootstrap-stage`}}"
+                "STAGE={{user `custom-config-stage`}}"
             ],
             "inline" : [
                 "umask 022",
