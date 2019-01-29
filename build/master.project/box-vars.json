@@ -15,6 +15,6 @@
     "salt-bootstrap-version" : "git-version-tag-to-install",
     "salt-bootstrap-patches" : "path-to-python-patches",
 
-    "custom-config-stage" : "/home/coreos/custom",
+    "custom-config-stage" : "/home/core/custom",
     "custom-config-directory" : "path-to-extra-configuration"
 }
