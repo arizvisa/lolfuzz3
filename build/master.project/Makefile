@@ -69,10 +69,10 @@ ifndef INPUT
     custom := $(boxname_workdir)/empty
 else
     ifneq ($(wildcard $(INPUT)/*),)
-        $(info [*] Using custom configuration specified by user: $(patsubst %/,%,$(INPUT)))
+        $(info [*] Using custom configuration specified by user: $(abspath $(patsubst %/,%,$(INPUT))))
         custom := $(patsubst %/,%,$(INPUT))
     else
-        $(error [*] No custom configuration found in path specified by user: $(patsubst %/,%,$(INPUT)))
+        $(error [*] No custom configuration found in path specified by user: $(abspath (patsubst %/,%,$(INPUT))))
     endif
 endif
 
