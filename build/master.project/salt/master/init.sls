@@ -117,7 +117,7 @@ Install salt-master configuration:
         - name: /etc/salt/master
 
         - defaults:
-            id: {{ MachineId }}.master.{{ pillar['configuration']['project'] }}
+            id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
             log_level: info
 
             saltenv: base
