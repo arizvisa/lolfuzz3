@@ -73,6 +73,21 @@ Install salt-minion configuration:
                   allow_reconnect: true
                   allow_redirect: true
 
+{% set id = salt['file.grep'](Root + '/etc/os-release', 'ID=')['stdout'].split('=')[-1] %}
+{% set fullname = salt['file.grep'](Root + '/etc/lsb-release', 'ID=')['stdout'].split('=')[-1] %}
+{% set release = salt['file.grep'](Root + '/etc/lsb-release', 'RELEASE=')['stdout'].split('=')[-1] %}
+{% set codename = salt['file.grep'](Root + '/etc/lsb-release', 'CODENAME=')['stdout'].split('=')[-1] %}
+{% set version = salt['file.grep'](Root + '/etc/os-release', 'VERSION=')['stdout'].split('=')[-1] %}
+
+            grains:
+                os: {{ id | yaml_dquote }}
+                os_family: core
+                oscodename: {{ codename }}
+                osfinger: {{ id }}-{{ version }}
+                osfullname: {{ fullname }}
+                osmajorrelease: {{ release | yaml_dquote }}
+                osrelease: {{ release | yaml_dquote }}
+
         # once we're sure the salt-master.service is configured, we can
         # install the salt-minion configuration....
         - use:
