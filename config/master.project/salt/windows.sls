@@ -65,3 +65,13 @@ Reboot after failure:
         - only_on_pending_reboot: false
         - onfail:
             - Everything is up to date
+
+## Final reboot if it is pending
+Reboot if necessary:
+    system.reboot:
+        - message: Reboot to satisfy pending changes
+        - timeout: 0
+        - only_on_pending_reboot: true
+        - require:
+            - Disable Microsoft's Windows Defender
+            - Everything is up to date
