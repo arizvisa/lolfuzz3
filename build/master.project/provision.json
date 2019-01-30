@@ -1,7 +1,7 @@
 {
     "provisioners": [
         { "type" : "shell-local",
-            "command" : "echo [*] System was successfully built"
+            "command" : "echo \"[*] System was successfully built\""
         },
         { "type" : "shell",
             "inline" : [
@@ -12,7 +12,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Uploading private key for connecting to localhost"
+            "command" : "echo \"[*] Uploading private key for connecting to localhost\""
         },
         { "type" : "shell",
             "inline" : [
@@ -31,7 +31,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Staging general CoreOS tools at {{user `coreos-tools-stage`}} and deploying in /opt/coreos"
+            "command" : "echo \"[*] Staging general CoreOS tools at {{user `coreos-tools-stage`}} and deploying in /opt/coreos\""
         },
         { "type" : "file",
             "source" : "{{user `coreos-tools-directory`}}",
@@ -51,7 +51,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Downloading toolbox container environment"
+            "command" : "echo \"[*] Downloading toolbox container environment\""
         },
         { "type" : "shell",
             "inline" : [
@@ -60,7 +60,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Performing an upgrade of the toolbox container environment"
+            "command" : "echo \"[*] Performing an upgrade of the toolbox container environment\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
@@ -74,7 +74,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Installing miscellaneous tools into the toolbox container environment"
+            "command" : "echo \"[*] Installing miscellaneous tools into the toolbox container environment\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
@@ -88,7 +88,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [-] Staging salt-minion installer for deployment into toolbox: {{user `salt-bootstrap-installer-stage`}}"
+            "command" : "echo \"[-] Staging salt-minion installer for deployment into toolbox: {{user `salt-bootstrap-installer-stage`}}\""
         },
         { "type" : "file",
             "source" : "{{user `salt-bootstrap-installer`}}",
@@ -96,7 +96,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Installing salt-minion dependencies into toolbox"
+            "command" : "echo \"[*] Installing salt-minion dependencies into toolbox\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
@@ -114,7 +114,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Installing salt-minion into toolbox"
+            "command" : "echo \"[*] Installing salt-minion into toolbox\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
@@ -131,7 +131,7 @@
         },
 
         { "type" : "shell-local",
-            "command": "echo [*] Cleaning temporary files leftover from installing packages"
+            "command": "echo \"[*] Cleaning temporary files leftover from installing packages\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
@@ -141,7 +141,7 @@
         },
 
         { "type" : "shell-local",
-            "command": "echo [-] Staging patches for site-packages in directory: {{user `site-packages-stage`}}"
+            "command": "echo \"[-] Staging patches for site-packages in directory: {{user `site-packages-stage`}}\""
         },
         { "type" : "file",
             "source" : "{{user `salt-bootstrap-patches`}}",
@@ -149,7 +149,7 @@
         },
 
         { "type" : "shell-local",
-            "command": "echo [-] Applying patches from {{user `site-packages-stage`}} to site-packages in toolbox instance"
+            "command": "echo \"[-] Applying patches from {{user `site-packages-stage`}} to site-packages in toolbox instance\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
@@ -167,7 +167,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [-] Creating directory structure in {{user `salt-bootstrap-stage`}} for staging salt-stack configuration"
+            "command" : "echo \"[-] Creating directory structure in {{user `salt-bootstrap-stage`}} for staging salt-stack configuration\""
         },
         { "type" : "shell",
             "inline" : [
@@ -190,7 +190,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Deploying salt-stack stage ({{user `salt-bootstrap-stage`}} into root filesystem"
+            "command" : "echo \"[*] Deploying salt-stack stage ({{user `salt-bootstrap-stage`}} into root filesystem\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
@@ -210,7 +210,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Starting setup-network-environment.service"
+            "command" : "echo \"[*] Starting setup-network-environment.service\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
@@ -223,7 +223,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Starting etcd-schema.service"
+            "command" : "echo \"[*] Starting etcd-schema.service\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
@@ -236,7 +236,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [-] Applying bootstrap state to {{user `guest-name`}}"
+            "command" : "echo \"[-] Applying bootstrap state to {{user `guest-name`}}\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/etc/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
@@ -250,7 +250,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [-] Cleaning up etcd-schema.service"
+            "command" : "echo \"[-] Cleaning up etcd-schema.service\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
@@ -260,7 +260,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [-] Staging the custom configuration"
+            "command" : "echo \"[-] Staging the custom configuration\""
         },
         { "type" : "file",
             "source" : "{{user `custom-config-directory`}}",
@@ -268,7 +268,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [-] Deploying the custom configuration into /srv"
+            "command" : "echo \"[-] Deploying the custom configuration into /srv\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
@@ -287,7 +287,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo [*] Done!"
+            "command" : "echo \"[*] Done!\""
         }
     ]
 }
