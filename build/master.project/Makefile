@@ -409,10 +409,10 @@ $(patsubst %/,%,$(OUTPUT))/$(boxname): $(boxname_template)	| $(patsubst %/,%,$(O
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files) $(custom)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build -only=vmware-iso -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
+	packer build -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build -only=vmware-iso -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
