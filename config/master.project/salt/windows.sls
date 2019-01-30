@@ -1,13 +1,15 @@
-Stop Microsoft's Windows Defender:
-    service.stop:
+## Services
+Disable Microsoft's Windows Defender:
+    service.disabled:
         - name: WinDefend
 
-Disable Microsoft's Windows Defender:
-    service.disable:    
+Stop Microsoft's Windows Defender:
+    service.dead:
         - name: WinDefend
         - onchanges:
-            - Stop Microsoft's Windows Defender
+            - Disable Microsoft's Windows Defender
 
+## Updates
 Download Windows Updates:
     module.run:
         - name: win_wua.list
