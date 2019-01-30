@@ -1,6 +1,13 @@
+Synchronize modules for the minion:
+    module.run:
+        - saltutil.sync_all:
+            - refresh: true
+
 Install required python-etcd module:
     pip.installed:
         - name: python-etcd
+        - required:
+            - Synchronize modules for the minion
 
 Notify the master that we weren't able to install Python:
     event.send:
