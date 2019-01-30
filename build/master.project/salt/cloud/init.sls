@@ -134,8 +134,35 @@ Install an example cloud provider:
                   saltify-linux:
                       minion:
                           master: {{ grains['ip4_interfaces'][Interface] | first }}
-                      driver: saltify
 
+                          # FIXME: this configuration should be barely enough to connect to the master
+                          #        and then the full config should be applied by a state
+                          ipv6: false
+                          transport: zeromq
+
+                          use_superseded:
+                            - module.run
+
+                          mine_return_job: true
+
+                          root_etcd:
+                            etcd.host: {{ grains['ip4_interfaces'][Interface] | first }}
+                            etcd.port: 2379
+                          minion_etcd:
+                            etcd.host: {{ grains['ip4_interfaces'][Interface] | first }}
+                            etcd.port: 2379
+
+                          etcd.host: {{ grains['ip4_interfaces'][Interface] | first }}
+                          etcd.port: 2379
+                          etcd.path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
+                          etcd.allow_reconnect: true
+                          etcd.allow_redirect: true
+
+                          etcd.returner: root_etcd
+                          etcd.returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
+                          etcd.ttl: {{ 60 * 30 }}
+
+                      driver: saltify
                       deploy: true
                       force_minion_config: true
                       remove_config_on_destroy: true
