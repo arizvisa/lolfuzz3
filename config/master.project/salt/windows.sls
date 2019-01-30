@@ -33,19 +33,35 @@ Everything is up to date:
         - require:
             - Install Windows Updates
 
+## Rebooting after changes
 Reboot after updates:
     event.send:
         - name: salt/minion/{{ grains['id'] }}/log
         - data:
             level: info
             message: "Rebooting due to updates"
-        - onchanges_any:
+        - onchanges:
             - Everything is up to date
 
     system.reboot:
         - message: Rebooting due to updates
         - timeout: 0
         - only_on_pending_reboot: true
-        - onchanges_any:
+        - onchanges:
             - Everything is up to date
 
+Reboot after failure:
+    event.send:
+        - name: salt/minion/{{ grains['id'] }}/log
+        - data:
+            level: info
+            message: "Rebooting due to a failure while updating"
+        - onfail:
+            - Everything is up to date
+
+    system.reboot:
+        - message: Rebooting due to updates
+        - timeout: 0
+        - only_on_pending_reboot: false
+        - onfail:
+            - Everything is up to date
