@@ -68,7 +68,6 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 # Import python libs
 import logging
-import uuid
 
 # Import salt libs
 import salt.utils.jid
@@ -175,7 +174,14 @@ def get_load(jid):
     log.debug('sdstack_etcd returner <get_load> called jid: {0}'.format(jid))
     read_profile = __opts__.get('etcd.returner_read_profile')
     client, path = _get_conn(__opts__, read_profile)
-    return salt.utils.json.loads(client.get('/'.join((path, 'jobs', jid, '.load.p'))).value)
+
+    loadp = '/'.join((path, 'jobs', jid, '.load.p'))
+    try:
+        res = client.get(loadp)
+    except:
+        log.error("etcd returner <get_load> could not find path: {:s}".format(loadp))
+        return None
+    return salt.utils.json.loads(res.value)
 
 
 def get_jid(jid):
@@ -190,7 +196,14 @@ def get_jid(jid):
         if str(item.key).endswith('.load.p'):
             continue
         comps = str(item.key).split('/')
-        data = client.get('/'.join((path, 'jobs', jid, comps[-1], 'return'))).value
+
+        returnp = '/'.join((path, 'jobs', jid, comps[-1], 'return'))
+        try:
+            res = client.get(returnp)
+        except:
+            log.debug("etcd returner <get_jid> returned nothing for minion: {:s}".format(returnp))
+            continue
+        data = res.value
         ret[comps[-1]] = {'return': salt.utils.json.loads(data)}
     return ret
 
@@ -205,7 +218,15 @@ def get_fun(fun):
     items = client.get('/'.join((path, 'minions')))
     for item in items.children:
         comps = str(item.key).split('/')
-        efun = salt.utils.json.loads(client.get('/'.join((path, 'jobs', str(item.value), comps[-1], 'fun'))).value)
+
+        funp = '/'.join((path, 'jobs', str(item.value), comps[-1], 'fun'))
+        try:
+            res = client.get(funp)
+        except:
+            log.debug("etcd returner <get_fun> returned nothing for minion: {:s}".format(returnp))
+            continue
+        data = res.value
+        efun = salt.utils.json.loads(data)
         if efun == fun:
             ret[comps[-1]] = str(efun)
     return ret
@@ -266,14 +287,16 @@ def event_return(events):
         }
         path = '/'.join([path, 'events', package['tag']])
         json = salt.utils.json.dumps(package)
+
         try:
             res = client.set(path, json, ttl=ttl)
-        except Exception, err:
-            log.exception('etcd: Unable to write event into returner path %s due to exception %s: %r', path, package, err)
+        except Exception as err:
+            log.exception('etcd: Unable to write event into returner path {:s} due to exception {:s}: {}'.format(path, package, err))
             exceptions.append(err)
             continue
-        if not res:
-            log.error('etcd: Unable to write event into returner path %s: %r', path, package)
-        continue
-    return
 
+        if not res:
+            log.error('etcd: Unable to write event into returner path {:s}: {}'.format(path, package))
+        continue
+
+    return
