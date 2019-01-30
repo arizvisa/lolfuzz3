@@ -26,7 +26,7 @@ Install Windows Updates:
             - Download Windows Updates
 
 Everything is up to date:
-    win_wua.uptodate:
+    wua.uptodate:
         - software: true
         - drivers: true
         - skip_reboot: false
