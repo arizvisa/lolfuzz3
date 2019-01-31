@@ -50,16 +50,25 @@ Make salt-minion configuration directory:
 ## salt-minion configuration
 Install salt-minion configuration:
     file.managed:
-        - template: jinja
         - source: salt://minion/salt-minion.conf
         - name: /etc/salt/minion
-        - use:
-            - Install salt-master configuration
         - require:
             - Make salt configuration directory
-            - Initialize the cache namespace
             # once we're sure the salt-master.service is configured, we can install the salt-minion configuration....
             - Enable systemd multi-user.target wants salt-master.service
+        - mode: 0664
+
+Install salt-minion masterless configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/master.conf
+        - name: /etc/salt/minion.d/masterless.conf
+        - use:
+            - Install salt-master base configuration
+        - require:
+            - Make salt-minion configuration directory
+            - Install salt-minion configuration
+            - Initialize the nodes pillar namespace
         - mode: 0664
 
 Install salt-minion etcd configuration:
@@ -93,7 +102,6 @@ Install salt-minion etcd configuration:
             - Make salt-minion configuration directory
             - Initialize the cache namespace
             - Initialize the returner namespace
-
         - mode: 0664
 
 {% set id = salt['file.grep'](Root + '/etc/os-release', 'ID=')['stdout'].split('=')[-1] %}
@@ -130,8 +138,6 @@ Install salt-minion identification configuration:
 
         - require:
             - Make salt-minion configuration directory
-            - Initialize the nodes pillar namespace
-
         - mode: 0664
 
 Install salt-minion common configuration:

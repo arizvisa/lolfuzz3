@@ -112,9 +112,17 @@ Make salt-master configuration directory:
 ## salt-stack master configuration
 Install salt-master configuration:
     file.managed:
-        - template: jinja
         - source: salt://master/salt-master.conf
         - name: /etc/salt/master
+        - require:
+            - Make salt configuration directory
+        - mode: 0664
+
+Install salt-master base configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/master.conf
+        - name: /etc/salt/master.d/base.conf
 
         - defaults:
             root_files:
@@ -141,11 +149,9 @@ Install salt-master configuration:
                   path: "{{ pillar['configuration']['salt']['namespace'] }}/pillar/%(minion_id)s"
 
         - require:
-            - Make salt configuration directory
+            - Make salt-master configuration directory
             - Initialize the nodes pillar namespace
-            - Initialize the cache namespace
             - Install salt-master etcd configuration
-
         - mode: 0664
 
 Install salt-master etcd configuration:
@@ -179,7 +185,6 @@ Install salt-master etcd configuration:
             - Make salt-master configuration directory
             - Initialize the cache namespace
             - Initialize the returner namespace
-
         - mode: 0664
 
 Install salt-master identification configuration:
