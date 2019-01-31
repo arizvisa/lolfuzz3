@@ -1,11 +1,4 @@
-# Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
-{% if grains['minion-role'] == 'master-bootstrap' %}
-    {% set Root = pillar['configuration']['root'] %}
-    {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
-{% else %}
-    {% set Root = grains['root'] %}
-    {% set MachineId = grains['machine-id'] %}
-{% endif %}
+{% set Root = pillar['local']['root'] %}
 
 ### Service directories
 Make service directory:
@@ -17,17 +10,17 @@ Make service directory:
 ### Standard directories that salt-stack uses for various things
 Make salt log directory:
     file.directory:
-        - name: /var/log/salt
+        - name: {{ Root }}/var/log/salt
         - mode: 0770
 
 Make salt configuration directory:
     file.directory:
-        - name: /etc/salt
+        - name: {{ Root }}/etc/salt
         - mode: 0770
 
 Make salt pki directory:
     file.directory:
-        - name: /etc/salt/pki
+        - name: {{ Root }}/etc/salt/pki
         - use:
             - Make salt configuration directory
         - require:
@@ -35,12 +28,12 @@ Make salt pki directory:
 
 Make salt cache directory:
     file.directory:
-        - name: /var/cache/salt
+        - name: {{ Root }}/var/cache/salt
         - mode: 0770
 
 Make salt run directory:
     file.directory:
-        - name: /var/run/salt
+        - name: {{ Root }}/var/run/salt
         - mode: 0770
 
 ### Salt-stack container

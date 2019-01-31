@@ -1,3 +1,5 @@
+{% set Root = pillar['local']['root'] %}
+
 include:
     - stack
     - local-minion
@@ -7,7 +9,7 @@ Install a default salt-minion beacon highstate:
     file.managed:
         - template: jinja
         - source: salt://local-beacon/default-top-state
-        - name: /etc/salt/minion.d/beacon.conf
+        - name: {{ Root }}/etc/salt/minion.d/beacon.conf
         - context:
             beacon:
                 inotify:

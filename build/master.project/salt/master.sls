@@ -1,11 +1,4 @@
-# Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
-{% if grains['minion-role'] == 'master-bootstrap' %}
-    {% set Root = pillar['configuration']['root'] %}
-    {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
-{% else %}
-    {% set Root = grains['root'] %}
-    {% set MachineId = grains['machine-id'] %}
-{% endif %}
+{% set Root = pillar['local']['root'] %}
 
 # Figure out the external network interface by searching /etc/network-environment
 {% set Address = salt['file.grep']('/'.join([Root, '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
@@ -20,7 +13,7 @@ include:
 ## standard salt-master directories
 Make salt-master cache directory:
     file.directory:
-        - name: /var/cache/salt/master
+        - name: {{ Root }}/var/cache/salt/master
         - use:
             - Make salt cache directory
         - require:
@@ -28,7 +21,7 @@ Make salt-master cache directory:
 
 Make salt-master pki directory:
     file.directory:
-        - name: /etc/salt/pki/master
+        - name: {{ Root }}/etc/salt/pki/master
         - use:
             - Make salt pki directory
         - require:
@@ -36,7 +29,7 @@ Make salt-master pki directory:
 
 Make salt-master run directory:
     file.directory:
-        - name: /var/run/salt/master
+        - name: {{ Root }}/var/run/salt/master
         - use:
             - Make salt run directory
         - require:
@@ -103,7 +96,7 @@ Install an example pillar topfile:
 
 Make salt-master configuration directory:
     file.directory:
-        - name: /etc/salt/master.d
+        - name: {{ Root }}/etc/salt/master.d
         - use:
             - Make salt configuration directory
         - require:
@@ -114,7 +107,7 @@ Install salt-master configuration:
     file.managed:
         - template: jinja
         - source: salt://config/salt-master.conf
-        - name: /etc/salt/master
+        - name: {{ Root }}/etc/salt/master
         - defaults:
             root_dir: /
             hash_type: sha1
@@ -126,7 +119,7 @@ Install salt-master base configuration:
     file.managed:
         - template: jinja
         - source: salt://config/master.conf
-        - name: /etc/salt/master.d/base.conf
+        - name: {{ Root }}/etc/salt/master.d/base.conf
 
         - defaults:
             root_files:
@@ -162,7 +155,7 @@ Install salt-master etcd configuration:
     file.managed:
         - template: jinja
         - source: salt://config/etcd.conf
-        - name: /etc/salt/master.d/etcd.conf
+        - name: {{ Root }}/etc/salt/master.d/etcd.conf
         - defaults:
             etcd_cache:
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
@@ -195,10 +188,10 @@ Install salt-master identification configuration:
     file.managed:
         - template: jinja
         - source: salt://config/custom.conf
-        - name: /etc/salt/master.d/id.conf
+        - name: {{ Root }}/etc/salt/master.d/id.conf
         - defaults:
             configuration:
-                master_id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
+                master_id: {{ pillar['local']['machine_id'] }}.{{ pillar['configuration']['project'] }}
 
         - require:
             - Make salt-master configuration directory
@@ -208,7 +201,7 @@ Install salt-master common configuration:
     file.managed:
         - template: jinja
         - source: salt://config/common.conf
-        - name: /etc/salt/master.d/common.conf
+        - name: {{ Root }}/etc/salt/master.d/common.conf
         - defaults:
             log_level: info
             ipv6: false
@@ -222,7 +215,7 @@ Install salt-master.service:
     file.managed:
         - template: jinja
         - source: salt://stack/salt.service
-        - name: /etc/systemd/system/salt-master.service
+        - name: {{ Root }}/etc/systemd/system/salt-master.service
 
         - context:
             description: Salt-Master
@@ -262,7 +255,7 @@ Install salt-master.service:
 # systemctl enable the salt-master.service
 Enable systemd multi-user.target wants salt-master.service:
     file.symlink:
-        - name: /etc/systemd/system/multi-user.target.wants/salt-master.service
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/salt-master.service
         - target: /etc/systemd/system/salt-master.service
         - require:
             - Install salt-master.service
@@ -273,7 +266,7 @@ Install the script for interacting with salt-master:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt.command
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt
+        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt
 
         - defaults:
             rkt: /bin/rkt
@@ -290,7 +283,7 @@ Install the script for interacting with salt-master:
 # everything else can just be a symbolic link
 Link the script for calling salt-api:
     file.symlink:
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-api
+        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-api
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -298,7 +291,7 @@ Link the script for calling salt-api:
 
 Link the script for calling salt-cloud:
     file.symlink:
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-cloud
+        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-cloud
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -306,7 +299,7 @@ Link the script for calling salt-cloud:
 
 Link the script for calling salt-cp:
     file.symlink:
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-cp
+        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-cp
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -314,7 +307,7 @@ Link the script for calling salt-cp:
 
 Link the script for calling salt-key:
     file.symlink:
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-key
+        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-key
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -322,7 +315,7 @@ Link the script for calling salt-key:
 
 Link the script for calling salt-run:
     file.symlink:
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-run
+        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-run
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -330,7 +323,7 @@ Link the script for calling salt-run:
 
 Link the script for calling salt-ssh:
     file.symlink:
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-ssh
+        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-ssh
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -338,7 +331,7 @@ Link the script for calling salt-ssh:
 
 Link the script for calling salt-unity:
     file.symlink:
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-unity
+        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-unity
         - target: salt
         - require:
             - Install the script for interacting with salt-master

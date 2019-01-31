@@ -1,18 +1,10 @@
-# Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
-{% if grains['minion-role'] == 'master-bootstrap' %}
-    {% set Root = pillar['configuration']['root'] %}
-    {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
-{% else %}
-    {% set Root = grains['root'] %}
-    {% set MachineId = grains['machine-id'] %}
-{% endif %}
+{% set Root = pillar['local']['root'] %}
 
 # Figure out the external network interface by searching /etc/network-environment
 {% set Address = salt['file.grep']('/'.join([Root, '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
 {% set Interface = salt['network.ifacestartswith'](Address) | first %}
 
-### Bootstrap the network environment with the unique MachineId
-
+### Bootstrap the network environment with the unique machine-id
 include:
     - master
 
@@ -25,7 +17,7 @@ Generate bootstrap-environment from machine-id:
         - context:
             ip4: {{ grains['ip4_interfaces'][Interface] | first }}
             ip6: {{ grains['ip6_interfaces'][Interface] | first }}
-            machine_id: {{ MachineId }}
+            machine_id: {{ pillar['local']['machine_id'] }}
 
         - require:
             - sls: master

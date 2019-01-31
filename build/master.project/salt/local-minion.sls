@@ -1,14 +1,6 @@
-# Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
-{% if grains['minion-role'] == 'master-bootstrap' %}
-    {% set Root = pillar['configuration']['root'] %}
-    {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
-{% else %}
-    {% set Root = grains['root'] %}
-    {% set MachineId = grains['machine-id'] %}
-{% endif %}
+{% set Root = pillar['local']['root'] %}
 
 ### States to build the salt-minion configuration for managing the salt-master
-
 include:
     - etcd
     - container
@@ -17,7 +9,7 @@ include:
 
 Make salt-minion cache directory:
     file.directory:
-        - name: /var/cache/salt/minion
+        - name: {{ Root }}/var/cache/salt/minion
         - use:
             - Make salt cache directory
         - require:
@@ -25,7 +17,7 @@ Make salt-minion cache directory:
 
 Make salt-minion pki directory:
     file.directory:
-        - name: /etc/salt/pki/minion
+        - name: {{ Root }}/etc/salt/pki/minion
         - use:
             - Make salt pki directory
         - require:
@@ -41,7 +33,7 @@ Make salt-minion run directory:
 
 Make salt-minion configuration directory:
     file.directory:
-        - name: /etc/salt/minion.d
+        - name: {{ Root }}/etc/salt/minion.d
         - use:
             - Make salt configuration directory
         - require:
@@ -52,7 +44,7 @@ Install salt-minion configuration:
     file.managed:
         - template: jinja
         - source: salt://config/salt-minion.conf
-        - name: /etc/salt/minion
+        - name: {{ Root }}/etc/salt/minion
         - defaults:
             root_dir: /
             hash_type: sha1
@@ -66,7 +58,7 @@ Install salt-minion masterless configuration:
     file.managed:
         - template: jinja
         - source: salt://config/master.conf
-        - name: /etc/salt/minion.d/masterless.conf
+        - name: {{ Root }}/etc/salt/minion.d/masterless.conf
         - use:
             - Install salt-master base configuration
         - require:
@@ -79,7 +71,7 @@ Install salt-minion etcd configuration:
     file.managed:
         - template: jinja
         - source: salt://config/etcd.conf
-        - name: /etc/salt/minion.d/etcd.conf
+        - name: {{ Root }}/etc/salt/minion.d/etcd.conf
         - defaults:
             etcd_cache:
                   host: 127.0.0.1
@@ -118,10 +110,10 @@ Install salt-minion identification configuration:
     file.managed:
         - template: jinja
         - source: salt://config/custom.conf
-        - name: /etc/salt/minion.d/id.conf
+        - name: {{ Root }}/etc/salt/minion.d/id.conf
         - defaults:
             configuration:
-                id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
+                id: {{ pillar['local']['machine_id'] }}.{{ pillar['configuration']['project'] }}
                 master: localhost
 
                 saltenv: base
@@ -129,8 +121,7 @@ Install salt-minion identification configuration:
 
                 grains:
                     minion-role: master
-                    machine-id: {{ MachineId }}
-                    root: {{ Root }}
+                    machine-id: {{ pillar['local']['machine_id'] }}
 
                     os: {{ id | yaml_dquote }}
                     os_family: core
@@ -148,7 +139,7 @@ Install salt-minion common configuration:
     file.managed:
         - template: jinja
         - source: salt://config/common.conf
-        - name: /etc/salt/minion.d/common.conf
+        - name: {{ Root }}/etc/salt/minion.d/common.conf
         - use:
             - Install salt-master common configuration
         - require:
@@ -160,7 +151,7 @@ Install salt-minion.service:
     file.managed:
         - template: jinja
         - source: salt://stack/salt.service
-        - name: /etc/systemd/system/salt-minion.service
+        - name: {{ Root }}/etc/systemd/system/salt-minion.service
 
         - context:
             description: Salt-Minion
@@ -195,7 +186,7 @@ Install salt-minion.service:
 # systemctl enable the salt-minion.service
 Enable systemd multi-user.target wants salt-minion.service:
     file.symlink:
-        - name: /etc/systemd/system/multi-user.target.wants/salt-minion.service
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/salt-minion.service
         - target: /etc/systemd/system/salt-minion.service
         - require:
             - Install salt-minion.service

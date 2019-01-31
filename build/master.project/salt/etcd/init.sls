@@ -1,11 +1,4 @@
-# Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
-{% if grains['minion-role'] == 'master-bootstrap' %}
-    {% set Root = pillar['configuration']['root'] %}
-    {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
-{% else %}
-    {% set Root = grains['root'] %}
-    {% set MachineId = grains['machine-id'] %}
-{% endif %}
+{% set Root = pillar['local']['root'] %}
 
 ### Macros to recursively serialize arbitrary data structures into etcd
 {% macro project_set_value(root, name, value) %}
@@ -48,7 +41,7 @@ Check firewall rules:
 
 Register the etcd cluster-size for the machine-id with the v2 discovery protocol:
     etcd.set:
-        - name: "{{ pillar['configuration']['etcd']['discovery'] }}/{{ MachineId }}/_config/size"
+        - name: "{{ pillar['configuration']['etcd']['discovery'] }}/{{ pillar['local']['machine_id'] }}/_config/size"
         - value: {{ pillar['configuration']['etcd']['cluster-size'] }}
         - profile: root_etcd
         - requires:

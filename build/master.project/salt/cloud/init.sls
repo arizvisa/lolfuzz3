@@ -1,11 +1,5 @@
 # Get the machine-id /etc/machine-id if we're using the bootstrap environment, otherwise use the grain.
-{% if grains['minion-role'] == 'master-bootstrap' %}
-    {% set Root = pillar['configuration']['root'] %}
-    {% set MachineId = salt['file.read']('/'.join([Root, '/etc/machine-id'])).strip() %}
-{% else %}
-    {% set Root = grains['root'] %}
-    {% set MachineId = grains['machine-id'] %}
-{% endif %}
+{% set Root = pillar['local']['root'] %}
 
 # Figure out the external network interface by searching /etc/network-environment
 {% set Address = salt['file.grep']('/'.join([Root, '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
@@ -19,7 +13,7 @@ Install salt-cloud configuration:
     file.managed:
         - template: jinja
         - source: salt://cloud/cloud.conf
-        - name: /etc/salt/cloud
+        - name: {{ Root }}/etc/salt/cloud
         - defaults:
             log_level: info
             pool_size: 10
@@ -86,7 +80,7 @@ Make salt-cloud profiles directory:
 ## Installation of service directories
 Install salt-cloud providers directory:
     file.symlink:
-        - name: /etc/salt/cloud.providers.d
+        - name: {{ Root }}/etc/salt/cloud.providers.d
         - target: /srv/cloud/providers
         - require:
             - Make salt configuration directory
@@ -94,7 +88,7 @@ Install salt-cloud providers directory:
 
 Install salt-cloud profiles directory:
     file.symlink:
-        - name: /etc/salt/cloud.profiles.d
+        - name: {{ Root }}/etc/salt/cloud.profiles.d
         - target: /srv/cloud/profiles
         - require:
             - Make salt configuration directory
