@@ -52,10 +52,11 @@ boxname_template=$(boxname_workdir)/template
 output_names := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
 
 ### Check output directory
-ifeq ($(wildcard $(patsubst %/,%,$(OUTPUT))/$(boxname)),)
-    $(info [-] Using the following output path for $(boxname): $(abspath $(patsubst %/,%,$(OUTPUT))/$(boxname)))
+outdir := $(patsubst %/,%,$(OUTPUT))
+ifeq ($(wildcard $(outdir)/$(boxname)),)
+    $(info [-] Using the following output path for $(boxname): $(abspath $(outdir)/$(boxname)))
 else
-    $(info [!] The output path for $(boxname) already exists (output will fail): $(abspath $(patsubst %/,%,$(OUTPUT))/$(boxname)))
+    $(info [!] The output path for $(boxname) already exists (output will fail): $(abspath $(outdir)/$(boxname)))
 endif
 
 $(info [-] Using the following work directory: $(abspath $(workdir)))
@@ -295,7 +296,7 @@ help:
 	@printf '\nThanks for playing!\n'
 
 .PHONY: template
-template: $(patsubst %/,%,$(OUTPUT))/$(boxname)
+template: $(outdir)/$(boxname)
 	@printf '[!] Wrote completed template: %s\n' '$<'
 
 .PHONY: clean
@@ -322,16 +323,16 @@ download: download-installer download-tools
 	@printf '[*] Successfully downloaded all required files\n'
 
 .PHONY: output
-output: $(patsubst %/,%,$(OUTPUT))/$(boxname) $(foreach f,$(output_names),$(patsubst %/,%,$(OUTPUT))/$(f))
-	@printf '[!] Sucessfully wrote output files to %s: %s\n' '$(patsubst %/,%,$(OUTPUT)))' '$^'
+output: $(outdir)/$(boxname) $(foreach f,$(output_names),$(outdir)/$(f))
+	@printf '[!] Sucessfully wrote output files to %s: %s\n' '$(outdir)' '$^'
 
 ## cleaning up files
 .PHONY: clean-output
 clean-output:
-	@printf '[!] Erasing template: %s\n' '$(patsubst %/,%,$(OUTPUT))/$(boxname)'
-	-rm -rf '$(patsubst %/,%,$(OUTPUT))/$(boxname)'
-	@printf '[!] Erasing output files from %s\n' '$(patsubst %/,%,$(OUTPUT))'
-	-rm -f $(foreach f,$(output_names),'$(patsubst %/,%,$(OUTPUT))/$(f)')
+	@printf '[!] Erasing template: %s\n' '$(outdir)/$(boxname)'
+	-rm -rf '$(outdir)/$(boxname)'
+	@printf '[!] Erasing output files from %s\n' '$(outdir)'
+	-rm -f $(foreach f,$(output_names),'$(outdir)/$(f)')
 
 .PHONY: clean-installer
 clean-installer:
@@ -400,7 +401,7 @@ clean-json:
 	-rm -f $(foreach f,$(coreos_installer_files),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)
 
 ### recipes for required directories
-$(patsubst %/,%,$(OUTPUT)) $(workdir):
+$(outdir) $(workdir):
 	@test -d '$@' || mkdir -p '$@'
 
 $(boxname_workdir):	$(workdir)
@@ -413,7 +414,7 @@ $(custom):
 	@test -d '$@' || mkdir -p '$@'
 
 ### recipes for actual output of the template and its related files
-$(patsubst %/,%,$(OUTPUT))/$(boxname): $(boxname_template)	| $(patsubst %/,%,$(OUTPUT))
+$(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 	@printf '[*] Moving template %s: %s\n' '$<' '$(dir $@)'
 	mv '$<' '$@'
 
@@ -561,7 +562,7 @@ $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
 ### recipes that are automatically generated
 
 # output results into the output directory
-$(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(patsubst %/,%,$(OUTPUT)))))
+$(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(outdir))))
 
 ## coreos installation and provisioning
 
