@@ -15,8 +15,8 @@ bootstrap:
         - reactor
 
     # salt-minion configuration
-        - minion
-        - beacon
+        - local-minion
+        - local-beacon
 
     # salt-cloud configuration
         - cloud
