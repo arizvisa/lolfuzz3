@@ -239,7 +239,7 @@
             "command" : "echo \"[-] Applying bootstrap state to {{user `guest-name`}}\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/etc/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "LOGFILE=/root/bootstrap.state.log"
