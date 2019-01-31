@@ -1,6 +1,6 @@
 include:
     - stack
-    - minion
+    - local-minion
 
 ## salt beacon configuration
 Install a default salt-minion beacon highstate:
