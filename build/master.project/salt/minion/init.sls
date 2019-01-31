@@ -201,7 +201,7 @@ Enable systemd multi-user.target wants salt-minion.service:
 Install the script for bootstrapping the master:
     file.managed:
         - template: jinja
-        - source: salt://minion/salt-bootstrap.command
+        - source: salt://scripts/salt-bootstrap.command
         - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-bootstrap
 
         - context:
