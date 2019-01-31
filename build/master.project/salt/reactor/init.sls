@@ -36,7 +36,7 @@ Install a salt-master reactor hightstate for creating the pillar for a minion:
     file.managed:
         - template: jinja
         - source: salt://reactor/default-top-state
-        - name: /etc/salt/master.d/pillar.conf
+        - name: /etc/salt/master.d/minion-pillar.conf
         - context:
             reactor:
                 - 'salt/minion/*/start':
