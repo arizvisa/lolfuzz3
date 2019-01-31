@@ -50,7 +50,7 @@ Make salt-minion configuration directory:
 ## salt-minion configuration
 Install salt-minion configuration:
     file.managed:
-        - source: salt://minion/salt-minion.conf
+        - source: salt://config/salt-minion.conf
         - name: /etc/salt/minion
         - require:
             - Make salt configuration directory
