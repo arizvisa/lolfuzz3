@@ -10,6 +10,6 @@ bootstrap:
 
     # master that has joined the project
     'G@minion-role:master':
-        - master
-        - container
         - project
+        - container
+        - salt
