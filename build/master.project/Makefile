@@ -8,6 +8,10 @@ ifndef PROJECT
     $(error [!] Required build variable PROJECT is not specified)
 endif
 
+ifndef PLATFORM
+    $(error [!] Please specify a build platform that is one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
+endif
+
 # optional parameters
 ifndef INPUT
     $(info [!] Optional build variable INPUT was not specified)
@@ -274,6 +278,7 @@ help:
 
 	@printf '\nParameters that are available:\n'
 	@printf '\tPROJECT: (mandatory) Name of the project (also used as the cluster%cs domain)\n' "'"
+	@printf '\tPLATFORM: (mandatory) Virtualization platform to use for building the template (vmware, virtualbox, qemu, parallels, hyperv).\n'
 	@printf '\tOUTPUT: (default /deploy) Path to move the template, its config, and auth keypair to\n'
 	@printf '\tINPUT: Path of /srv configuration that is deployed to the template after installation of salt\n'
 	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
@@ -409,10 +414,10 @@ $(patsubst %/,%,$(OUTPUT))/$(boxname): $(boxname_template)	| $(patsubst %/,%,$(O
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files) $(custom)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
+	packer build -only '$(PLATFORM)-iso' -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build -only %c%s%c -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' "'" '$(PLATFORM)-iso' "'" "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
