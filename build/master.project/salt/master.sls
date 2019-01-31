@@ -112,8 +112,12 @@ Make salt-master configuration directory:
 ## salt-stack master configuration
 Install salt-master configuration:
     file.managed:
+        - template: jinja
         - source: salt://config/salt-master.conf
         - name: /etc/salt/master
+        - defaults:
+            root_dir: /
+            hash_type: sha1
         - require:
             - Make salt configuration directory
         - mode: 0664
@@ -206,7 +210,6 @@ Install salt-master common configuration:
         - source: salt://config/common.conf
         - name: /etc/salt/master.d/common.conf
         - defaults:
-            root_dir: /
             log_level: info
             ipv6: false
             transport: zeromq

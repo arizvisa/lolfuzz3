@@ -50,8 +50,12 @@ Make salt-minion configuration directory:
 ## salt-minion configuration
 Install salt-minion configuration:
     file.managed:
+        - template: jinja
         - source: salt://config/salt-minion.conf
         - name: /etc/salt/minion
+        - defaults:
+            root_dir: /
+            hash_type: sha1
         - require:
             - Make salt configuration directory
             # once we're sure the salt-master.service is configured, we can install the salt-minion configuration....
