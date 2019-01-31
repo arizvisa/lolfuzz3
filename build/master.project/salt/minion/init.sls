@@ -53,8 +53,21 @@ Install salt-minion configuration:
         - template: jinja
         - source: salt://minion/salt-minion.conf
         - name: /etc/salt/minion
+        - use:
+            - Install salt-master configuration
+        - require:
+            - Make salt configuration directory
+            - Initialize the cache namespace
+            # once we're sure the salt-master.service is configured, we can install the salt-minion configuration....
+            - Enable systemd multi-user.target wants salt-master.service
+        - mode: 0664
 
-        - context:
+Install salt-minion etcd configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/common.conf
+        - name: /etc/salt/minion.d/common.conf
+        - defaults:
             etcd_cache:
                   host: 127.0.0.1
                   port: 2379
@@ -62,15 +75,24 @@ Install salt-minion configuration:
                   allow_reconnect: true
                   allow_redirect: true
 
-        - use:
-            - Install salt-master configuration
+            etcd_hosts:
+                - name: "root_etcd"
+                  host: 127.0.0.1
+                  port: 2379
 
-        # once we're sure the salt-master.service is configured, we can
-        # install the salt-minion configuration....
+                - name: "minion_etcd"
+                  host: 127.0.0.1
+                  port: 2379
+
+            etcd_returner:
+                returner: "root_etcd"
+                returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
+                ttl: {{ 60 * 30 }}
+
         - require:
-            - Make salt configuration directory
+            - Make salt-minion configuration directory
             - Initialize the cache namespace
-            - Enable systemd multi-user.target wants salt-master.service
+            - Initialize the returner namespace
 
         - mode: 0664
 
@@ -86,10 +108,7 @@ Install salt-minion identification configuration:
         - source: salt://stack/custom.conf
         - name: /etc/salt/minion.d/id.conf
         - defaults:
-
             configuration:
-                log_level: info
-
                 id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
                 master: localhost
 
@@ -120,25 +139,10 @@ Install salt-minion common configuration:
         - template: jinja
         - source: salt://stack/common.conf
         - name: /etc/salt/minion.d/common.conf
-        - defaults:
-            etcd_hosts:
-                - name: "root_etcd"
-                  host: 127.0.0.1
-                  port: 2379
-
-                - name: "minion_etcd"
-                  host: 127.0.0.1
-                  port: 2379
-
-            etcd_returner:
-                returner: "root_etcd"
-                returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
-                ttl: {{ 60 * 30 }}
-
+        - use:
+            - Install salt-master common configuration
         - require:
             - Make salt-minion configuration directory
-            - Initialize the returner namespace
-
         - mode: 0664
 
 ## services

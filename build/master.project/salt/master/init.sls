@@ -117,15 +117,6 @@ Install salt-master configuration:
         - name: /etc/salt/master
 
         - defaults:
-            id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
-
-            etcd_cache:
-                  host: {{ grains['ip4_interfaces'][Interface] | first }}
-                  port: 2379
-                  path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
-                  allow_reconnect: true
-                  allow_redirect: true
-
             root_files:
                 - name: "base"
                   path: "/srv/salt"
@@ -140,41 +131,36 @@ Install salt-master configuration:
                 - name: "bootstrap"
                   path: "/srv/bootstrap/pillar"
 
-            etcd_pillars_ext:
-                - name: "root_etcd"
+            ext_pillars:
+                - type: "etcd"
+                  name: "root_etcd"
                   path: "/config"
 
-                - name: "minion_etcd"
+                - type: "etcd"
+                  name: "minion_etcd"
                   path: "{{ pillar['configuration']['salt']['namespace'] }}/pillar/%(minion_id)s"
 
         - require:
             - Make salt configuration directory
             - Initialize the nodes pillar namespace
             - Initialize the cache namespace
+            - Install salt-master etcd configuration
 
         - mode: 0664
 
-Install salt-master identification configuration:
+Install salt-master etcd configuration:
     file.managed:
         - template: jinja
-        - source: salt://stack/custom.conf
-        - name: /etc/salt/master.d/id.conf
+        - source: salt://stack/etcd.conf
+        - name: /etc/salt/master.d/etcd.conf
         - defaults:
+            etcd_cache:
+                  host: {{ grains['ip4_interfaces'][Interface] | first }}
+                  port: 2379
+                  path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
+                  allow_reconnect: true
+                  allow_redirect: true
 
-            configuration:
-                log_level: info
-                master_id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
-
-        - require:
-            - Make salt-master configuration directory
-        - mode: 0664
-
-Install salt-master common configuration:
-    file.managed:
-        - template: jinja
-        - source: salt://stack/common.conf
-        - name: /etc/salt/master.d/common.conf
-        - defaults:
             etcd_hosts:
                 - name: "root_etcd"
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
@@ -191,8 +177,36 @@ Install salt-master common configuration:
 
         - require:
             - Make salt-master configuration directory
+            - Initialize the cache namespace
             - Initialize the returner namespace
 
+        - mode: 0664
+
+Install salt-master identification configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/custom.conf
+        - name: /etc/salt/master.d/id.conf
+        - defaults:
+            configuration:
+                master_id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
+
+        - require:
+            - Make salt-master configuration directory
+        - mode: 0664
+
+Install salt-master common configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/common.conf
+        - name: /etc/salt/master.d/common.conf
+        - defaults:
+            root_dir: /
+            log_level: info
+            ipv6: false
+            transport: zeromq
+        - require:
+            - Make salt-master configuration directory
         - mode: 0664
 
 ## services
