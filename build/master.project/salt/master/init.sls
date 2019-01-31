@@ -112,7 +112,7 @@ Make salt-master configuration directory:
 ## salt-stack master configuration
 Install salt-master configuration:
     file.managed:
-        - source: salt://master/salt-master.conf
+        - source: salt://config/salt-master.conf
         - name: /etc/salt/master
         - require:
             - Make salt configuration directory
