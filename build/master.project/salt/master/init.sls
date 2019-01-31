@@ -269,7 +269,7 @@ Enable systemd multi-user.target wants salt-master.service:
 Install the script for interacting with salt-master:
     file.managed:
         - template: jinja
-        - source: salt://stack/salt.command
+        - source: salt://scripts/salt.command
         - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt
 
         - defaults:
