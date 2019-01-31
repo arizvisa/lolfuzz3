@@ -9,7 +9,7 @@ ifndef PROJECT
 endif
 
 ifndef PLATFORM
-    $(error [!] Please specify a build platform that is one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
+    $(error [!] Please specify a build platform via the PLATFORM variable that is one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
 endif
 
 # optional parameters
