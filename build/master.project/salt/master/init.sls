@@ -109,7 +109,7 @@ Make salt-master configuration directory:
         - require:
             - Make salt configuration directory
 
-## salt-stack master
+## salt-stack master configuration
 Install salt-master configuration:
     file.managed:
         - template: jinja
@@ -150,6 +150,22 @@ Install salt-master configuration:
         - require:
             - Make salt configuration directory
             - Initialize the nodes pillar namespace
+            - Initialize the cache namespace
+
+        - mode: 0664
+
+Install salt-master identification configuration:
+    file.managed:
+        - source: salt://stack/custom.conf
+        - name: /etc/salt/master.d/id.conf
+        - defaults:
+
+            configuration:
+                log_level: info
+                master_id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
+
+        - require:
+            - Make salt-master configuration directory
         - mode: 0664
 
 Install salt-master common configuration:
@@ -157,13 +173,7 @@ Install salt-master common configuration:
         - template: jinja
         - source: salt://stack/common.conf
         - name: /etc/salt/master.d/common.conf
-        - context:
-            id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
-            log_level: info
-
-            saltenv: base
-            pillarenv: base
-
+        - defaults:
             etcd_hosts:
                 - name: "root_etcd"
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
@@ -180,8 +190,11 @@ Install salt-master common configuration:
 
         - require:
             - Make salt-master configuration directory
+            - Initialize the returner namespace
+
         - mode: 0664
 
+## services
 Install salt-master.service:
     file.managed:
         - template: jinja
@@ -215,10 +228,12 @@ Install salt-master.service:
 
         - use:
             - Generate salt-stack container build rules
+
         - require:
             - Install salt-master configuration
             - Finished building the salt-stack image
             - Install container load script
+
         - mode: 0664
 
 # systemctl enable the salt-master.service
