@@ -25,7 +25,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
+            "ssh_timeout" : "{{user `timeout-wait`}}",
 
             "disk_interface" : "scsi",
             "format" : "qcow2",
@@ -55,7 +55,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
+            "ssh_timeout" : "{{user `timeout-wait`}}",
 
             "cpus" : "{{user `guest-cpu-count`}}",
             "memory" : "{{user `guest-memory-size`}}",
@@ -89,7 +89,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
+            "ssh_timeout" : "{{user `timeout-wait`}}",
 
             "cpus" : "{{user `guest-cpu-count`}}",
             "memory" : "{{user `guest-memory-size`}}",
@@ -125,7 +125,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
+            "ssh_timeout" : "{{user `timeout-wait`}}",
 
             "guest_os_type" : "linux",
             "tools_upload_flavor" : "linux",
@@ -162,7 +162,7 @@
             "ssh_username" : "{{user `provision-user`}}",
             "ssh_port" : 22,
             "ssh_private_key_file" : "{{user `provision-key`}}",
-            "ssh_wait_timeout" : "{{user `timeout-wait`}}",
+            "ssh_timeout" : "{{user `timeout-wait`}}",
 
             "cpu" : "{{user `guest-cpu-count`}}",
             "disk_size" : "{{user `guest-disk-size`}}",
