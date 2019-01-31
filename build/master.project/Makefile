@@ -23,35 +23,20 @@ ifndef OUTPUT
     OUTPUT := $(ROOTDIR)/deploy
 endif
 
-## configurable parameters
+### Validation of configurable parameters
 noop=
 space=$(noop) $(noop)
 comma=,
-platform = $(subst $(comma),$(space),$(PLATFORM))
+lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(subst G,g,$(subst H,h,$(subst I,i,$(subst J,j,$(subst K,k,$(subst L,l,$(subst M,m,$(subst N,n,$(subst O,o,$(subst P,p,$(subst Q,q,$(subst R,r,$(subst S,s,$(subst T,t,$(subst U,u,$(subst V,v,$(subst W,w,$(subst X,x,$(subst Y,y,$(subst Z,z,$1))))))))))))))))))))))))))
 
-# convert the following parameters to an integer
-VALIDATE ?= 1
-validate := $(VALIDATE)
-validate := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(validate)))))
-validate := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(validate)))))
+## project variable
+project := $(call lc,${PROJECT})
+boxname?=master.$(project)
+boxname_config=master.$(project).config
 
-BUILD ?= 1
-build := $(BUILD)
-build := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(build)))))
-build := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(build)))))
+$(info [-] Using the specified project name: $(project))
 
-### user variables
-boxname?=master.${PROJECT}
-boxname_config=$(boxname).config
-
-workdir?=build.dir
-boxname_workdir=$(workdir)/$(boxname)
-boxname_template=$(boxname_workdir)/template
-
-# all important filenames that are copied to output
-output_names := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
-
-### Check output directory
+## output directory
 outdir := $(patsubst %/,%,$(OUTPUT))
 ifeq ($(wildcard $(outdir)/$(boxname)),)
     $(info [-] Using the following output path for $(boxname): $(abspath $(outdir)/$(boxname)))
@@ -59,24 +44,44 @@ else
     $(info [!] The output path for $(boxname) already exists (output will fail): $(abspath $(outdir)/$(boxname)))
 endif
 
+## work directory
+workdir?=build.dir
+boxname_workdir=$(workdir)/$(boxname)
+boxname_template=$(boxname_workdir)/template
+
 $(info [-] Using the following work directory: $(abspath $(workdir)))
 
-### Inform the user of any options they've specified
+## Validation option
+VALIDATE ?= 1
+validate := $(VALIDATE)
+validate := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(validate)))))
+validate := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(validate)))))
+
 ifeq ($(validate),0)
     $(info [!] User has requested to skip validation of configuration: $(boxname_config))
 endif
+
+## Build option
+BUILD ?= 1
+build := $(BUILD)
+build := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(build)))))
+build := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(build)))))
 
 ifeq ($(build),0)
     $(info [!] User has requested to skip building the target: $(boxname_template))
 endif
 
+## Timeout option
 ifdef TIMEOUT
     $(info [*] User has specified an initial boot timeout of $(TIMEOUT))
 endif
 
+## Platform types
+platform = $(subst $(comma),$(space),$(PLATFORM))
+
 $(info [*] User has specified the following template type(s): $(platform))
 
-# nodify user if any custom configuration was specified
+## Custom configuration
 ifndef INPUT
     custom := $(boxname_workdir)/empty
 else
@@ -88,7 +93,7 @@ else
     endif
 endif
 
-### some utility macros for downloading files
+### Commands (macros)
 DOWNLOAD := curl -L -C- --progress-bar
 FETCH := curl -L -s -S
 PUT := curl -L -s -S -X PUT --data-binary
@@ -99,7 +104,10 @@ else
 GH_FETCH := ${FETCH}
 endif
 
-### static configuration
+### Static configuration
+output_names := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
+
+## Salt and provisioning
 checksum_type := md5
 ignition_config := $(MAKEDIR)ignition
 salt_config := $(MAKEDIR)salt
@@ -110,7 +118,7 @@ tools_config := $(MAKEDIR)tools
 in_github_url_format=$(MAKEDIR)github.url
 github_url_format=$(file <$(in_github_url_format))
 
-### coreos configuration
+## Container Linux
 in_coreos=$(MAKEDIR)coreos.url
 in_coreos_version=$(MAKEDIR)coreos.version
 in_coreos_validate=$(MAKEDIR)coreos.validate.url
@@ -127,7 +135,7 @@ coreos_validate_url=$(file <$(in_coreos_validate))
 # all files that are needed to install coreos
 coreos_installer_files := $(foreach f,$(file <$(in_coreos_files)),$(workdir)/$(f))
 
-### tools configuration
+## Tools configuration
 toolsdir=$(workdir)/tools
 filesdir=$(workdir)/files
 
@@ -157,7 +165,7 @@ salt_bootstrap_file_url != ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.dow
 salt_bootstrap_version := '$(file <$(in_salt_bootstrap_version))'
 salt_bootstrap_pillar_files := acbuild.sls project-name.sls
 
-### ignition components and related variables
+### Ignition configuration and its components
 ignition_template := $(MAKEDIR)default.json
 ignition_sysctl_files := $(wildcard $(ignition_config)/sysctl/*.conf)
 ignition_users_files := $(wildcard $(ignition_config)/users/*)
@@ -166,7 +174,7 @@ ignition_network_files := $(wildcard $(ignition_config)/network/*.network)
 ignition_units_names := $(foreach f,$(wildcard $(ignition_config)/units/*),$(notdir $(f)))
 ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$(notdir $(f)))
 
-### definitions for generating recipes
+### Recipe definitions (macros)
 
 # output_file '$file' '$directory'
 define output_file
@@ -267,7 +275,7 @@ $(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
 	@jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
 endef
 
-### general utility recipes
+### General recipes
 .DEFAULT_GOAL := help
 
 # dependency to use when a target needs to always be rebuilt
@@ -400,7 +408,7 @@ clean-json:
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
 	-rm -f $(foreach f,$(coreos_installer_files),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)
 
-### recipes for required directories
+### Directory recipes
 $(outdir) $(workdir):
 	@test -d '$@' || mkdir -p '$@'
 
@@ -413,12 +421,12 @@ $(filesdir) $(toolsdir) $(toolsdir)/bin: $(workdir)
 $(custom):
 	@test -d '$@' || mkdir -p '$@'
 
-### recipes for actual output of the template and its related files
+### Output recipes
 $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 	@printf '[*] Moving template %s: %s\n' '$<' '$(dir $@)'
 	mv '$<' '$@'
 
-### recipes that actually build the box
+### Box recipes
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files) $(custom)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
@@ -475,7 +483,7 @@ $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
 	ssh-keygen -q -t rsa -C 'core@$(boxname)' -f '$(workdir)/$(boxname).id_rsa' -N ''
 
-### recipes for building the bootstrap configuration
+### Bootstrap recipes
 
 ## recipes for validating the configuration
 $(boxname_workdir)/$(boxname_config).validate: $(boxname_workdir)/$(boxname_config)
@@ -538,7 +546,7 @@ $(boxname_workdir)/$(boxname_config)-network: $(foreach f,$(ignition_network_fil
 	@printf '[*] Merging all ignition network files into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $^ >| '$@'
 
-### recipes for provisioning with saltstack
+### Provisioning recipes
 $(boxname_workdir)/salt $(boxname_workdir)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files)	| $(boxname_workdir)
 	@printf '[*] Copying states for bootstrapping %s: %s\n' '$(boxname)' '$(boxname_workdir)/salt'
 	@cp -r '$(salt_config)' '$(boxname_workdir)'/
@@ -557,14 +565,14 @@ $(boxname_workdir)/pillar/acbuild.sls: $(acbuild_files)	| $(boxname_workdir)/pil
 
 $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
 	@printf '[-] Writing project name into pillar configuration: %s\n' '$@'
-	@printf -- '%s\n' '$(PROJECT)' >| '$@'
+	@printf -- '%s\n' '$(project)' >| '$@'
 
-### recipes that are automatically generated
+### Dynamically generated recipes
 
 # output results into the output directory
 $(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(outdir))))
 
-## coreos installation and provisioning
+## Container Linux installation and configuration
 
 # download the coreos installer
 $(foreach name,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(workdir)/$(name),$(name))))
@@ -585,7 +593,7 @@ $(foreach f,$(wildcard $(tools_config)/*),$(eval $(call coreos_tool,$(f),$(tools
 # download the saltstack-bootstrap installer
 $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_file_url)))
 
-## ignition components
+## Ignition components
 
 # making the ignition sysctl list (the permission 0644 is 420 in decimal)
 $(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),$(notdir $(f)),420)))
