@@ -62,7 +62,7 @@ Reboot after failure:
     system.reboot:
         - message: Rebooting due to updates
         - timeout: 0
-        - only_on_pending_reboot: false
+        - only_on_pending_reboot: true
         - onfail:
             - Everything is up to date
 
