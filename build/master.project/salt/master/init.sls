@@ -118,11 +118,13 @@ Install salt-master configuration:
 
         - defaults:
             id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
-            log_level: info
 
-            saltenv: base
-            pillarenv: base
-            rootfs: {{ Root }}
+            etcd_cache:
+                  host: {{ grains['ip4_interfaces'][Interface] | first }}
+                  port: 2379
+                  path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
+                  allow_reconnect: true
+                  allow_redirect: true
 
             root_files:
                 - name: "base"
@@ -145,12 +147,23 @@ Install salt-master configuration:
                 - name: "minion_etcd"
                   path: "{{ pillar['configuration']['salt']['namespace'] }}/pillar/%(minion_id)s"
 
-            etcd_returner:
-                returner: "root_etcd"
-                returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
-                ttl: {{ 60 * 30 }}
+        - require:
+            - Make salt configuration directory
+            - Initialize the nodes pillar namespace
+        - mode: 0664
 
+Install salt-master common configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/common.conf
+        - name: /etc/salt/master.d/common.conf
         - context:
+            id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
+            log_level: info
+
+            saltenv: base
+            pillarenv: base
+
             etcd_hosts:
                 - name: "root_etcd"
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
@@ -160,16 +173,13 @@ Install salt-master configuration:
                   host: {{ grains['ip4_interfaces'][Interface] | first }}
                   port: 2379
 
-            etcd_cache:
-                  host: {{ grains['ip4_interfaces'][Interface] | first }}
-                  port: 2379
-                  path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
-                  allow_reconnect: true
-                  allow_redirect: true
+            etcd_returner:
+                returner: "root_etcd"
+                returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
+                ttl: {{ 60 * 30 }}
 
         - require:
-            - Make salt configuration directory
-            - Initialize the nodes pillar namespace
+            - Make salt-master configuration directory
         - mode: 0664
 
 Install salt-master.service:
