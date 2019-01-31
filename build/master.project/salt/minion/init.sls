@@ -61,7 +61,7 @@ Install salt-minion configuration:
 Install salt-minion masterless configuration:
     file.managed:
         - template: jinja
-        - source: salt://stack/master.conf
+        - source: salt://config/master.conf
         - name: /etc/salt/minion.d/masterless.conf
         - use:
             - Install salt-master base configuration
@@ -74,8 +74,8 @@ Install salt-minion masterless configuration:
 Install salt-minion etcd configuration:
     file.managed:
         - template: jinja
-        - source: salt://stack/common.conf
-        - name: /etc/salt/minion.d/common.conf
+        - source: salt://config/etcd.conf
+        - name: /etc/salt/minion.d/etcd.conf
         - defaults:
             etcd_cache:
                   host: 127.0.0.1
@@ -113,7 +113,7 @@ Install salt-minion etcd configuration:
 Install salt-minion identification configuration:
     file.managed:
         - template: jinja
-        - source: salt://stack/custom.conf
+        - source: salt://config/custom.conf
         - name: /etc/salt/minion.d/id.conf
         - defaults:
             configuration:
@@ -143,7 +143,7 @@ Install salt-minion identification configuration:
 Install salt-minion common configuration:
     file.managed:
         - template: jinja
-        - source: salt://stack/common.conf
+        - source: salt://config/common.conf
         - name: /etc/salt/minion.d/common.conf
         - use:
             - Install salt-master common configuration

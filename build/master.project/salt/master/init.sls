@@ -121,7 +121,7 @@ Install salt-master configuration:
 Install salt-master base configuration:
     file.managed:
         - template: jinja
-        - source: salt://stack/master.conf
+        - source: salt://config/master.conf
         - name: /etc/salt/master.d/base.conf
 
         - defaults:
@@ -157,7 +157,7 @@ Install salt-master base configuration:
 Install salt-master etcd configuration:
     file.managed:
         - template: jinja
-        - source: salt://stack/etcd.conf
+        - source: salt://config/etcd.conf
         - name: /etc/salt/master.d/etcd.conf
         - defaults:
             etcd_cache:
@@ -190,7 +190,7 @@ Install salt-master etcd configuration:
 Install salt-master identification configuration:
     file.managed:
         - template: jinja
-        - source: salt://stack/custom.conf
+        - source: salt://config/custom.conf
         - name: /etc/salt/master.d/id.conf
         - defaults:
             configuration:
@@ -203,7 +203,7 @@ Install salt-master identification configuration:
 Install salt-master common configuration:
     file.managed:
         - template: jinja
-        - source: salt://stack/common.conf
+        - source: salt://config/common.conf
         - name: /etc/salt/master.d/common.conf
         - defaults:
             root_dir: /
