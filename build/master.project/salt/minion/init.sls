@@ -54,18 +54,6 @@ Install salt-minion configuration:
         - name: /etc/salt/minion
 
         - context:
-            machine_id: {{ MachineId }}
-            master: localhost
-
-            etcd_hosts:
-                - name: "root_etcd"
-                  host: 127.0.0.1
-                  port: 2379
-
-                - name: "minion_etcd"
-                  host: 127.0.0.1
-                  port: 2379
-
             etcd_cache:
                   host: 127.0.0.1
                   port: 2379
@@ -73,20 +61,26 @@ Install salt-minion configuration:
                   allow_reconnect: true
                   allow_redirect: true
 
-{% set id = salt['file.grep'](Root + '/etc/os-release', 'ID=')['stdout'].split('=')[-1] %}
-{% set fullname = salt['file.grep'](Root + '/etc/lsb-release', 'ID=')['stdout'].split('=')[-1] %}
-{% set release = salt['file.grep'](Root + '/etc/lsb-release', 'RELEASE=')['stdout'].split('=')[-1] %}
-{% set codename = salt['file.grep'](Root + '/etc/lsb-release', 'CODENAME=')['stdout'].split('=')[-1] %}
-{% set version = salt['file.grep'](Root + '/etc/os-release', 'VERSION=')['stdout'].split('=')[-1] %}
+            root_files:
+                - name: "base"
+                  path: "/srv/salt"
 
-            grains:
-                os: {{ id | yaml_dquote }}
-                os_family: core
-                oscodename: {{ codename }}
-                osfinger: {{ id }}-{{ version }}
-                osfullname: {{ fullname }}
-                osmajorrelease: {{ release | yaml_dquote }}
-                osrelease: {{ release | yaml_dquote }}
+                - name: "bootstrap"
+                  path: "/srv/bootstrap/salt"
+
+            root_pillars:
+                - name: "base"
+                  path: "/srv/pillar"
+
+                - name: "bootstrap"
+                  path: "/srv/bootstrap/pillar"
+
+            etcd_pillars_ext:
+                - name: "root_etcd"
+                  path: "/config"
+
+                - name: "minion_etcd"
+                  path: "{{ pillar['configuration']['salt']['namespace'] }}/pillar/%(minion_id)s"
 
         # once we're sure the salt-master.service is configured, we can
         # install the salt-minion configuration....
@@ -97,6 +91,56 @@ Install salt-minion configuration:
             - Make salt configuration directory
             - Initialize the nodes pillar namespace
             - Enable systemd multi-user.target wants salt-master.service
+
+{% set id = salt['file.grep'](Root + '/etc/os-release', 'ID=')['stdout'].split('=')[-1] %}
+{% set fullname = salt['file.grep'](Root + '/etc/lsb-release', 'ID=')['stdout'].split('=')[-1] %}
+{% set release = salt['file.grep'](Root + '/etc/lsb-release', 'RELEASE=')['stdout'].split('=')[-1] %}
+{% set codename = salt['file.grep'](Root + '/etc/lsb-release', 'CODENAME=')['stdout'].split('=')[-1] %}
+{% set version = salt['file.grep'](Root + '/etc/os-release', 'VERSION=')['stdout'].split('=')[-1] %}
+
+Install salt-minion common configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://stack/common.conf
+        - name: /etc/salt/minion.d/common.conf
+        - context:
+            log_level: info
+            id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
+            master: localhost
+            saltenv: base
+            pillarenv: base
+
+            etcd_hosts:
+                - name: "root_etcd"
+                  host: 127.0.0.1
+                  port: 2379
+
+                - name: "minion_etcd"
+                  host: 127.0.0.1
+                  port: 2379
+
+            etcd_returner:
+                returner: "root_etcd"
+                returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
+                ttl: {{ 60 * 30 }}
+
+            grains:
+                minion-role: master
+                machine-id: {{ MachineId }}
+                root: {{ Root }}
+
+                os: {{ id | yaml_dquote }}
+                os_family: core
+                oscodename: {{ codename }}
+                osfinger: {{ id }}-{{ version }}
+                osfullname: {{ fullname }}
+                osmajorrelease: {{ release | yaml_dquote }}
+                osrelease: {{ release | yaml_dquote }}
+
+        - require:
+            - Make salt-minion configuration directory
+            - Initialize the nodes pillar namespace
+            - Install salt-minion configuration
 
 Install salt-minion.service:
     file.managed:
@@ -129,6 +173,7 @@ Install salt-minion.service:
             - Generate salt-stack container build rules
         - require:
             - Install salt-minion configuration
+            - Install salt-minion common configuration
             - Finished building the salt-stack image
             - Install container load script
         - mode: 0664
