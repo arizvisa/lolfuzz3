@@ -82,6 +82,7 @@ Install salt-minion configuration:
 
 Install salt-minion identification configuration:
     file.managed:
+        - template: jinja
         - source: salt://stack/custom.conf
         - name: /etc/salt/minion.d/id.conf
         - defaults:

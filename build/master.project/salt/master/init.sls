@@ -156,6 +156,7 @@ Install salt-master configuration:
 
 Install salt-master identification configuration:
     file.managed:
+        - template: jinja
         - source: salt://stack/custom.conf
         - name: /etc/salt/master.d/id.conf
         - defaults:
