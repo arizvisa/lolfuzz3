@@ -7,7 +7,6 @@ bootstrap:
         - container         # create container-directory and build-scripts
         - flannel           # enable the flanneld service
         - stack             # common salt-stack configuration
-        - fix-modules       # because Steve Hajducko is a fucking idiot that doesn't test his shit
         - maintenance       # install services that perform regular maintenance
 
     # salt-master container and services
