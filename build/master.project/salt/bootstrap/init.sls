@@ -1,8 +1,5 @@
 {% set Root = pillar['local']['root'] %}
-
-# Figure out the external network interface by searching /etc/network-environment
-{% set Address = salt['file.grep']('/'.join([Root, '/etc/network-environment']), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
-{% set Interface = salt['network.ifacestartswith'](Address) | first %}
+{% set Interface = pillar['local']['interface'] %}
 
 ### Bootstrap the network environment with the unique machine-id
 include:
