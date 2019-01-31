@@ -18,9 +18,6 @@ configuration:
         template: {}
         pod: {}
 
-    # path to root filesystem while running CoreOS' toolbox
-    root: /media/root
-
     # how the toolbox authenticates back to the host
     remote:
         host: core@localhost
