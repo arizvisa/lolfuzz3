@@ -481,7 +481,7 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 
 # generate ssh public/private key
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
-	ssh-keygen -q -t rsa -C 'core@$(boxname)' -f '$(workdir)/$(boxname).id_rsa' -N ''
+	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(workdir)/$(boxname).id_rsa' -N ''
 
 ### Bootstrap recipes
 
