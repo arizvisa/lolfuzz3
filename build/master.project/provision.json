@@ -44,6 +44,7 @@
                 "DEPLOY=/opt"
             ],
             "inline" : [
+                "mkdir -p \"$DEPLOY\"",
                 "find \"$STAGE\" -exec chmod 0755 {} +",
                 "tar -C \"$STAGE\" -cpf- . | tar -xpf- -C \"$DEPLOY\""
             ]
