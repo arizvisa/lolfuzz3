@@ -13,10 +13,8 @@ Project variable {{ (root + [name]) | join('.') }}:
 
 {% macro project_set_mapping(root, name, value) %}
 Project key {{ (root + [name]) | join('.') }}:
-    etcd.set:
+    etcd.directory:
         - name: {{ (root + [name]) | join('/') }}
-        - value: null
-        - directory: true
         - profile: root_etcd
         - requires:
             - Project key {{ root }}
@@ -50,10 +48,8 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
 ### Project configuration
 {% set ProjectRoot = ['', 'config'] -%}
 Project key {{ ProjectRoot | join('.') }}:
-    etcd.set:
+    etcd.directory:
         - name: {{ ProjectRoot | join('/') }}
-        - value: null
-        - directory: true
         - profile: root_etcd
         - requires:
             - Check firewall rules

@@ -328,30 +328,24 @@ Link the script for calling salt-unity:
 
 ## States for initializing the etcd namespaces
 Initialize the salt namespace:
-    etcd.set:
+    etcd.directory:
         - name: "{{ pillar['configuration']['salt']['namespace'] }}"
-        - value: null
-        - directory: true
         - profile: root_etcd
         - requires:
             - sls: etcd
 
 # cache
 Initialize the cache namespace:
-    etcd.set:
+    etcd.directory:
         - name: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
-        - value: null
-        - directory: true
         - use:
             - Initialize the salt namespace
         - requires:
             - Initialize the salt namespace
 
 Initialize the minion cache namespace:
-    etcd.set:
+    etcd.directory:
         - name: "{{ pillar['configuration']['salt']['namespace'] }}/cache/minions"
-        - value: null
-        - directory: true
         - use:
             - Initialize the cache namespace
         - requires:
@@ -359,30 +353,24 @@ Initialize the minion cache namespace:
 
 # returner
 Initialize the returner namespace:
-    etcd.set:
+    etcd.directory:
         - name: "{{ pillar['configuration']['salt']['namespace'] }}/return"
-        - value: null
-        - directory: true
         - use:
             - Initialize the salt namespace
         - requires:
             - Initialize the salt namespace
 
 Initialize the minion returner namespace:
-    etcd.set:
+    etcd.directory:
         - name: "{{ pillar['configuration']['salt']['namespace'] }}/return/minions"
-        - value: null
-        - directory: true
         - use:
             - Initialize the returner namespace
         - requires:
             - Initialize the returner namespace
 
 Initialize the jobs returner namespace:
-    etcd.set:
+    etcd.directory:
         - name: "{{ pillar['configuration']['salt']['namespace'] }}/return/jobs"
-        - value: null
-        - directory: true
         - use:
             - Initialize the returner namespace
         - requires:
@@ -390,10 +378,8 @@ Initialize the jobs returner namespace:
 
 # events
 Initialize the events returner namespace:
-    etcd.set:
+    etcd.directory:
         - name: "{{ pillar['configuration']['salt']['namespace'] }}/return/events"
-        - value: null
-        - directory: true
         - use:
             - Initialize the returner namespace
         - requires:
@@ -401,10 +387,8 @@ Initialize the events returner namespace:
 
 # pillar
 Initialize the nodes pillar namespace:
-    etcd.set:
+    etcd.directory:
         - name: "{{ pillar['configuration']['salt']['namespace'] }}/pillar"
-        - value: null
-        - directory: true
         - use:
             - Initialize the salt namespace
         - requires:
