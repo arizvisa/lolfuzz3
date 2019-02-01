@@ -125,6 +125,7 @@
                 "MASTER_ID={{user `guest-name`}}"
             ],
             "inline" : [
+                "mkdir -p \"$ROOT/var/cache/salt\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\"",
                 "sh \"$ROOT/$STAGE\"/install-salt.sh -X -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -f \"$ROOT/$STAGE\"/install-salt.sh"
             ]
@@ -190,22 +191,22 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo \"[*] Deploying salt-stack stage ({{user `salt-bootstrap-stage`}} into root filesystem\""
+            "command" : "echo \"[*] Deploying salt-stack stage ({{user `salt-bootstrap-stage`}} into toolbox filesystem\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
+                "ROOT=/media/root",
                 "DEPLOY=/",
                 "STAGE={{user `salt-bootstrap-stage`}}"
             ],
             "inline" : [
                 "umask 022",
-                "chown -R root:root \"$STAGE\"",
-                "find \"$STAGE\" -type f -exec chmod 0644 {} +",
-                "find \"$STAGE\" -type d -exec chmod 0755 {} +",
-                "tar -C \"$STAGE\" -cpf- . | tar -xpf- -C \"$DEPLOY\"",
-                "rm -rf \"$STAGE\"",
-                "mkdir -p \"$DEPLOY/var/cache/salt\" \"$DEPLOY/var/run/salt\" \"$DEPLOY/var/log/salt\""
+                "chown -R root:root \"$ROOT$STAGE\"",
+                "find \"$ROOT$STAGE\" -type f -exec chmod 0644 {} +",
+                "find \"$ROOT$STAGE\" -type d -exec chmod 0755 {} +",
+                "tar -C \"$ROOT$STAGE\" -cpf- . | tar -xpf- -C \"$DEPLOY\"",
+                "rm -rf \"$ROOT$STAGE\""
             ]
         },
 
@@ -239,7 +240,7 @@
             "command" : "echo \"[-] Applying bootstrap state to {{user `guest-name`}}\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "LOGFILE=/root/bootstrap.state.log"
