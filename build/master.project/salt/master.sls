@@ -1,5 +1,4 @@
 {% set Root = pillar['local']['root'] %}
-{% set Interface = pillar['local']['interface'] %}
 
 ### States to bootstrap the salt-master container and install it as a service
 include:
@@ -155,7 +154,7 @@ Install salt-master etcd configuration:
         - name: {{ Root }}/etc/salt/master.d/etcd.conf
         - defaults:
             etcd_cache:
-                  host: {{ grains['ip4_interfaces'][Interface] | first }}
+                  host: 127.0.0.1
                   port: 2379
                   path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
                   allow_reconnect: true
@@ -163,11 +162,11 @@ Install salt-master etcd configuration:
 
             etcd_hosts:
                 - name: "root_etcd"
-                  host: {{ grains['ip4_interfaces'][Interface] | first }}
+                  host: 127.0.0.1
                   port: 2379
 
                 - name: "minion_etcd"
-                  host: {{ grains['ip4_interfaces'][Interface] | first }}
+                  host: 127.0.0.1
                   port: 2379
 
             etcd_returner:
@@ -225,14 +224,7 @@ Install salt-master.service:
             requires:
                 - flanneld.service
 
-            network: default
-            exposed:
-                - name: salt-job
-                  number: 4505
-
-                - name: salt-result
-                  number: 4506
-
+            network: host
             container_path: {{ pillar['service']['container']['path'] }}
             image_name: lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}
             image_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci
