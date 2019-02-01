@@ -197,15 +197,16 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
+                "LOGFILE=/root/bootstrap.state.log",
                 "DEPLOY=/",
                 "STAGE={{user `salt-bootstrap-stage`}}"
             ],
             "inline" : [
                 "umask 022",
-                "chown -R root:root \"$ROOT$STAGE\"",
-                "find \"$ROOT$STAGE\" -type f -exec chmod 0644 {} +",
-                "find \"$ROOT$STAGE\" -type d -exec chmod 0755 {} +",
-                "tar -C \"$ROOT$STAGE\" -cpf- . | tar -xpf- -C \"$DEPLOY\"",
+                "chown -vR root:root \"$ROOT$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "find \"$ROOT$STAGE\" -type f -exec chmod -v 0644 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "find \"$ROOT$STAGE\" -type d -exec chmod -v 0755 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "tar -C \"$ROOT$STAGE\" -cpf- . | tar -xvpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -rf \"$ROOT$STAGE\""
             ]
         },
@@ -215,11 +216,15 @@
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.state.log"
+            ],
             "inline" : [
-                "systemctl start setup-network-environment.service",
-                "systemctl status setup-network-environment.service",
-                "until [ -e /etc/network-environment ]; do :; done",
-                "cat /etc/network-environment"
+                "until systemctl start setup-network-environment.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "systemctl status setup-network-environment.service 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until [ -e /etc/network-environment ]; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "cat /etc/network-environment 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -228,11 +233,15 @@
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.state.log"
+            ],
             "inline" : [
-                "systemctl start etcd-schema.service",
-                "systemctl status etcd-schema.service",
-                "until etcdctl cluster-health; do :; done",
-                "etcdctl setdir /coreos.com"
+                "until systemctl start etcd-schema.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "systemctl status etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until etcdctl cluster-health; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "etcdctl setdir /coreos.com 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -255,8 +264,12 @@
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.state.log"
+            ],
             "inline" : [
-                "systemctl stop etcd-schema.service"
+                "systemctl stop etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -274,15 +287,17 @@
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.state.log",
                 "DEPLOY=/srv",
                 "STAGE={{user `custom-config-stage`}}"
             ],
             "inline" : [
                 "umask 022",
-                "chown -R root:root \"$STAGE\"",
-                "find \"$STAGE\" -type f -exec chmod 0644 {} +",
-                "find \"$STAGE\" -type d -exec chmod 0755 {} +",
-                "tar -C \"$STAGE\" -cpf- . | tar -xpf- -C \"$DEPLOY\"",
+                "chown -vR root:root \"$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "find \"$STAGE\" -type f -exec chmod -v 0644 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "find \"$STAGE\" -type d -exec chmod -v 0755 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "tar -C \"$STAGE\" -cpf- . | tar -xvpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -rf \"$STAGE\""
             ]
         },
