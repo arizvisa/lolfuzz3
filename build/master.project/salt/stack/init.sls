@@ -1,5 +1,8 @@
 {% set Root = pillar['local']['root'] %}
 
+include:
+    - container
+
 ### Service directories
 Make service directory:
     file.directory:
