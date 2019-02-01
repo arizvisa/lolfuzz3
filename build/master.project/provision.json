@@ -83,7 +83,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "dnf -y {{user `dnf-options`}} install casync jq 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "dnf -y {{user `dnf-options`}} install casync jq findutils 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
