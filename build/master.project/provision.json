@@ -197,7 +197,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
-                "LOGFILE=/root/bootstrap.state.log",
+                "LOGFILE=/root/bootstrap.install.log",
                 "DEPLOY=/",
                 "STAGE={{user `salt-bootstrap-stage`}}"
             ],
@@ -218,7 +218,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/",
-                "LOGFILE=/root/bootstrap.state.log"
+                "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "until systemctl start setup-network-environment.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -235,7 +235,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/",
-                "LOGFILE=/root/bootstrap.state.log"
+                "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "until systemctl start etcd-schema.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -266,7 +266,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/",
-                "LOGFILE=/root/bootstrap.state.log"
+                "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "systemctl stop etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\""
@@ -288,7 +288,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/",
-                "LOGFILE=/root/bootstrap.state.log",
+                "LOGFILE=/root/bootstrap.install.log",
                 "DEPLOY=/srv",
                 "STAGE={{user `custom-config-stage`}}"
             ],
