@@ -3,15 +3,17 @@ bootstrap:
     # bootstrapping a master
     'G@minion-role:master-bootstrap':
         - bootstrap-local
+        - flannel
+        - cloud
+        - toolbox
         - project
         - container
         - salt
-        - flannel
-        - cloud
 
     # master that has joined the project
     'G@minion-role:master':
         - local
+        - toolbox
         - project
         - container
         - salt
