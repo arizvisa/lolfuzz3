@@ -225,9 +225,3 @@ Install the script for calling salt-call:
 
         - mode: 0755
         - makedirs: true
-
-## Synchronize module fixes for the minion
-Synchronize all modules for the minion:
-    module.run:
-        - saltutil.sync_all:
-            - refresh: true

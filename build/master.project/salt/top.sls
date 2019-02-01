@@ -12,6 +12,7 @@ bootstrap:
         # states related to salt-stack
         - stack             # common salt-stack configuration
         - maintenance       # install services that perform regular maintenance
+        - sync              # synchronize all the modules
 
         # salt-master container and services
         - master
@@ -28,8 +29,9 @@ bootstrap:
     'G@minion-role:master':
 
         # states for joining the cluster
-#        - reset-id          # remove /etc/machine-id and then restart
-#        - join-master       # register master cluster with etcd
+        #- reset-id          # remove /etc/machine-id and then restart
+        #- join-master       # register master cluster with etcd
+        - local-minion-sync # synchronize the minion
 
         # states used for services
         - container         # create container-directory and build-scripts

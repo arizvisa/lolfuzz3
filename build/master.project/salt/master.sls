@@ -393,8 +393,3 @@ Initialize the nodes pillar namespace:
             - Initialize the salt namespace
         - requires:
             - Initialize the salt namespace
-
-## Synchronize module fixes for the master
-Synchronize all modules for the master:
-    salt.runner:
-        - name: saltutil.sync_all
