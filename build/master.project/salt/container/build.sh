@@ -35,7 +35,7 @@ case "$rule" in
 
     cat "${rule}" <( printf 'write --overwrite %s\n' "$IMAGEDIR/${imgfile}" ) | "$ACBUILD" script /dev/stdin
 
-    if [ $? -ne 0 ] || [ ! -f "$IMAGEDIR/${imgname}:${imgver}.aci"]; then
+    if [ $? -ne 0 ] || [ ! -f "$IMAGEDIR/${imgname}:${imgver}.aci" ]; then
         printf 'Error trying to build image: "%s:%s"\n' "${imgname}" "${imgver}" 1>&2
         rm -f "$IMAGEDIR/${imgname}:${imgver}.aci"
         exit 1
