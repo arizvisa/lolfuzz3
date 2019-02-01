@@ -105,7 +105,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "until dnf -y {{user `dnf-options`}} install ca-certificates procps-ng net-tools git; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until dnf -y {{user `dnf-options`}} install ca-certificates procps-ng net-tools iproute git; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install systemd-container m2crypto PyYAML; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install dnf-utils libyaml procps-ng python2-crypto python2-jinja2 ; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install python2-msgpack python2-requests python2-zmq; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
