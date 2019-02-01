@@ -25,4 +25,4 @@ configuration:
 
     # configuration for any extra scripts/tools
     tools:
-        prefix: /usr/local
+        prefix: /opt

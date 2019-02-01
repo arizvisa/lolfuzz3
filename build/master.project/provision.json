@@ -31,7 +31,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo \"[*] Staging general CoreOS tools at {{user `coreos-tools-stage`}} and deploying in /usr/local\""
+            "command" : "echo \"[*] Staging general CoreOS tools at {{user `coreos-tools-stage`}} and deploying in /opt\""
         },
         { "type" : "file",
             "source" : "{{user `coreos-tools-directory`}}",
@@ -41,7 +41,7 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
                 "STAGE={{user `coreos-tools-stage`}}",
-                "DEPLOY=/usr/local"
+                "DEPLOY=/opt"
             ],
             "inline" : [
                 "find \"$STAGE\" -exec chmod 0755 {} +",
@@ -193,7 +193,7 @@
             "command" : "echo \"[*] Deploying salt-stack stage ({{user `salt-bootstrap-stage`}} into toolbox filesystem\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/usr/local --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "DEPLOY=/",
@@ -239,7 +239,7 @@
             "command" : "echo \"[-] Applying bootstrap state to {{user `guest-name`}}\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/usr/local --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "LOGFILE=/root/bootstrap.state.log"
