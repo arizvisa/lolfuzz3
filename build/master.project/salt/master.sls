@@ -398,4 +398,3 @@ Initialize the nodes pillar namespace:
 Synchronize all modules for the master:
     salt.runner:
         - name: saltutil.sync_all
-        - saltenv: bootstrap

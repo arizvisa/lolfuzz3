@@ -231,4 +231,3 @@ Synchronize all modules for the minion:
     module.run:
         - saltutil.sync_all:
             - refresh: true
-            - saltenv: bootstrap
