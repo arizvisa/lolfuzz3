@@ -88,14 +88,14 @@ Install openssh-clients in toolbox:
 
     file.symlink:
         - name: {{ salt['user.info'](grains['username']).home }}/.ssh/id_rsa
-        - target: {{ Root }}{{ pillar['configuration']['remote']['key'] }}
+        - target: {{ Root }}{{ pillar['toolbox']['self-service']['key'] }}
         - force: true
         - mode: 0400
         - makedirs : true
 
 Build the salt-stack image:
     cmd.run:
-        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['configuration']['remote']['host'] }}" sudo -H -E "CONTAINER_DIR={{ pillar['service']['container']['path'] }}" -- "{{ pillar['service']['container']['path'] }}/build.sh" "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.acb"
+        - name: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['toolbox']['self-service']['host'] }}" sudo -H -E "CONTAINER_DIR={{ pillar['service']['container']['path'] }}" -- "{{ pillar['service']['container']['path'] }}/build.sh" "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.acb"
         - cwd: {{ pillar['service']['container']['path'] }}
         - use_vt: true
         - hide_output: true
