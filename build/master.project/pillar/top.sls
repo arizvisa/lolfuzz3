@@ -2,7 +2,7 @@ bootstrap:
 
     # bootstrapping a master
     'G@minion-role:master-bootstrap':
-        - bootstrap-local
+        - local-bootstrap
         - local-network
         - flannel
         - cloud
