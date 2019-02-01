@@ -120,7 +120,7 @@ Install the salt-toolbox wrapper:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt-toolbox.command
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-toolbox
+        - name: {{ pillar['configuration']['tools']['prefix'] }}/sbin/salt-toolbox
 
         - defaults:
             toolbox: /bin/toolbox

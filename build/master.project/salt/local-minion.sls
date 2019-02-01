@@ -197,10 +197,10 @@ Install the script for bootstrapping the master:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt-bootstrap.command
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-bootstrap
+        - name: {{ pillar['configuration']['tools']['prefix'] }}/sbin/salt-bootstrap
 
         - context:
-            salt_toolbox: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-toolbox
+            salt_toolbox: {{ pillar['configuration']['tools']['prefix'] }}/sbin/salt-toolbox
 
         - require:
             - Install the salt-toolbox wrapper

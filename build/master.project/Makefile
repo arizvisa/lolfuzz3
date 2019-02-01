@@ -588,7 +588,7 @@ $(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_
 $(foreach u,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(toolsdir)/bin/$(notdir $(u)),$(u))))
 
 # transfer any miscellaneous tools
-$(foreach f,$(wildcard $(tools_config)/*),$(eval $(call coreos_tool,$(f),$(toolsdir)/bin/$(notdir $(f)))))
+$(foreach f,$(wildcard $(tools_config)/*),$(eval $(call coreos_tool,$(f),$(toolsdir)/libexec/$(notdir $(f)))))
 
 # download the saltstack-bootstrap installer
 $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_file_url)))
