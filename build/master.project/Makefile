@@ -146,13 +146,13 @@ acbuild_metaurl != printf -- '$(github_url_format)' '$(file <$(in_acbuild_repo))
 # required files for acbuild
 acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].name'),$(filesdir)/$(f))
 
-## kelseyhightower's setup-network-environment
+## kelseyhightower's setup-network-environment (/opt/libexec)
 in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
 setup_network_environment_metaurl != printf -- '$(github_url_format)' '$(file <$(in_setup_network_environment_repo))'
 
-setup_network_environment_files := $(foreach f,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name'),$(toolsdir)/bin/$(f))
+setup_network_environment_files := $(foreach f,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name'),$(toolsdir)/libexec/$(f))
 
-## extra tools to include
+## extra tools to deploy (/opt/bin)
 extra_tools_files := $(foreach f,$(wildcard $(tools_config)/*),$(toolsdir)/bin/$(notdir $(f)))
 
 ## salt-bootstrap.sh installer
@@ -588,7 +588,7 @@ $(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_
 $(foreach u,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(toolsdir)/bin/$(notdir $(u)),$(u))))
 
 # transfer any miscellaneous tools
-$(foreach f,$(wildcard $(tools_config)/*),$(eval $(call coreos_tool,$(f),$(toolsdir)/libexec/$(notdir $(f)))))
+$(foreach f,$(wildcard $(tools_config)/*),$(eval $(call coreos_tool,$(f),$(toolsdir)/bin/$(notdir $(f)))))
 
 # download the saltstack-bootstrap installer
 $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_file_url)))
