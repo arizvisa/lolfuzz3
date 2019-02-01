@@ -1,5 +1,4 @@
 {% set Root = pillar['local']['root'] %}
-{% set Interface = pillar['local']['interface'] %}
 
 include:
     - stack
@@ -14,7 +13,7 @@ Install salt-cloud configuration:
             log_level: info
             pool_size: 10
             minion:
-                master: {{ grains['ip4_interfaces'][Interface] | first }}
+                master: {{ pillar['local']['ip4'] }}
 
                 # FIXME: this configuration should be barely enough to connect to the master
                 #        and then the full config should be applied by a state
@@ -27,13 +26,13 @@ Install salt-cloud configuration:
                 mine_return_job: true
 
                 root_etcd:
-                    etcd.host: {{ grains['ip4_interfaces'][Interface] | first }}
+                    etcd.host: {{ pillar['local']['ip4'] }}
                     etcd.port: 2379
                 minion_etcd:
-                    etcd.host: {{ grains['ip4_interfaces'][Interface] | first }}
+                    etcd.host: {{ pillar['local']['ip4'] }}
                     etcd.port: 2379
 
-                etcd.host: {{ grains['ip4_interfaces'][Interface] | first }}
+                etcd.host: {{ pillar['local']['ip4'] }}
                 etcd.port: 2379
                 etcd.path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
                 etcd.allow_reconnect: true
