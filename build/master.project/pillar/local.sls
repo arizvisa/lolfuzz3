@@ -1,4 +1,4 @@
-{% set Address = salt['file.grep']('/media/root/etc/network-environment'), pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
+{% set Address = salt['file.grep']('/media/root/etc/network-environment', pattern='^DEFAULT_IPV4=').get('stdout', '').split('=') | last %}
 
 # path to root filesystem after bootstrapping with CoreOS' toolbox
 local:
