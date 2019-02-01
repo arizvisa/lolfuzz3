@@ -150,10 +150,10 @@ acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.
 in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
 setup_network_environment_metaurl != printf -- '$(github_url_format)' '$(file <$(in_setup_network_environment_repo))'
 
-setup_network_environment_files := $(foreach f,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name'),$(toolsdir)/libexec/$(f))
+setup_network_environment_files := $(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name')
 
 ## extra tools to deploy (/opt/bin)
-extra_tools_files := $(foreach f,$(wildcard $(tools_config)/*),$(toolsdir)/bin/$(notdir $(f)))
+extra_tools_files := $(foreach f,$(wildcard $(tools_config)/*),$(notdir $(f)))
 
 ## salt-bootstrap.sh installer
 in_salt_bootstrap_metaurl=$(MAKEDIR)salt-bootstrap.url
@@ -218,8 +218,8 @@ $(3): $(1)
 	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\r\n' >| '$$@'
 endef
 
-# coreos_tool '$target' '$source'
-define coreos_tool
+# stage_tool '$target' '$source'
+define stage_tool
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@printf '[!] Staging file %s in %s\n' '$(1)' '$(2)'
 	@cp -f '$(1)' '$(2)'
@@ -323,7 +323,7 @@ download-installer: $(coreos_installer_files)
 	@printf '[*] Successfully downloaded CoreOS installer files\n'
 
 .PHONY: download-tools
-download-tools: $(acbuild_files) $(setup_network_environment_files) $(workdir)/$(salt_bootstrap_file)
+download-tools: $(acbuild_files) $(workdir)/$(salt_bootstrap_file) $(foreach f,$(setup_network_environment_files),$(toolsdir)/libexec/$(f))
 	@printf '[*] Successfully downloaded required tools\n'
 
 .PHONY: download
@@ -373,8 +373,8 @@ endif
 clean-tools:
 	@printf '[!] Erasing tool %s\n' '$(workdir)/$(salt_bootstrap_file)'
 	-rm -f '$(workdir)/$(salt_bootstrap_file)'
-	@printf '[!] Erasing tool %s\n' '$(setup_network_environment_files)'
-	-rm -f '$(setup_network_environment_files)'
+	@printf '[!] Erasing tool %s\n' '$(foreach f,$(setup_network_environment_files),$(toolsdir)/libexec/$(f))'
+	-rm -f $(foreach f,$(setup_network_environment_files),'$(toolsdir)/libexec/$(f)')
 	@printf '[!] Erasing temporary files from %s\n' '$(filesdir)'
 	-rm -rf '$(filesdir)'
 	@printf '[!] Removing tool directories %s\n' '$(toolsdir)'
@@ -415,7 +415,7 @@ $(outdir) $(workdir):
 $(boxname_workdir):	$(workdir)
 	@test -d '$@' || mkdir -p '$@'
 
-$(filesdir) $(toolsdir) $(toolsdir)/bin: $(workdir)
+$(filesdir) $(toolsdir) $(toolsdir)/bin $(toolsdir)/libexec $(toolsdir)/sbin: $(workdir)
 	@test -d '$@' || mkdir -p '$@'
 
 $(custom):
@@ -464,7 +464,7 @@ $(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workd
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
 
 # grab all the specified tools into the tools directory and build a json for it
-$(boxname_workdir)/$(boxname)-vars.json.tools: $(setup_network_environment_files) $(extra_tools_files)	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname)-vars.json.tools: $(foreach f,$(setup_network_environment_files),$(toolsdir)/libexec/$(f)) $(foreach f,$(extra_tools_files),$(toolsdir)/bin/$(f))	| $(boxname_workdir)
 	@printf '[-] Generating variables for miscellaneous CoreOS tools\n'
 	@jq -n --arg tools '$(toolsdir)' '{ "coreos-tools-directory": $$tools }' >| '$@'
 
@@ -584,11 +584,11 @@ $(foreach f,$(coreos_installer_files),$(eval $(call json_rawfile,$(f).$(checksum
 # fetch the acbuild tool
 $(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(filesdir)/$(notdir $(u)),$(u))))
 
-# fetch the setup-network-environment tool
-$(foreach u,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(toolsdir)/bin/$(notdir $(u)),$(u))))
+# fetch the setup-network-environment tool into the tools working directory
+$(foreach u,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(toolsdir)/libexec/$(notdir $(u)),$(u))))
 
-# transfer any miscellaneous tools
-$(foreach f,$(wildcard $(tools_config)/*),$(eval $(call coreos_tool,$(f),$(toolsdir)/bin/$(notdir $(f)))))
+# transfer any required tools to the tools working directory
+$(foreach f,$(extra_tools_files),$(eval $(call stage_tool,$(tools_config)/$(f),$(toolsdir)/bin/$(f))))
 
 # download the saltstack-bootstrap installer
 $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_file_url)))
