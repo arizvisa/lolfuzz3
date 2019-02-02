@@ -4,7 +4,7 @@
 configuration:
 
     # project name
-    project: {{ project_name }}
+    project: {{ project_name | yaml_dquote }}
     repository: "git://path/to/{{ project_name }}/repository"
 
     # salt namespace
