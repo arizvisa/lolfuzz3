@@ -117,8 +117,8 @@ Install salt-minion identification configuration:
                 id: {{ pillar['local']['machine_id'] }}.{{ pillar['configuration']['project'] }}
                 master: localhost
 
-                saltenv: base
-                pillarenv: base
+                saltenv: master
+                pillarenv: master
 
                 grains:
                     minion-role: master
