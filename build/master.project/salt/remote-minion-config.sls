@@ -49,7 +49,7 @@ Install minion etcd configuration:
 
 Install all required Python modules:
     pip.installed:
-        - requirements: salt://remote-minion-config/requirements.txt
+        - requirements: salt://config/requirements.txt
         - reload_modules: true
         - require:
             - Install minion common configuration
