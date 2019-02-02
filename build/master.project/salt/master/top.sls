@@ -46,13 +46,3 @@ bootstrap:
 
         # salt-cloud configuration
         - cloud
-
-    # Windows minions that need to be re-provisioned
-    'not G@minion-role:master-bootstrap and not G@minion-role:master and G@os_family:Windows':
-        - remote-minion-config
-        - remote-minion-windows
-
-    # Other minions that need to be re-provisioned
-    'not G@minion-role:master-bootstrap and not G@minion-role:master and not G@os_family:Windows':
-        - remote-minion-config
-        - remote-minion-other
