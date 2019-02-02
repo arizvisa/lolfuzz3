@@ -2,7 +2,7 @@ master:
 
     # bootstrapping a master
     'G@minion-role:master-bootstrap':
-        - master-bootstrap
+        - master
         - master-network
         - project
 
