@@ -22,7 +22,3 @@ configuration:
     etcd:
         discovery: "/coreos.com/discovery"
         cluster-size: 1
-
-    # configuration for any extra scripts/tools
-    tools:
-        prefix: /opt

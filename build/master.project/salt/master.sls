@@ -255,7 +255,7 @@ Install the script for interacting with salt-master:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt.command
-        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt
+        - name: {{ Root }}/opt/bin/salt
 
         - defaults:
             rkt: /bin/rkt
@@ -272,7 +272,7 @@ Install the script for interacting with salt-master:
 # everything else can just be a symbolic link
 Link the script for calling salt-api:
     file.symlink:
-        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-api
+        - name: {{ Root }}/opt/bin/salt-api
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -280,7 +280,7 @@ Link the script for calling salt-api:
 
 Link the script for calling salt-cloud:
     file.symlink:
-        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-cloud
+        - name: {{ Root }}/opt/bin/salt-cloud
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -288,7 +288,7 @@ Link the script for calling salt-cloud:
 
 Link the script for calling salt-cp:
     file.symlink:
-        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-cp
+        - name: {{ Root }}/opt/bin/salt-cp
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -296,7 +296,7 @@ Link the script for calling salt-cp:
 
 Link the script for calling salt-key:
     file.symlink:
-        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-key
+        - name: {{ Root }}/opt/bin/salt-key
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -304,7 +304,7 @@ Link the script for calling salt-key:
 
 Link the script for calling salt-run:
     file.symlink:
-        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-run
+        - name: {{ Root }}/opt/bin/salt-run
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -312,7 +312,7 @@ Link the script for calling salt-run:
 
 Link the script for calling salt-ssh:
     file.symlink:
-        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-ssh
+        - name: {{ Root }}/opt/bin/salt-ssh
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -320,7 +320,7 @@ Link the script for calling salt-ssh:
 
 Link the script for calling salt-unity:
     file.symlink:
-        - name: {{ Root }}/{{ pillar['configuration']['tools']['prefix'] }}/bin/salt-unity
+        - name: {{ Root }}/opt/bin/salt-unity
         - target: salt
         - require:
             - Install the script for interacting with salt-master

@@ -123,7 +123,7 @@ Install the salt-toolbox wrapper:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt-toolbox.command
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/sbin/salt-toolbox
+        - name: /opt/sbin/salt-toolbox
 
         - defaults:
             toolbox: /bin/toolbox
@@ -132,7 +132,7 @@ Install the salt-toolbox wrapper:
             mounts:
                 - "/var/run/dbus"
                 - "/etc/systemd"
-                - "{{ pillar['configuration']['tools']['prefix'] }}"
+                - "/opt"
                 - "/var/cache/salt"
                 - "/var/run/salt"
                 - "/var/log/salt"

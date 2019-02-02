@@ -197,10 +197,10 @@ Install the script for bootstrapping the master:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt-bootstrap.command
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/sbin/salt-bootstrap
+        - name: {{ Root }}/opt/sbin/salt-bootstrap
 
         - context:
-            salt_toolbox: {{ pillar['configuration']['tools']['prefix'] }}/sbin/salt-toolbox
+            salt_toolbox: /opt/sbin/salt-toolbox
 
         - require:
             - Install the salt-toolbox wrapper
@@ -212,7 +212,7 @@ Install the script for calling salt-call:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt.command
-        - name: {{ pillar['configuration']['tools']['prefix'] }}/bin/salt-call
+        - name: {{ Root }}/opt/bin/salt-call
 
         - defaults:
             rkt: /bin/rkt
