@@ -52,5 +52,5 @@ Install all required Python modules:
         - requirements: salt://remote-minion-config/requirements.txt
         - reload_modules: true
         - require:
-            - Install minion common configuration:
+            - Install minion common configuration
             - Install minion etcd configuration
