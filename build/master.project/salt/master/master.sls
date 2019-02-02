@@ -123,15 +123,21 @@ Install salt-master base configuration:
                 - name: "base"
                   path: "/srv/salt"
 
+                - name: "master"
+                  path: "/srv/bootstrap/master/salt"
+
                 - name: "bootstrap"
-                  path: "/srv/bootstrap/salt"
+                  path: "/srv/bootstrap/minion/salt"
 
             root_pillars:
                 - name: "base"
                   path: "/srv/pillar"
 
+                - name: "master"
+                  path: "/srv/bootstrap/master/pillar"
+
                 - name: "bootstrap"
-                  path: "/srv/bootstrap/pillar"
+                  path: "/srv/bootstrap/minion/pillar"
 
             ext_pillars:
                 - type: "etcd"
