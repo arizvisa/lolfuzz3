@@ -1,4 +1,4 @@
-{%- import_yaml '../acbuild.sls' as acbuild_files -%}
+{%- import_yaml 'acbuild.sls' as acbuild_files -%}
 
 # configuration for the service responsible for building and deploying containers
 

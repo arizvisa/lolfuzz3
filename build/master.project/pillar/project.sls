@@ -1,4 +1,4 @@
-{%- import_yaml '../project-name.sls' as project_name -%}
+{%- import_yaml 'project-name.sls' as project_name -%}
 
 # configuration for bootstrapping etcd and installation of salt
 configuration:
