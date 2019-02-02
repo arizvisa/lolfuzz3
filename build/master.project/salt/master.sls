@@ -2,9 +2,13 @@
 
 ### States to bootstrap the salt-master container and install it as a service
 include:
-    - etcd
     - container
     - stack
+
+Check firewall rules:
+    firewall.check:
+        - name: {{ salt['config.get']('root_etcd')['etcd.host'] }}
+        - port: {{ salt['config.get']('root_etcd')['etcd.port'] }}
 
 ## standard salt-master directories
 Make salt-master cache directory:
@@ -338,7 +342,7 @@ Initialize the salt namespace:
         - name: "{{ pillar['configuration']['salt'] }}"
         - profile: root_etcd
         - requires:
-            - sls: etcd
+            - Check firewall rules
 
 # cache
 Initialize the cache namespace:

@@ -2,7 +2,6 @@
 
 ### States to build the salt-minion configuration for managing the salt-master
 include:
-    - etcd
     - container
     - stack
     - master
