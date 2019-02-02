@@ -37,11 +37,11 @@ Make container-root tools directory:
         - dir_mode: 0755
         - file_mode: 0664
 
-### container tools (FIXME: either check the signature, or replace this with just an archive.extracted)
+### container tools
 {% for item in pillar['service']['container']['tools'] %}
 Transfer container-root tools ({{ item.Source }}):
     file.managed:
-        - source: salt://files/{{ item.Source }}
+        - source: /srv/bootstrap/files/{{ item.Source }}    # XXX: This hardcoded path is where the provisioner puts these files
         - source_hash: {{ item.Algo }}={{ item.Hash }}
         - name: {{ pillar['service']['container']['path'] }}/tools/{{ item.Source }}
         - require:
