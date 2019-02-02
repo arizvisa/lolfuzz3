@@ -48,11 +48,11 @@ bootstrap:
         - cloud
 
     # Windows minions that need to be re-provisioned
-    'G@os_family:Windows and not G@minion-role:mastere and not G@minion-role:master-bootstrap':
+    'not G@minion-role:master-bootstrap and not G@minion-role:master and G@os_family:Windows':
         - remote-minion-config
         - remote-minion-windows
 
     # Other minions that need to be re-provisioned
-    '* and not G@os_family:Windows and not G@minion-role:master and not G@minion-role:master-bootstrap':
+    'not G@minion-role:master-bootstrap and not G@minion-role:master and not G@os_family:Windows':
         - remote-minion-config
         - remote-minion-other
