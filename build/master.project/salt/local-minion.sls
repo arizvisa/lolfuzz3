@@ -47,7 +47,8 @@ Install salt-minion configuration:
         - name: {{ Root }}/etc/salt/minion
         - defaults:
             root_dir: /
-            hash_type: sha1
+            hash_type: sha256
+            log_level: warning
         - require:
             - Make salt configuration directory
             # once we're sure the salt-master.service is configured, we can install the salt-minion configuration....

@@ -106,7 +106,8 @@ Install salt-master configuration:
         - name: {{ Root }}/etc/salt/master
         - defaults:
             root_dir: /
-            hash_type: sha1
+            hash_type: sha256
+            log_level: info
         - require:
             - Make salt configuration directory
         - mode: 0664
@@ -199,7 +200,6 @@ Install salt-master common configuration:
         - source: salt://config/common.conf
         - name: {{ Root }}/etc/salt/master.d/common.conf
         - defaults:
-            log_level: info
             ipv6: false
             transport: zeromq
         - require:
