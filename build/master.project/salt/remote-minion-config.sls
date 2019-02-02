@@ -16,7 +16,6 @@ Install minion common configuration:
             transport: zeromq
         - require:
             - Create minion configuration directory
-        - mode: 0664
 
 Install minion etcd configuration:
     file.managed:
@@ -47,7 +46,6 @@ Install minion etcd configuration:
 
         - require:
             - Create minion configuration directory
-        - mode: 0664
 
 Install all required Python modules:
     pip.installed:
@@ -56,4 +54,3 @@ Install all required Python modules:
         - require:
             - Install minion common configuration:
             - Install minion etcd configuration
-        - mode: 0664
