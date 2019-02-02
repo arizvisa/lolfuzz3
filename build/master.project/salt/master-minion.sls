@@ -6,7 +6,7 @@ include:
 
 Make salt-minion cache directory:
     file.directory:
-        - name: {{ Root }}/var/cache/salt/minion
+        - name: "{{ Root }}/var/cache/salt/minion"
         - use:
             - Make salt cache directory
         - require:
@@ -14,7 +14,7 @@ Make salt-minion cache directory:
 
 Make salt-minion pki directory:
     file.directory:
-        - name: {{ Root }}/etc/salt/pki/minion
+        - name: "{{ Root }}/etc/salt/pki/minion"
         - use:
             - Make salt pki directory
         - require:
@@ -30,7 +30,7 @@ Make salt-minion run directory:
 
 Make salt-minion configuration directory:
     file.directory:
-        - name: {{ Root }}/etc/salt/minion.d
+        - name: "{{ Root }}/etc/salt/minion.d"
         - use:
             - Make salt configuration directory
         - require:
@@ -41,7 +41,7 @@ Install salt-minion configuration:
     file.managed:
         - template: jinja
         - source: salt://config/salt-minion.conf
-        - name: {{ Root }}/etc/salt/minion
+        - name: "{{ Root }}/etc/salt/minion"
         - defaults:
             root_dir: /
             hash_type: sha256
@@ -54,7 +54,7 @@ Install salt-minion masterless configuration:
     file.managed:
         - template: jinja
         - source: salt://config/master.conf
-        - name: {{ Root }}/etc/salt/minion.d/masterless.conf
+        - name: "{{ Root }}/etc/salt/minion.d/masterless.conf"
         - defaults:
             root_files:
                 - name: "base"
@@ -94,7 +94,7 @@ Install salt-minion etcd configuration:
     file.managed:
         - template: jinja
         - source: salt://config/etcd.conf
-        - name: {{ Root }}/etc/salt/minion.d/etcd.conf
+        - name: "{{ Root }}/etc/salt/minion.d/etcd.conf"
         - defaults:
             etcd_cache:
                   host: 127.0.0.1
@@ -131,10 +131,10 @@ Install salt-minion identification configuration:
     file.managed:
         - template: jinja
         - source: salt://config/custom.conf
-        - name: {{ Root }}/etc/salt/minion.d/id.conf
+        - name: "{{ Root }}/etc/salt/minion.d/id.conf"
         - defaults:
             configuration:
-                id: {{ pillar['local']['machine_id'] }}.{{ pillar['configuration']['project'] }}
+                id: "{{ pillar['local']['machine_id'] }}.{{ pillar['configuration']['project'] }}"
                 master: localhost
 
                 saltenv: master
@@ -142,13 +142,13 @@ Install salt-minion identification configuration:
 
                 grains:
                     minion-role: master
-                    machine-id: {{ pillar['local']['machine_id'] }}
+                    machine-id: {{ pillar['local']['machine_id'] | yaml_dquote }}
 
                     os: {{ id | yaml_dquote }}
                     os_family: core
-                    oscodename: {{ codename }}
-                    osfinger: {{ id }}-{{ version }}
-                    osfullname: {{ fullname }}
+                    oscodename: {{ codename | yaml_dquote }}
+                    osfinger: "{{ id }}-{{ version }}"
+                    osfullname: {{ fullname | yaml_dquote }}
                     osmajorrelease: {{ release | yaml_dquote }}
                     osrelease: {{ release | yaml_dquote }}
 
@@ -160,7 +160,7 @@ Install salt-minion common configuration:
     file.managed:
         - template: jinja
         - source: salt://config/common.conf
-        - name: {{ Root }}/etc/salt/minion.d/common.conf
+        - name: "{{ Root }}/etc/salt/minion.d/common.conf"
         - defaults:
             ipv6: false
             transport: zeromq
@@ -173,7 +173,7 @@ Install salt-minion.service:
     file.managed:
         - template: jinja
         - source: salt://stack/salt.service
-        - name: {{ Root }}/etc/systemd/system/salt-minion.service
+        - name: "{{ Root }}/etc/systemd/system/salt-minion.service"
 
         - context:
             description: Salt-Minion
@@ -190,11 +190,11 @@ Install salt-minion.service:
             network: host
             exposed: []
 
-            container_path: {{ pillar['service']['container']['path'] }}
-            image_name: lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}
-            image_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci
-            image_uuid_path: salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id
-            run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
+            container_path: {{ pillar['service']['container']['path'] | yaml_dquote }}
+            image_name: "lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}"
+            image_path: "salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci"
+            image_uuid_path: "salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id"
+            run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] | yaml_dquote }}
 
         - use:
             - Generate salt-stack container build rules
@@ -207,7 +207,7 @@ Install salt-minion.service:
 # systemctl enable the salt-minion.service
 Enable systemd multi-user.target wants salt-minion.service:
     file.symlink:
-        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/salt-minion.service
+        - name: "{{ Root }}/etc/systemd/system/multi-user.target.wants/salt-minion.service"
         - target: /etc/systemd/system/salt-minion.service
         - require:
             - Install salt-minion.service
@@ -218,7 +218,7 @@ Install the script for starting the bootstrap environment:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt-bootstrap.command
-        - name: {{ Root }}/opt/sbin/salt-bootstrap
+        - name: "{{ Root }}/opt/sbin/salt-bootstrap"
 
         - context:
             salt_toolbox: /opt/sbin/salt-toolbox
@@ -233,12 +233,12 @@ Install the script for calling salt-call:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt.command
-        - name: {{ Root }}/opt/bin/salt-call
+        - name: "{{ Root }}/opt/bin/salt-call"
 
         - defaults:
             rkt: /bin/rkt
             unit: salt-minion.service
-            run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] }}
+            run_uuid_path: {{ pillar['service']['salt-minion']['UUID'] | yaml_dquote }}
 
         - require:
             - Finished building the salt-stack image
