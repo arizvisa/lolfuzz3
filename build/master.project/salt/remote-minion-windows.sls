@@ -11,14 +11,15 @@ Re-install minion configuration:
         - name: {{ ConfigDir }}/minion
         - source: salt://config/custom.conf
         - defaults:
-            master: {{ grains['master'] }}
-            log_level: warning
-            hash_type: sha256
-            id: {{ grains['id'] }}
-            ipc_mode: tcp
-            root_dir: {{ Root }}
-            saltenv: base
-            pillarenv: base
+            configuration:
+                master: {{ grains['master'] }}
+                log_level: warning
+                hash_type: sha256
+                id: {{ grains['id'] }}
+                ipc_mode: tcp
+                root_dir: {{ Root }}
+                saltenv: base
+                pillarenv: base
 
 Synchronize all modules for the minion:
     module.run:
