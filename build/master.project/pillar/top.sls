@@ -2,8 +2,8 @@ bootstrap:
 
     # bootstrapping a master
     'G@minion-role:master-bootstrap':
-        - local-bootstrap
-        - local-network
+        - master-bootstrap
+        - master-network
         - project
 
         # bootstrap configuration
@@ -18,8 +18,8 @@ bootstrap:
 
     # master that has joined the project
     'G@minion-role:master':
-        - local
-        - local-network
+        - master
+        - master-network
         - project
 
         # bootstrap configuration
