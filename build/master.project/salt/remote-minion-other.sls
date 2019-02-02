@@ -16,9 +16,17 @@ Re-install minion configuration:
             pillarenv: base
         - mode: 0664
 
-Restart minion with new configuration:
-    salt.function:
-        - name: minion.restart
+Synchronize all modules for the minion:
+    module.run:
+        - saltutil.sync_all:
+            - refresh: true
         - require:
             - sls: remote-minion-config
             - Re-install minion configuration
+
+Restart minion with new configuration:
+    module.run:
+        - name: minion.restart
+        - onchanges_any:
+            - Re-install minion configuration
+            - Synchronize all modules for the minion
