@@ -5,7 +5,7 @@ include:
 
 Synchronize all modules for the minion:
     module.run:
-        - name: saltutil.sync_all:
+        - name: saltutil.sync_all
         - refresh: true
         - require:
             - sls: master-minion
