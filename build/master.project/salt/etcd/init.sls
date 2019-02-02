@@ -47,6 +47,7 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
 
 ### Project configuration
 {% set ProjectRoot = ['', 'config'] -%}
+
 Project key {{ ProjectRoot | join('.') }}:
     etcd.directory:
         - name: {{ ProjectRoot | join('/') }}
@@ -54,14 +55,21 @@ Project key {{ ProjectRoot | join('.') }}:
         - requires:
             - Check firewall rules
 
-# recursively populate the /config key with the defaults specified in the bootstrap pillar
-{% for item in pillar['configuration']['defaults'] %}
-    {%- if pillar['configuration']['defaults'][item] is mapping -%}
-{{ project_set_mapping(['', 'config'], item, pillar['configuration']['defaults'][item]) }}
-    {%- elif pillar['configuration']['defaults'][item] is sequence and pillar['configuration']['defaults'][item] is not string -%}
+# Project name
+{{ project_set_value(ProjectRoot, 'project', pillar['configuration']['project']) }}
+
+# Project repository
+{{ project_set_value(ProjectRoot, 'repository', pillar['configuration']['repository']) }}
+
+# Recursively populate the /config key with the defaults specified in the bootstrap pillar
+{% set Defaults = pillar['configuration']['etcd']['defaults'] %}
+{% for item in Defaults %}
+    {%- if Defaults[item] is mapping -%}
+{{ project_set_mapping(ProjectRoot, item, Defaults[item]) }}
+    {%- elif Defaults[item] is sequence and Defaults[item] is not string -%}
 {{ raise("Unable to serialize a sequence within the project namespace") }}
     {%- else -%}
-{{ project_set_value(['', 'config'], item, pillar['configuration']['defaults'][item]) }}
+{{ project_set_value(ProjectRoot, item, Defaults[item]) }}
     {%- endif -%}
 {% endfor %}
 

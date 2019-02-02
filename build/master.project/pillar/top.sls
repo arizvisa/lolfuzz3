@@ -4,23 +4,28 @@ bootstrap:
     'G@minion-role:master-bootstrap':
         - local-bootstrap
         - local-network
+        - project
 
+        # bootstrap configuration
         - flannel
         - cloud
         - toolbox
 
+        # standard service configuration
         - etcd
         - container
         - salt
-
-        - project
 
     # master that has joined the project
     'G@minion-role:master':
         - local
         - local-network
-        - toolbox
         - project
+
+        # bootstrap configuration
+        - toolbox
+
+        # standard service configuration
         - etcd
         - container
         - salt
