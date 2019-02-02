@@ -13,17 +13,17 @@ Make service directory:
 ### Standard directories that salt-stack uses for various things
 Make salt log directory:
     file.directory:
-        - name: {{ Root }}/var/log/salt
+        - name: "{{ Root }}/var/log/salt"
         - mode: 0770
 
 Make salt configuration directory:
     file.directory:
-        - name: {{ Root }}/etc/salt
+        - name: "{{ Root }}/etc/salt"
         - mode: 0770
 
 Make salt pki directory:
     file.directory:
-        - name: {{ Root }}/etc/salt/pki
+        - name: "{{ Root }}/etc/salt/pki"
         - use:
             - Make salt configuration directory
         - require:
@@ -31,12 +31,12 @@ Make salt pki directory:
 
 Make salt cache directory:
     file.directory:
-        - name: {{ Root }}/var/cache/salt
+        - name: "{{ Root }}/var/cache/salt"
         - mode: 0770
 
 Make salt run directory:
     file.directory:
-        - name: {{ Root }}/var/run/salt
+        - name: "{{ Root }}/var/run/salt"
         - mode: 0770
 
 ### Salt-stack container
@@ -47,9 +47,9 @@ Generate salt-stack container build rules:
         - name: "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.acb"
 
         - context:
-            version: {{ pillar['container']['salt-stack']['version'] }}
-            python: {{ pillar['container']['salt-stack']['python'] }}
-            pip: {{ pillar['container']['salt-stack']['pip'] }}
+            version: {{ pillar['container']['salt-stack']['version'] | yaml_dquote }}
+            python: {{ pillar['container']['salt-stack']['python'] | yaml_dquote }}
+            pip: {{ pillar['container']['salt-stack']['pip'] | yaml_dquote }}
 
         - defaults:
             volumes:
