@@ -84,23 +84,16 @@ Generate salt-stack container build rules:
         - mode: 0664
 
 # building the salt-stack container
-Install openssh-clients in toolbox:
-    pkg.installed:
-        - name: openssh-clients
-        - refresh: false
-        - hold: true
-
 Build the salt-stack image:
     cmd.run:
-        - name: ssh -i "{{ Root }}{{ pillar['toolbox']['self-service']['key'] }}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- "{{ pillar['toolbox']['self-service']['host'] }}" sudo -H -E "CONTAINER_DIR={{ pillar['service']['container']['path'] }}" -- "{{ pillar['service']['container']['path'] }}/build.sh" "{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.acb"
-        - cwd: {{ pillar['service']['container']['path'] }}
+        - name: "{{ Root }}/usr/bin/ssh -i '{{ Root }}{{ pillar['toolbox']['self-service']['key'] }}' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- {{ pillar['toolbox']['self-service']['host'] | yaml_squote }} sudo -H -E 'CONTAINER_DIR={{ pillar['service']['container']['path'] }}' -- '{{ pillar['service']['container']['path'] }}/build.sh' '{{ pillar['service']['container']['path'] }}/build/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.acb'"
+        - cwd: {{ pillar['service']['container']['path'] | yaml_dquote }}
         - use_vt: true
         - hide_output: true
         - creates: "{{ pillar['service']['container']['path'] }}/image/salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci"
         - env:
-            - CONTAINER_DIR: {{ pillar['service']['container']['path'] }}
+            - CONTAINER_DIR: {{ pillar['service']['container']['path'] | yaml_dquote }}
         - require:
-            - Install openssh-clients in toolbox
             - Generate salt-stack container build rules
             - Install container build script
 
