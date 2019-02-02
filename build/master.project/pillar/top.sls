@@ -23,6 +23,7 @@ master:
         - project
 
         # bootstrap configuration
+        - cloud
         - toolbox
 
         # standard service configuration
