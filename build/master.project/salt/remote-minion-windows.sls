@@ -19,7 +19,6 @@ Re-install minion configuration:
             root_dir: {{ Root }}
             saltenv: base
             pillarenv: base
-        - mode: 0664
 
 Synchronize all modules for the minion:
     module.run:
