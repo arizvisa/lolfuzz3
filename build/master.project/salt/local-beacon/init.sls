@@ -9,18 +9,18 @@ Install a default salt-minion beacon highstate:
     file.managed:
         - template: jinja
         - source: salt://local-beacon/default-top-state
-        - name: {{ Root }}/etc/salt/minion.d/beacon.conf
+        - name: "{{ Root }}/etc/salt/minion.d/beacon.conf"
         - context:
             beacon:
                 inotify:
                     - files:
-                        {{ pillar['service']['container']['path']}}/build:
+                        "{{ pillar['service']['container']['path']}}/build":
                             mask:
                                 - create
                                 - delete
                                 - modify
                             recurse: true
-                        {{ pillar['service']['container']['path']}}/image:
+                        "{{ pillar['service']['container']['path']}}/image":
                             mask:
                                 - create
                                 - delete
@@ -30,7 +30,7 @@ Install a default salt-minion beacon highstate:
                 service:
                     - services:
                         {% for name in pillar['service'] %}
-                        {{ name }}:
+                        "{{ name }}":
                             onchangeonly: true
                         {% endfor %}
         - use:
