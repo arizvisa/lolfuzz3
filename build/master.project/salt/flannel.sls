@@ -10,10 +10,8 @@ Enable systemd multi-user.target wants flanneld.service:
 
 ## etcd configuration
 Register the flannel namespace:
-    etcd.set:
+    etcd.directory:
         - name: {{ pillar['service']['flannel']['namespace'] }}
-        - value: null
-        - directory: true
         - profile: root_etcd
         - requires:
             - sls: etcd
