@@ -1,3 +1,7 @@
+{% set Root = pillar['local']['root'] %}
+{% set Config = salt['config.get']('conf_file') %}
+{% set ConfigDir = Config.rsplit('/' if Config.startswith('/') else '\\', 1)[0] %}
+
 include:
     - remote-minion-config
 
