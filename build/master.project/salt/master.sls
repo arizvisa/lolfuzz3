@@ -4,7 +4,7 @@
 include:
     - stack
 
-Check firewall rules:
+Check connection to etcd:
     firewall.check:
         - name: {{ salt['config.get']('root_etcd')['etcd.host'] | yaml_dquote }}
         - port: {{ salt['config.get']('root_etcd')['etcd.port'] | yaml_dquote }}
@@ -340,7 +340,7 @@ Initialize the salt namespace:
         - name: {{ pillar['configuration']['salt'] | yaml_dquote }}
         - profile: root_etcd
         - requires:
-            - Check firewall rules
+            - Check connection to etcd
 
 # cache
 Initialize the cache namespace:
