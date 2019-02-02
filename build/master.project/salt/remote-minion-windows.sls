@@ -8,16 +8,16 @@ include:
 Re-install minion configuration:
     file.managed:
         - template: jinja
-        - name: {{ ConfigDir }}/minion
+        - name: "{{ ConfigDir }}/minion"
         - source: salt://config/custom.conf
         - defaults:
             configuration:
-                master: {{ grains['master'] }}
+                master: {{ grains['master'] | yaml_dquote }}
                 log_level: warning
                 hash_type: sha256
-                id: {{ grains['id'] }}
+                id: {{ grains['id'] | yaml_dquote }}
                 ipc_mode: tcp
-                root_dir: {{ Root }}
+                root_dir: {{ Root | yaml_dquote }}
                 saltenv: base
                 pillarenv: base
 

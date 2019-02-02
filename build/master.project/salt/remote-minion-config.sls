@@ -4,12 +4,12 @@
 
 Create minion configuration directory:
     file.directory:
-        - name: {{ ConfigDir }}/minion.d
+        - name: "{{ ConfigDir }}/minion.d"
 
 Install minion common configuration:
     file.managed:
         - template: jinja
-        - name: {{ ConfigDir }}/minion.d/common.conf
+        - name: "{{ ConfigDir }}/minion.d/common.conf"
         - source: salt://config/common.conf
         - defaults:
             ipv6: false
@@ -20,11 +20,11 @@ Install minion common configuration:
 Install minion etcd configuration:
     file.managed:
         - template: jinja
-        - name: {{ ConfigDir }}/minion.d/etcd.conf
+        - name: "{{ ConfigDir }}/minion.d/etcd.conf"
         - source: salt://config/etcd.conf
         - defaults:
             etcd_cache:
-                host: {{ opts['master'] }}
+                host: {{ opts['master'] | yaml_dquote }}
                 port: 2379
                 path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
                 allow_reconnect: true
@@ -32,11 +32,11 @@ Install minion etcd configuration:
 
             etcd_hosts:
                 - name: "root_etcd"
-                  host: {{ opts['master'] }}
+                  host: {{ opts['master'] | yaml_dquote }}
                   port: 2379
 
                 - name: "minion_etcd"
-                  host: {{ opts['master'] }}
+                  host: {{ opts['master'] | yaml_dquote }}
                   port: 2379
 
             etcd_returner:
