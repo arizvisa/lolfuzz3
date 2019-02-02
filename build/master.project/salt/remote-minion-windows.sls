@@ -8,6 +8,7 @@ Re-install minion configuration:
         - source: salt://config/custom.conf
         - defaults:
             master: {{ grains['master'] }}
+            log_level: warning
             hash_type: sha256
             id: {{ grains['id'] }}
             ipc_mode: tcp

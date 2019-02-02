@@ -6,26 +6,12 @@ Create minion configuration directory:
     file.directory:
         - name: {{ ConfigDir }}/minion.d
 
-Install minion identification configuration:
-    file.managed:
-        - template: jinja
-        - source: salt://config/custom.conf
-        - name: /etc/salt/master.d/id.conf
-        - defaults:
-            configuration:
-                log_level: info
-                master_id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
-        - require:
-            - Create minion configuration directory
-        - mode: 0664
-
 Install minion common configuration:
     file.managed:
         - template: jinja
         - name: {{ ConfigDir }}/minion.d/common.conf
         - source: salt://config/common.conf
         - defaults:
-            log_level: warning
             ipv6: false
             transport: zeromq
         - require:
@@ -68,7 +54,6 @@ Install all required Python modules:
         - requirements: salt://remote-minion-config/requirements.txt
         - reload_modules: true
         - require:
-            - Install minion identification configuration
             - Install minion common configuration:
             - Install minion etcd configuration
         - mode: 0664
