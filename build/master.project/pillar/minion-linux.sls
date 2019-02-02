@@ -1,7 +1,7 @@
 local:
     # path to root filesystem on a linux minion
     root: /
-    machine_id: {{ grains['id'].rsplit('.', 1)[0] }}
+    machine_id: {{ grains['id'].rsplit('.', 1)[0] | yaml_dquote }}
 
     # networking information on linux minion
     interface: {{ grains['hwaddr_interfaces'] | first | yaml_dquote }}
