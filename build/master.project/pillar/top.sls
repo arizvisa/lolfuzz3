@@ -19,3 +19,7 @@ bootstrap:
         - project
         - container
         - salt
+
+    # any minions that are running Windows
+    'G@os_family:Windows':
+        - local-windows
