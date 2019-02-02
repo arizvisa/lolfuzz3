@@ -5,9 +5,9 @@ Generate bootstrap-environment from machine-id:
     file.managed:
         - template: jinja
         - source: salt://bootstrap/bootstrap.env
-        - name: {{ Root }}/etc/bootstrap-environment
+        - name: "{{ Root }}/etc/bootstrap-environment"
         - defaults:
-            ip4: {{ pillar['local']['ip4'] }}
-            ip6: {{ pillar['local']['ip6'] }}
-            machine_id: {{ pillar['local']['machine_id'] }}
+            ip4: {{ pillar['local']['ip4'] | yaml_dquote }}
+            ip6: {{ pillar['local']['ip6'] | yaml_dquote }}
+            machine_id: {{ pillar['local']['machine_id'] | yaml_dquote }}
         - mode: 0664
