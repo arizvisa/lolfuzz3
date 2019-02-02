@@ -1,0 +1,74 @@
+{% set Root = pillar['local']['root'] %}
+{% set Config = salt['config.get']('conf_file') %}
+{% set ConfigDir = Config.rsplit('/' if Config.startswith('/') else '\\', 1)[0] %}
+
+Create minion configuration directory:
+    file.directory:
+        - name: {{ ConfigDir }}/minion.d
+
+Install minion identification configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://config/custom.conf
+        - name: /etc/salt/master.d/id.conf
+        - defaults:
+            configuration:
+                log_level: info
+                master_id: {{ MachineId }}.{{ pillar['configuration']['project'] }}
+        - require:
+            - Create minion configuration directory
+        - mode: 0664
+
+Install minion common configuration:
+    file.managed:
+        - template: jinja
+        - name: {{ ConfigDir }}/minion.d/common.conf
+        - source: salt://config/common.conf
+        - defaults:
+            log_level: warning
+            ipv6: false
+            transport: zeromq
+        - require:
+            - Create minion configuration directory
+        - mode: 0664
+
+Install minion etcd configuration:
+    file.managed:
+        - template: jinja
+        - name: {{ ConfigDir }}/minion.d/etcd.conf
+        - source: salt://config/etcd.conf
+        - defaults:
+            etcd_cache:
+                host: {{ opts['master'] }}
+                port: 2379
+                path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
+                allow_reconnect: true
+                allow_redirect: true
+
+            etcd_hosts:
+                - name: "root_etcd"
+                  host: {{ opts['master'] }}
+                  port: 2379
+
+                - name: "minion_etcd"
+                  host: {{ opts['master'] }}
+                  port: 2379
+
+            etcd_returner:
+                returner: "root_etcd"
+                returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
+                ttl: {{ 60 * 30 }}
+
+        - require:
+            - Create minion configuration directory
+        - mode: 0664
+
+Install all required Python modules:
+    pip.installed:
+        - requirements: salt://remote-minion-config/requirements.txt
+        - reload_modules: true
+        - require:
+            - Install minion identification configuration
+            - Install minion common configuration:
+            - Install minion etcd configuration
+        - mode: 0664
