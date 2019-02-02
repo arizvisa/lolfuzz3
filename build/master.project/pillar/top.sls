@@ -34,3 +34,8 @@ bootstrap:
     'G@os_family:Windows':
         - minion-windows
         - project
+
+    # any minions that are running Linux
+    '* and not G@os_family:Windows':
+        - minion-linux
+        - project
