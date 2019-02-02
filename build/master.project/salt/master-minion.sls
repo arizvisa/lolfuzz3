@@ -88,7 +88,6 @@ Install salt-minion masterless configuration:
         - require:
             - Make salt-minion configuration directory
             - Install salt-minion configuration
-            - Initialize the nodes pillar namespace
         - mode: 0664
 
 Install salt-minion etcd configuration:
@@ -120,8 +119,6 @@ Install salt-minion etcd configuration:
 
         - require:
             - Make salt-minion configuration directory
-            - Initialize the cache namespace
-            - Initialize the returner namespace
         - mode: 0664
 
 {% set id = salt['file.grep'](Root + '/etc/os-release', 'ID=')['stdout'].split('=')[-1] %}
