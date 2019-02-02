@@ -8,6 +8,6 @@ service:
         tools:
             {% for file in acbuild_files -%}
             - {% for attribute in file -%}
-              {{ attribute }}: {{ file[attribute] }}
+              {{ attribute | yaml_dquote }}: {{ file[attribute] | yaml_dquote }}
               {% endfor %}
             {% endfor %}
