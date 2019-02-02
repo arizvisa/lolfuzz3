@@ -77,7 +77,7 @@ ifdef TIMEOUT
 endif
 
 ## Debug option
-ifdef DEBUG
+ifneq ($(DEBUG),0)
     $(info [*] User has enabled the debug option. Packer will ask user if they wish to remove the template)
     options := on-error=ask
 else
@@ -88,6 +88,7 @@ endif
 platform = $(subst $(comma),$(space),$(PLATFORM))
 
 $(info [*] User has specified the following template type(s): $(platform))
+options := $(options) only='$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))'
 
 ## Custom configuration
 ifndef INPUT
@@ -439,10 +440,10 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files) $(custom)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build $(foreach opt,$(options),-$(opt)) -only '$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))' -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
+	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build %s -only %c%s%c -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))' "'" "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build %s -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
