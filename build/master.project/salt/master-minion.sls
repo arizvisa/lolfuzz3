@@ -2,9 +2,7 @@
 
 ### States to build the salt-minion configuration for managing the salt-master
 include:
-    - container
     - stack
-    - master
 
 Make salt-minion cache directory:
     file.directory:
@@ -50,8 +48,6 @@ Install salt-minion configuration:
             log_level: warning
         - require:
             - Make salt configuration directory
-            # once we're sure the salt-master.service is configured, we can install the salt-minion configuration....
-            - Enable systemd multi-user.target wants salt-master.service
         - mode: 0664
 
 Install salt-minion masterless configuration:
@@ -59,8 +55,36 @@ Install salt-minion masterless configuration:
         - template: jinja
         - source: salt://config/master.conf
         - name: {{ Root }}/etc/salt/minion.d/masterless.conf
-        - use:
-            - Install salt-master base configuration
+        - defaults:
+            root_files:
+                - name: "base"
+                  path: "/srv/salt"
+
+                - name: "master"
+                  path: "/srv/bootstrap/salt"
+
+                - name: "bootstrap"
+                  path: "/srv/bootstrap/salt"
+
+            root_pillars:
+                - name: "base"
+                  path: "/srv/pillar"
+
+                - name: "master"
+                  path: "/srv/bootstrap/pillar"
+
+                - name: "bootstrap"
+                  path: "/srv/bootstrap/pillar"
+
+            ext_pillars:
+                - type: "etcd"
+                  name: "root_etcd"
+                  path: "/config"
+
+                - type: "etcd"
+                  name: "minion_etcd"
+                  path: "{{ pillar['configuration']['salt'] }}/pillar/%(minion_id)s"
+
         - require:
             - Make salt-minion configuration directory
             - Install salt-minion configuration
@@ -140,8 +164,9 @@ Install salt-minion common configuration:
         - template: jinja
         - source: salt://config/common.conf
         - name: {{ Root }}/etc/salt/minion.d/common.conf
-        - use:
-            - Install salt-master common configuration
+        - defaults:
+            ipv6: false
+            transport: zeromq
         - require:
             - Make salt-minion configuration directory
         - mode: 0664
@@ -155,7 +180,7 @@ Install salt-minion.service:
 
         - context:
             description: Salt-Minion
-            configuration: /etc/salt/master
+            configuration: /etc/salt/minion
 
             execute: /usr/bin/salt-minion
             kill_mode: control-group
@@ -180,7 +205,6 @@ Install salt-minion.service:
             - Install salt-minion configuration
             - Install salt-minion common configuration
             - Finished building the salt-stack image
-            - Install container load script
         - mode: 0664
 
 # systemctl enable the salt-minion.service
@@ -193,7 +217,7 @@ Enable systemd multi-user.target wants salt-minion.service:
         - makedirs: true
 
 ## scripts for interacting with the salt-minion
-Install the script for bootstrapping the master:
+Install the script for starting the bootstrap environment:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt-bootstrap.command
