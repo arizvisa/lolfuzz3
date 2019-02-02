@@ -4,7 +4,7 @@
 {% macro project_set_value(root, name, value) %}
 Project variable {{ (root + [name]) | join('.') }}:
     etcd.set:
-        - name: {{ (root + [name]) | join('/') }}
+        - name: {{ (root + [name]) | join('/') | yaml_dquote }}
         - value: {{ value }}
         - profile: root_etcd
         - requires:
@@ -14,7 +14,7 @@ Project variable {{ (root + [name]) | join('.') }}:
 {% macro project_set_mapping(root, name, value) %}
 Project key {{ (root + [name]) | join('.') }}:
     etcd.directory:
-        - name: {{ (root + [name]) | join('/') }}
+        - name: {{ (root + [name]) | join('/') | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Project key {{ root }}
@@ -34,13 +34,13 @@ Project key {{ (root + [name]) | join('.') }}:
 
 Check firewall rules:
     firewall.check:
-        - name: {{ salt['config.get']('root_etcd')['etcd.host'] }}
-        - port: {{ salt['config.get']('root_etcd')['etcd.port'] }}
+        - name: {{ salt['config.get']('root_etcd')['etcd.host'] | yaml_dquote }}
+        - port: {{ salt['config.get']('root_etcd')['etcd.port'] | yaml_dquote }}
 
 Register the etcd cluster-size for the machine-id with the v2 discovery protocol:
     etcd.set:
         - name: "{{ pillar['configuration']['etcd']['discovery'] }}/{{ pillar['local']['machine_id'] }}/_config/size"
-        - value: {{ pillar['configuration']['etcd']['cluster-size'] }}
+        - value: {{ pillar['configuration']['etcd']['cluster-size'] | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check firewall rules
@@ -50,7 +50,7 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
 
 Project key {{ ProjectRoot | join('.') }}:
     etcd.directory:
-        - name: {{ ProjectRoot | join('/') }}
+        - name: {{ ProjectRoot | join('/') | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check firewall rules
