@@ -77,7 +77,7 @@ Install salt-minion etcd configuration:
             etcd_cache:
                   host: 127.0.0.1
                   port: 2379
-                  path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
+                  path_prefix: "{{ pillar['configuration']['salt'] }}/cache"
                   allow_reconnect: true
                   allow_redirect: true
 
@@ -92,7 +92,7 @@ Install salt-minion etcd configuration:
 
             etcd_returner:
                 returner: "root_etcd"
-                returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
+                returner_root: "{{ pillar['configuration']['salt'] }}/return"
                 ttl: {{ 60 * 30 }}
 
         - require:
