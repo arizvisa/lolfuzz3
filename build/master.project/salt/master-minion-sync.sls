@@ -1,12 +1,12 @@
 ## Synchronize module fixes (minion)
 
 include:
-    - local-minion
+    - master-minion
 
 Synchronize all modules for the minion:
     module.run:
         - saltutil.sync_all:
             - refresh: true
         - require:
-            - sls: local-minion
+            - sls: master-minion
 

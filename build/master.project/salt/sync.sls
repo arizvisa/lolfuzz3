@@ -2,14 +2,14 @@
 
 include:
     - master
-    - local-minion
+    - master-minion
 
 Synchronize all modules for the master:
     salt.runner:
         - name: saltutil.sync_all
         - require:
             - sls: master
-            - sls: local-minion
+            - sls: master-minion
 
 Synchronize all modules for the minion:
     module.run:
@@ -17,4 +17,4 @@ Synchronize all modules for the minion:
             - refresh: true
         - require:
             - sls: master
-            - sls: local-minion
+            - sls: master-minion

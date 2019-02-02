@@ -2,7 +2,7 @@
 
 include:
     - stack
-    - local-minion
+    - master-minion
 
 ## salt beacon configuration
 Install a default salt-minion beacon highstate:

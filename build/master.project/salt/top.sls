@@ -19,7 +19,7 @@ bootstrap:
         - reactor
 
         # salt-minion configuration
-        - local-minion
+        - master-minion
         - local-beacon
 
         # salt-cloud configuration
@@ -31,7 +31,7 @@ bootstrap:
         # states for joining the cluster
         #- reset-id          # remove /etc/machine-id and then restart
         #- join-master       # register master cluster with etcd
-        - local-minion-sync # synchronize the minion
+        - master-minion-sync # synchronize the minion
 
         # states used for services
         - container         # create container-directory and build-scripts
@@ -41,7 +41,7 @@ bootstrap:
         - maintenance       # install services that perform regular maintenance
 
         # salt-minion configuration
-        - local-minion
+        - master-minion
         - local-beacon
 
         # salt-cloud configuration
