@@ -123,7 +123,6 @@ Install the salt-toolbox wrapper:
                 - "/var/cache/salt"
                 - "/var/run/salt"
                 - "/var/log/salt"
-                - "/etc/salt"
                 - "/srv"
 
         - mode: 0755
