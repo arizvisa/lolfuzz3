@@ -2,7 +2,6 @@
 
 ### States to bootstrap the salt-master container and install it as a service
 include:
-    - container
     - stack
 
 Check firewall rules:
@@ -247,7 +246,6 @@ Install salt-master.service:
         - require:
             - Install salt-master configuration
             - Finished building the salt-stack image
-            - Install container load script
 
         - mode: 0664
 
