@@ -40,13 +40,15 @@
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
+                "DEPLOY=/opt",
                 "STAGE={{user `coreos-tools-stage`}}",
-                "DEPLOY=/opt"
+                "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "mkdir -p \"$DEPLOY\"",
-                "find \"$STAGE\" -exec chmod 0755 {} +",
-                "tar -C \"$STAGE\" -cpf- . | tar -xpf- -C \"$DEPLOY\""
+                "find \"$STAGE\" -exec chmod -v 0755 {} + 2>&1 | tee -a \"$LOGFILE\"",
+                "tar -C \"$STAGE\" -cvpf- . | tar -xpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$LOGFILE\"",
+                "rm -rf \"$ROOT/$STAGE\""
             ]
         },
 
@@ -69,7 +71,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "until dnf -y {{user `dnf-options`}} upgrade; do :; done 2>&1 | tee \"$ROOT/$LOGFILE\""
+                "until dnf -y {{user `dnf-options`}} upgrade; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -121,8 +123,8 @@
             "environment_vars" : [
                 "ROOT=/media/root",
                 "STAGE={{user `salt-bootstrap-installer-stage`}}",
-                "LOGFILE=/root/bootstrap.install.log",
-                "MASTER_ID={{user `guest-name`}}"
+                "MASTER_ID={{user `guest-name`}}",
+                "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "mkdir -p \"$ROOT/var/cache/salt\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\"",
@@ -197,16 +199,16 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
-                "LOGFILE=/root/bootstrap.install.log",
                 "DEPLOY=/",
-                "STAGE={{user `salt-bootstrap-stage`}}"
+                "STAGE={{user `salt-bootstrap-stage`}}",
+                "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "umask 022",
                 "chown -vR root:root \"$ROOT$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$ROOT$STAGE\" -type f -exec chmod -v 0644 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$ROOT$STAGE\" -type d -exec chmod -v 0755 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "tar -C \"$ROOT$STAGE\" -cpf- . | tar -xvpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "tar -C \"$ROOT$STAGE\" -cvpf- . | tar -xpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -rf \"$ROOT$STAGE\""
             ]
         },
@@ -288,16 +290,16 @@
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/",
-                "LOGFILE=/root/bootstrap.install.log",
                 "DEPLOY=/srv",
-                "STAGE={{user `custom-config-stage`}}"
+                "STAGE={{user `custom-config-stage`}}",
+                "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "umask 022",
                 "chown -vR root:root \"$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$STAGE\" -type f -exec chmod -v 0644 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$STAGE\" -type d -exec chmod -v 0755 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "tar -C \"$STAGE\" -cpf- . | tar -xvpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "tar -C \"$STAGE\" -cvpf- . | tar -xpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -rf \"$STAGE\""
             ]
         },
