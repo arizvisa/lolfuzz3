@@ -76,6 +76,14 @@ ifdef TIMEOUT
     $(info [*] User has specified an initial boot timeout of $(TIMEOUT))
 endif
 
+## Debug option
+ifdef DEBUG
+    $(info [*] User has enabled the debug option. Packer will ask user if they wish to remove the template)
+    options := on-error=ask
+else
+    options := on-error=clean
+endif
+
 ## Platform types
 platform = $(subst $(comma),$(space),$(PLATFORM))
 
@@ -300,6 +308,7 @@ help:
 	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
 	@printf '\tBUILD: (default true) Whether to actually build the template, or to just generate the config\n'
 	@printf '\tVALIDATE: (default true) Whether to validate the config via "%s"\n' "https://coreos.com/validate/"
+	@printf '\tDEBUG: (default false) Ask the user if they wish to unregister the template if the build fails\n'
 
 	@printf '\nThanks for playing!\n'
 
@@ -430,10 +439,10 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files) $(custom)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build -only '$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))' -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
+	packer build $(foreach opt,$(options),-$(opt)) -only '$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))' -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build -only %c%s%c -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' "'" '$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))' "'" "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build %s -only %c%s%c -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))' "'" "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
