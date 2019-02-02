@@ -31,11 +31,11 @@ bootstrap:
         - salt
 
     # any minions that are running Windows
-    'G@os_family:Windows':
+    'not G@minion-role:master-bootstrap and not G@minion-role:master and G@os_family:Windows':
         - minion-windows
         - project
 
     # any minions that are running Linux
-    '* and not G@os_family:Windows':
+    'not G@minion-role:master-bootstrap and not G@minion-role:master and not G@os_family:Windows':
         - minion-linux
         - project
