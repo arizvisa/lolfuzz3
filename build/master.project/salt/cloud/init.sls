@@ -14,6 +14,7 @@ Install salt-cloud configuration:
             pool_size: 10
             minion:
                 master: {{ pillar['local']['ip4'] }}
+                startup_states: highstate
 
                 ipv6: false
                 transport: zeromq
