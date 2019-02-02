@@ -7,7 +7,7 @@ include:
 Check connection to etcd:
     firewall.check:
         - name: {{ salt['config.get']('root_etcd')['etcd.host'] | yaml_dquote }}
-        - port: {{ salt['config.get']('root_etcd')['etcd.port'] | yaml_dquote }}
+        - port: {{ salt['config.get']('root_etcd')['etcd.port'] }}
 
 ## standard salt-master directories
 Make salt-master cache directory:

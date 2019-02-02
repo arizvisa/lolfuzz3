@@ -35,7 +35,7 @@ Project key {{ (root + [name]) | join('.') }}:
 Check firewall rules:
     firewall.check:
         - name: {{ salt['config.get']('root_etcd')['etcd.host'] | yaml_dquote }}
-        - port: {{ salt['config.get']('root_etcd')['etcd.port'] | yaml_dquote }}
+        - port: {{ salt['config.get']('root_etcd')['etcd.port'] }}
 
 Register the etcd cluster-size for the machine-id with the v2 discovery protocol:
     etcd.set:
