@@ -4,7 +4,7 @@
 include:
     - stack
 
-Check connection to etcd:
+Check connection to etcd for the master:
     firewall.check:
         - name: {{ salt['config.get']('root_etcd')['etcd.host'] | yaml_dquote }}
         - port: {{ salt['config.get']('root_etcd')['etcd.port'] }}
