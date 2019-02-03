@@ -56,6 +56,7 @@ Install an example state topfile:
         - template: jinja
         - source: salt://stack/default-top-state
         - name: /srv/salt/top.sls
+        - replace: false
         - defaults:
             environments:
                 base:
@@ -77,6 +78,7 @@ Install an example pillar topfile:
         - template: jinja
         - source: salt://stack/default-top-state
         - name: /srv/pillar/top.sls
+        - replace: false
         - defaults:
             environments:
                 base:

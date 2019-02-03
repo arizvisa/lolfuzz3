@@ -86,6 +86,7 @@ Install an example cloud provider:
         - template: jinja
         - source: salt://cloud/providers.conf
         - name: /srv/cloud/providers/default.conf
+        - replace: false
         - defaults:
               providers:
                   saltify-linux:
@@ -118,6 +119,7 @@ Install an example cloud profile:
         - template: jinja
         - source: salt://cloud/profiles.conf
         - name: /srv/cloud/profiles/default.conf
+        - replace: false
         - defaults:
               profiles:
                   {}

@@ -63,6 +63,7 @@ Install an example salt-master reactor highstate:
         - template: jinja
         - source: salt://reactor/default-top-state
         - name: /srv/reactor/top.sls
+        - replace: false
         - context:
             reactor:
                 []
