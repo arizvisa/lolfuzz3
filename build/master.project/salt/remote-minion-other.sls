@@ -34,6 +34,6 @@ Synchronize all modules for the minion:
 Restart minion with new configuration:
     module.run:
         - name: minion.restart
-        - onchanges_any:
+        - require:
             - Re-install minion configuration
             - Synchronize all modules for the minion
