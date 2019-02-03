@@ -71,7 +71,7 @@ ifeq ($(debug),1)
     $(warning User has enabled the debug option. Packer will not remove template on failure.)
     options := $(options) on-error=ask
 else
-    options := $(options) on-error=clean
+    options := $(options) on-error=cleanup
 endif
 
 ## Platform types
