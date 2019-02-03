@@ -76,11 +76,16 @@ ifdef TIMEOUT
 endif
 
 ## Debug option
-ifneq ($(DEBUG),0)
-    $(warning User has enabled the debug option. Packer will not remove template on failure)
-    options := on-error=ask
+DEBUG ?= 0
+debug := $(DEBUG)
+debug := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(debug)))))
+debug := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(debug)))))
+
+ifeq ($(debug),1)
+    $(warning User has enabled the debug option. Packer will not remove template on failure.)
+    options := $(options) on-error=ask
 else
-    options := on-error=clean
+    options := $(options) on-error=clean
 endif
 
 ## Platform types
