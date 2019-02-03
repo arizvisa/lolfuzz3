@@ -26,7 +26,7 @@ Install minion etcd configuration:
             etcd_cache:
                 host: {{ opts["master"] | yaml_dquote }}
                 port: 2379
-                path_prefix: '{{ pillar["configuration"]["salt"] | yaml_encode }}/cache'
+                path_prefix: '{{ pillar["salt"] }}/cache'
                 allow_reconnect: true
                 allow_redirect: true
 
@@ -41,7 +41,7 @@ Install minion etcd configuration:
 
             etcd_returner:
                 returner: root_etcd
-                returner_root: '{{ pillar["configuration"]["salt"] | yaml_encode }}/return'
+                returner_root: '{{ pillar["salt"] }}/return'
                 ttl: {{ 60 * 30 }}
 
         - require:
