@@ -17,7 +17,3 @@ reactor:
     # Receive a log from a minion
     - 'salt/minion/*/log':
         - /srv/reactor/minion-log.sls
-
-    # Re-apply states when a minion starts up
-    - 'salt/minion/*/start':
-        - /srv/reactor/minion-apply.sls
