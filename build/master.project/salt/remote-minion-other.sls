@@ -18,6 +18,7 @@ Re-install minion configuration:
                 id: {{ grains["id"] | yaml_dquote }}
                 ipc_mode: ipc
                 root_dir: {{ Root | yaml_dquote }}
+                startup_states: highstate
                 saltenv: base
                 pillarenv: base
         - mode: 0664
