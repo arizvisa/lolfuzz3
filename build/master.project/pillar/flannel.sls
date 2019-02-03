@@ -2,7 +2,7 @@
 
 service:
     flannel:
-        namespace: "/coreos.com/network"
+        namespace: /coreos.com/network
         configuration:
             Network: 10.1.0.0/16
             SubnetLen: 28
