@@ -10,11 +10,11 @@ endif
 
 # optional parameters
 ifndef INPUT
-    $(info [!] Optional build variable INPUT was not specified)
+    $(warning Optional build variable INPUT was not specified)
 endif
 
 ifndef OUTPUT
-    $(info [!] Optional build variable OUTPUT was not specified)
+    $(warning Optional build variable OUTPUT was not specified)
     $(info [*] Setting default value for OUTPUT: $(ROOTDIR)/deploy)
     OUTPUT := $(ROOTDIR)/deploy
 endif
@@ -37,7 +37,7 @@ outdir := $(patsubst %/,%,$(OUTPUT))
 ifeq ($(wildcard $(outdir)/$(boxname)),)
     $(info [-] Using the following output path for $(boxname): $(abspath $(outdir)/$(boxname)))
 else
-    $(info [!] The output path for $(boxname) already exists (output will fail): $(abspath $(outdir)/$(boxname)))
+    $(warning The output path for $(boxname) already exists (output will fail): $(abspath $(outdir)/$(boxname)))
 endif
 
 ## work directory
@@ -54,7 +54,7 @@ validate := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(va
 validate := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(validate)))))
 
 ifeq ($(validate),0)
-    $(info [!] User has requested to skip validation of configuration: $(boxname_config))
+    $(warning User has requested to skip validation of configuration: $(boxname_config))
 endif
 
 ## Build option
@@ -64,17 +64,17 @@ build := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(build
 build := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(build)))))
 
 ifeq ($(build),0)
-    $(info [!] User has requested to skip building the target: $(boxname_template))
+    $(warning User has requested to skip building the target: $(boxname_template))
 endif
 
 ## Timeout option
 ifdef TIMEOUT
-    $(info [*] User has specified an initial boot timeout of $(TIMEOUT))
+    $(info [-] User has specified an initial boot timeout of $(TIMEOUT))
 endif
 
 ## Debug option
 ifneq ($(DEBUG),0)
-    $(info [*] User has enabled the debug option. Packer will ask user if they wish to remove the template)
+    $(warning User has enabled the debug option. Packer will not remove template on failure)
     options := on-error=ask
 else
     options := on-error=clean
@@ -84,11 +84,11 @@ endif
 platform = $(subst $(comma),$(space),$(PLATFORM))
 
 ifneq ($(platform),)
-$(info [*] User has specified the following template type(s): $(platform))
+$(info [-] User has specified the following template type(s): $(platform))
 options := $(options) only='$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))'
 else
 $(warning User has specified no templates types. Assuming all platforms are available.)
-$(info [*] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
+$(info [!] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
 endif
 
 ## Custom configuration
@@ -96,7 +96,7 @@ ifndef INPUT
     custom := $(boxname_workdir)/empty
 else
     ifneq ($(wildcard $(INPUT)/*),)
-        $(info [*] Using custom configuration specified by user: $(abspath $(patsubst %/,%,$(INPUT))))
+        $(info [-] Using custom configuration specified by user: $(abspath $(patsubst %/,%,$(INPUT))))
         custom := $(patsubst %/,%,$(INPUT))
     else
         $(error No custom configuration found in path specified by user: $(abspath (patsubst %/,%,$(INPUT))))
@@ -202,7 +202,7 @@ endef
 define output_file
 $(2)/$(notdir $(1)): $(1)	| $(2)
 	@if [ -e '$$@' ]; then \
-	    printf '[!] Refusing to deploy over already existing file: %s\n' '$$@'; \
+	    printf '[!] Refusing to deploy %s over already existing file: %s\n' '$(1)' '$$@'; \
 	    false; \
 	fi
 	@printf '[*] Copying output file to %s: %s\n' '$(2)' '$$<'
@@ -236,14 +236,14 @@ endef
 # checksum '$filename' '$checksum' '$checksum_filename'
 define checksum
 $(3): $(1)
-	@printf '[*] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
+	@printf '[-] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
 	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\r\n' >| '$$@'
 endef
 
 # stage_tool '$target' '$source'
 define stage_tool
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
-	@printf '[!] Staging file %s in %s\n' '$(1)' '$(2)'
+	@printf '[-] Staging file %s in %s\n' '$(1)' '$(2)'
 	@cp -f '$(1)' '$(2)'
 endef
 
@@ -306,7 +306,7 @@ FORCE:
 ## regular recipes
 .PHONY: help
 help:
-	$(info [*] User requested help for the makefile)
+	$(info [-] User requested help for the makefile)
 	@printf '\nThe following recipes are available:\n'
 	@printf '\t%s\n' 'all' 'output' 'template' 'clean' 'download'
 	@printf '\nTo pre-download an individual class of files needed for the build:\n'
@@ -355,36 +355,36 @@ download: download-installer download-tools
 
 .PHONY: output
 output: $(outdir)/$(boxname) $(foreach f,$(output_names),$(outdir)/$(f))
-	@printf '[!] Sucessfully wrote output files to %s: %s\n' '$(outdir)' '$^'
+	@printf '[*] Sucessfully wrote output files to %s: %s\n' '$(outdir)' '$^'
 
 ## cleaning up files
 .PHONY: clean-output
 clean-output:
-	@printf '[!] Erasing template: %s\n' '$(outdir)/$(boxname)'
+	@printf '[*] Erasing template: %s\n' '$(outdir)/$(boxname)'
 	-rm -rf '$(outdir)/$(boxname)'
-	@printf '[!] Erasing output files from %s\n' '$(outdir)'
+	@printf '[*] Erasing output files from %s\n' '$(outdir)'
 	-rm -f $(foreach f,$(output_names),'$(outdir)/$(f)')
 
 .PHONY: clean-installer
 clean-installer:
-	@printf '[!] Removing CoreOS installer files\n'
+	@printf '[*] Removing CoreOS installer files\n'
 	-rm -f $(foreach f,$(coreos_installer_files),'$(f)')
-	@printf '[!] Removing CoreOS installer checksum files\n'
+	@printf '[*] Removing CoreOS installer checksum files\n'
 	-rm -f $(foreach f,$(coreos_installer_files),'$(f).$(checksum_type)')
 
 .PHONY: clean-template
 clean-template:
-	@printf '[!] Erasing temporary template: %s\n' '$(boxname_template)'
+	@printf '[*] Erasing temporary template: %s\n' '$(boxname_template)'
 	-rm -rf '$(boxname_template)'
 
 .PHONY: clean-build
 clean-build:
-	@printf '[!] Erasing temporary output files from %s\n' '$(workdir)'
+	@printf '[*] Erasing temporary output files from %s\n' '$(workdir)'
 	-rm -f $(foreach f,$(output_names),'$(workdir)/$(f)')
 
 .PHONY: clean-provisioning
 clean-provisioning:
-	@printf '[!] Erasing temporary files used for provisioning: %s %s %s\n' '$(boxname_workdir)/salt' '$(boxname_workdir)/pillar' '$(boxname_workdir)/salt-minion.conf'
+	@printf '[*] Erasing temporary files used for provisioning: %s %s %s\n' '$(boxname_workdir)/salt' '$(boxname_workdir)/pillar' '$(boxname_workdir)/salt-minion.conf'
 	-rm -rf '$(boxname_workdir)/salt'
 	-rm -rf '$(boxname_workdir)/pillar'
 	-rm -f '$(boxname_workdir)/salt-minion.conf'
@@ -394,18 +394,18 @@ endif
 
 .PHONY: clean-tools
 clean-tools:
-	@printf '[!] Erasing tool %s\n' '$(workdir)/$(salt_bootstrap_file)'
+	@printf '[*] Erasing tool %s\n' '$(workdir)/$(salt_bootstrap_file)'
 	-rm -f '$(workdir)/$(salt_bootstrap_file)'
-	@printf '[!] Erasing tool %s\n' '$(foreach f,$(setup_network_environment_files),$(toolsdir)/libexec/$(f))'
+	@printf '[*] Erasing tool %s\n' '$(foreach f,$(setup_network_environment_files),$(toolsdir)/libexec/$(f))'
 	-rm -f $(foreach f,$(setup_network_environment_files),'$(toolsdir)/libexec/$(f)')
-	@printf '[!] Erasing temporary files from %s\n' '$(filesdir)'
+	@printf '[*] Erasing temporary files from %s\n' '$(filesdir)'
 	-rm -rf '$(filesdir)'
-	@printf '[!] Removing tool directories %s\n' '$(toolsdir)'
+	@printf '[*] Removing tool directories %s\n' '$(toolsdir)'
 	rmdir '$(toolsdir)/bin' '$(toolsdir)'
 
 .PHONY: clean-ignition
 clean-ignition:
-	@printf '[!] Erasing temporary files for building ignition: %s\n' '$(boxname_workdir)/ignition-*'
+	@printf '[*] Erasing temporary files for building ignition: %s\n' '$(boxname_workdir)/ignition-*'
 	-rm -f $(foreach f,$(ignition_sysctl_files),'$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f))'{,.json-raw})
 	-rm -f $(foreach f,$(ignition_users_files),'$(boxname_workdir)/ignition-user.json-$(notdir $(f))')
 	-rm -f $(foreach f,$(ignition_network_files),'$(boxname_workdir)/ignition-network.json-$(notdir $(f))'{,.json-raw})
@@ -415,18 +415,18 @@ clean-ignition:
 	-rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-units.json-$(name)'{,.json-raw})
 	-rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)'-* '$(boxname_workdir)/ignition-dropins.json-$(name)'-*)
 	-rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)' '$(boxname_workdir)/ignition-dropins.json-$(name)')
-	@printf '[!] Erasing temporary files for ssh keys: %s\n' '$(boxname_workdir)/$(boxname).id_rsa*'
+	@printf '[*] Erasing temporary files for ssh keys: %s\n' '$(boxname_workdir)/$(boxname).id_rsa*'
 	-rm -f '$(boxname_workdir)/$(boxname).id_rsa'*
-	@printf '[!] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network,$(boxname_workdir)/$(boxname_config)-$(name))'
+	@printf '[*] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network,$(boxname_workdir)/$(boxname_config)-$(name))'
 	-rm -f $(foreach name,original files units users hostname sysctl pubkey network,'$(boxname_workdir)/$(boxname_config)-$(name)')
-	@printf '[!] Erasing temporary configuration files: %s %s\n' '$(boxname_workdir)/$(boxname_config)' '$(boxname_workdir)/$(boxname_config).validate'
+	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(boxname_workdir)/$(boxname_config)' '$(boxname_workdir)/$(boxname_config).validate'
 	-rm -f '$(boxname_workdir)/$(boxname_config)' '$(boxname_workdir)/$(boxname_config).validate'
 
 .PHONY: clean-json
 clean-json:
-	@printf '[!] Erasing temporary packer template: %s\n' '$(boxname).json'
+	@printf '[*] Erasing temporary packer template: %s\n' '$(boxname).json'
 	-rm -f '$(boxname_workdir)/$(boxname).json'
-	@printf '[!] Erasing temporary files for building packer template: %s\n' '$(foreach suffix,base iso salt ssh tools,$(boxname_workdir)/$(boxname)-vars.json.$(suffix))'
+	@printf '[*] Erasing temporary files for building packer template: %s\n' '$(foreach suffix,base iso salt ssh tools,$(boxname_workdir)/$(boxname)-vars.json.$(suffix))'
 	-rm -f '$(boxname_workdir)/$(boxname)-vars.json'{,.base,.iso,.salt,.ssh,.tools}
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
 	-rm -f $(foreach f,$(coreos_installer_files),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)
@@ -514,7 +514,7 @@ ifneq ($(validate),0)
 	@printf '[!] Validating ignition configuration %s: %s\n' '$<' '$(coreos_validate_url)'
 	${PUT} '@$<' '$(coreos_validate_url)' >| '$@'
 else
-	@printf '[!] Skipping the validation for the ignition configuration: %s\n' '$<'
+	@printf '[-] Skipping the validation for the ignition configuration: %s\n' '$<'
 	@jq -n . >| '$@'
 endif
 
