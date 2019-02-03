@@ -141,7 +141,7 @@ Install salt-minion identification configuration:
                 pillarenv: master
 
                 grains:
-                    minion-role: master
+                    role: master
                     machine-id: {{ pillar["local"]["machine_id"] | yaml_dquote }}
 
                     os: {{ id | yaml_dquote }}

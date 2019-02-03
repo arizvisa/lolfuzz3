@@ -1,7 +1,7 @@
 master:
 
     # bootstrapping a master
-    'G@minion-role:master-bootstrap':
+    'G@role:master-bootstrap':
         - master
         - master-network
         - project
@@ -17,7 +17,7 @@ master:
         - salt
 
     # master that has joined the project
-    'G@minion-role:master':
+    'G@role:master':
         - master
         - master-network
         - project
