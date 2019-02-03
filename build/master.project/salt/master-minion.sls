@@ -246,3 +246,15 @@ Install the script for calling salt-call:
 
         - mode: 0755
         - makedirs: true
+
+Check etcd is reachable by the minion:
+    firewall.check:
+        - name: {{ salt["config.get"]("root_etcd")["etcd.host"] | yaml_dquote }}
+        - port: {{ salt["config.get"]("root_etcd")["etcd.port"] | yaml_encode }}
+
+Register the pillar for the salt-minion:
+    etcd.directory:
+        - name: '{{ pillar["configuration"]["salt"] }}/pillar/{{ grains["id"] }}'
+        - profile: root_etcd
+        - requires:
+            - Check etcd is reachable by the minion
