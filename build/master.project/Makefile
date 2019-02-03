@@ -5,7 +5,7 @@ ROOTDIR := $(realpath $(MAKEDIR)../..)
 
 # mandatory parameters
 ifndef PROJECT
-    $(error Required build variable PROJECT is not specified)
+    $(warning Required build variable PROJECT was not specified)
 endif
 
 # optional parameters
@@ -27,9 +27,13 @@ lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(s
 
 ## project variable
 project := $(call lc,${PROJECT})
-boxname?=master.$(project)
+boxname?=$(if $(project),master.$(project),master.unnamed)
 
+ifneq ($(project),)
 $(info [-] Using the specified project name: $(project))
+else
+$(warning No project name was specified. Using name "$(boxname)" for name until failure)
+endif
 
 ## output directory
 outdir := $(patsubst %/,%,$(OUTPUT))
@@ -502,6 +506,7 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 
 
 # generate ssh public/private key
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
+	$(call verify_expression,$(project),printf '[!] No PROJECT was specified. Unable to to generate public/private keypair!\n')
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
 	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(workdir)/$(boxname).id_rsa' -N ''
 
@@ -586,6 +591,7 @@ $(boxname_workdir)/pillar/acbuild.sls: $(acbuild_files)	| $(boxname_workdir)/pil
 	@printf -- '- Source: %s\n  Algo: %s\n  Hash: %s\n\n' $(foreach f,$^,'$(shell basename $(f))' '$(checksum_type)' "$(shell openssl dgst -$(checksum_type) '$(f)' | rev | cut -d' ' -f1 | rev)") >| '$@'
 
 $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
+	$(call verify_expression,$(project),printf '[!] No PROJECT was specified. Unable to write project name into pillar configuration!\n')
 	@printf '[-] Writing project name into pillar configuration: %s\n' '$@'
 	@printf -- '%s\n' '$(project)' >| '$@'
 
