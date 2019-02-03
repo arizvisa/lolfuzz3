@@ -2,20 +2,7 @@ MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ROOTDIR := $(realpath $(MAKEDIR)../..)
 
 ### Parameters that the user can supply
-
-# mandatory parameters
-ifndef PROJECT
-    $(warning Required build variable PROJECT was not specified)
-endif
-
-# optional parameters
-ifndef INPUT
-    $(warning Optional build variable INPUT was not specified)
-endif
-
 ifndef OUTPUT
-    $(warning Optional build variable OUTPUT was not specified)
-    $(info [*] Setting default value for OUTPUT: $(ROOTDIR)/deploy)
     OUTPUT := $(ROOTDIR)/deploy
 endif
 
@@ -32,7 +19,7 @@ boxname?=$(if $(project),master.$(project),master.unnamed)
 ifneq ($(project),)
 $(info [-] Using the specified project name: $(project))
 else
-$(warning No project name was specified. Using name "$(boxname)" for name until failure)
+$(warning No project name was specified. Using the name "$(boxname)" until failure.)
 endif
 
 ## output directory
@@ -314,7 +301,7 @@ FORCE:
 ## regular recipes
 .PHONY: help
 help:
-	$(info [-] User requested help for the makefile)
+	$(info [*] User requested help for the makefile)
 	@printf '\nThe following recipes are available:\n'
 	@printf '\t%s\n' 'all' 'output' 'template' 'clean' 'download'
 	@printf '\nTo pre-download an individual class of files needed for the build:\n'
