@@ -86,7 +86,7 @@ Generate salt-stack container build rules:
 # building the salt-stack container
 Build the salt-stack image:
     cmd.run:
-        - name: '/usr/bin/ssh -i "{{ Root }}{{ pillar["toolbox"]["self-service"]["key"] }}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }} sudo -H -E "CONTAINER_DIR={{ pillar["service"]["container"]["path"] }}" -- "{{ pillar["service"]["container"]["path"] }}/build.sh" "{{ pillar["service"]["container"]["path"] }}/build/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"'
+        - name: /usr/bin/ssh -i "{{ Root }}{{ pillar["toolbox"]["self-service"]["key"] }}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }} sudo -H -E "CONTAINER_DIR={{ pillar["service"]["container"]["path"] }}" -- "{{ pillar["service"]["container"]["path"] }}/build.sh" "{{ pillar["service"]["container"]["path"] }}/build/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"
         - cwd: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
         - use_vt: true
         - hide_output: true
