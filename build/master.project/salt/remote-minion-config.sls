@@ -1,15 +1,15 @@
-{% set Root = pillar['local']['root'] %}
-{% set Config = salt['config.get']('conf_file') %}
-{% set ConfigDir = Config.rsplit('/' if Config.startswith('/') else '\\', 1)[0] %}
+{% set Root = pillar["local"]["root"] %}
+{% set Config = salt["config.get"]("conf_file") %}
+{% set ConfigDir = Config.rsplit("/" if Config.startswith("/") else "\\", 1)[0] %}
 
 Create minion configuration directory:
     file.directory:
-        - name: "{{ ConfigDir }}/minion.d"
+        - name: '{{ ConfigDir }}/minion.d'
 
 Install minion common configuration:
     file.managed:
         - template: jinja
-        - name: "{{ ConfigDir }}/minion.d/common.conf"
+        - name: '{{ ConfigDir }}/minion.d/common.conf'
         - source: salt://config/common.conf
         - defaults:
             ipv6: false
@@ -20,28 +20,28 @@ Install minion common configuration:
 Install minion etcd configuration:
     file.managed:
         - template: jinja
-        - name: "{{ ConfigDir }}/minion.d/etcd.conf"
+        - name: '{{ ConfigDir }}/minion.d/etcd.conf'
         - source: salt://config/etcd.conf
         - defaults:
             etcd_cache:
-                host: {{ opts['master'] | yaml_dquote }}
+                host: {{ opts["master"] | yaml_dquote }}
                 port: 2379
-                path_prefix: "{{ pillar['configuration']['salt']['namespace'] }}/cache"
+                path_prefix: '{{ pillar["configuration"]["salt"] | yaml_encode }}/cache'
                 allow_reconnect: true
                 allow_redirect: true
 
             etcd_hosts:
-                - name: "root_etcd"
-                  host: {{ opts['master'] | yaml_dquote }}
+                - name: root_etcd
+                  host: {{ opts["master"] | yaml_dquote }}
                   port: 2379
 
-                - name: "minion_etcd"
-                  host: {{ opts['master'] | yaml_dquote }}
+                - name: minion_etcd
+                  host: {{ opts["master"] | yaml_dquote }}
                   port: 2379
 
             etcd_returner:
-                returner: "root_etcd"
-                returner_root: "{{ pillar['configuration']['salt']['namespace'] }}/return"
+                returner: root_etcd
+                returner_root: '{{ pillar["configuration"]["salt"] | yaml_encode }}/return'
                 ttl: {{ 60 * 30 }}
 
         - require:

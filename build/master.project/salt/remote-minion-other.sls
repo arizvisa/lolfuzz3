@@ -1,6 +1,6 @@
-{% set Root = pillar['local']['root'] %}
-{% set Config = salt['config.get']('conf_file') %}
-{% set ConfigDir = Config.rsplit('/' if Config.startswith('/') else '\\', 1)[0] %}
+{% set Root = pillar["local"]["root"] %}
+{% set Config = salt["config.get"]("conf_file") %}
+{% set ConfigDir = Config.rsplit("/" if Config.startswith("/") else "\\", 1)[0] %}
 
 include:
     - remote-minion-config
@@ -8,14 +8,14 @@ include:
 Re-install minion configuration:
     file.managed:
         - template: jinja
-        - name: "{{ ConfigDir }}/minion"
+        - name: '{{ ConfigDir }}/minion'
         - source: salt://config/custom.conf
         - defaults:
             configuration:
-                master: {{ grains['master'] | yaml_dquote }}
+                master: {{ grains["master"] | yaml_dquote }}
                 log_level: warning
                 hash_type: sha256
-                id: {{ grains['id'] | yaml_dquote }}
+                id: {{ grains["id"] | yaml_dquote }}
                 ipc_mode: ipc
                 root_dir: {{ Root | yaml_dquote }}
                 saltenv: base
