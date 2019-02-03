@@ -61,6 +61,9 @@ Project key {{ ProjectRoot | join(".") }}:
 # Project repository
 {{ project_set_value(ProjectRoot, "repository", pillar["configuration"]["repository"]) }}
 
+# Salt namespace
+{{ project_set_value(ProjectRoot, "salt", pillar["configuration"]["salt"]) }}
+
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
 {% set Defaults = pillar["configuration"]["etcd"]["defaults"] %}
 {% for item in Defaults %}
