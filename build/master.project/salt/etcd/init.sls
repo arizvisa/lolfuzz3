@@ -1,10 +1,10 @@
-{% set Root = pillar['local']['root'] %}
+{% set Root = pillar["local"]["root"] %}
 
 ### Macros to recursively serialize arbitrary data structures into etcd
 {% macro project_set_value(root, name, value) %}
-Project variable {{ (root + [name]) | join('.') }}:
+Project variable {{ (root + [name]) | join(".") }}:
     etcd.set:
-        - name: {{ (root + [name]) | join('/') | yaml_dquote }}
+        - name: {{ (root + [name]) | join("/") | yaml_dquote }}
         - value: {{ value }}
         - profile: root_etcd
         - requires:
@@ -12,9 +12,9 @@ Project variable {{ (root + [name]) | join('.') }}:
 {% endmacro %}
 
 {% macro project_set_mapping(root, name, value) %}
-Project key {{ (root + [name]) | join('.') }}:
+Project key {{ (root + [name]) | join(".") }}:
     etcd.directory:
-        - name: {{ (root + [name]) | join('/') | yaml_dquote }}
+        - name: {{ (root + [name]) | join("/") | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Project key {{ root }}
@@ -34,35 +34,35 @@ Project key {{ (root + [name]) | join('.') }}:
 
 Check firewall rules:
     firewall.check:
-        - name: {{ salt['config.get']('root_etcd')['etcd.host'] | yaml_dquote }}
-        - port: {{ salt['config.get']('root_etcd')['etcd.port'] }}
+        - name: {{ salt["config.get"]("root_etcd")["etcd.host"] | yaml_dquote }}
+        - port: {{ salt["config.get"]("root_etcd")["etcd.port"] }}
 
 Register the etcd cluster-size for the machine-id with the v2 discovery protocol:
     etcd.set:
-        - name: "{{ pillar['configuration']['etcd']['discovery'] }}/{{ pillar['local']['machine_id'] }}/_config/size"
-        - value: {{ pillar['configuration']['etcd']['cluster-size'] | yaml_dquote }}
+        - name: '{{ pillar["configuration"]["etcd"]["discovery"] }}/{{ pillar["local"]["machine_id"] }}/_config/size'
+        - value: {{ pillar["configuration"]["etcd"]["cluster-size"] | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check firewall rules
 
 ### Project configuration
-{% set ProjectRoot = ['', 'config'] -%}
+{% set ProjectRoot = ["", "config"] -%}
 
-Project key {{ ProjectRoot | join('.') }}:
+Project key {{ ProjectRoot | join(".") }}:
     etcd.directory:
-        - name: {{ ProjectRoot | join('/') | yaml_dquote }}
+        - name: {{ ProjectRoot | join("/") | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check firewall rules
 
 # Project name
-{{ project_set_value(ProjectRoot, 'project', pillar['configuration']['project']) }}
+{{ project_set_value(ProjectRoot, "project", pillar["configuration"]["project"]) }}
 
 # Project repository
-{{ project_set_value(ProjectRoot, 'repository', pillar['configuration']['repository']) }}
+{{ project_set_value(ProjectRoot, "repository", pillar["configuration"]["repository"]) }}
 
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
-{% set Defaults = pillar['configuration']['etcd']['defaults'] %}
+{% set Defaults = pillar["configuration"]["etcd"]["defaults"] %}
 {% for item in Defaults %}
     {%- if Defaults[item] is mapping -%}
 {{ project_set_mapping(ProjectRoot, item, Defaults[item]) }}

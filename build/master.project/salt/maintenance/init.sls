@@ -33,7 +33,7 @@ Install rkt-gc service timer dropin:
         - source: salt://maintenance/timer.dropin
         - context:
             timer:
-                OnCalendar: "*:00/30"
+                OnCalendar: '*:00/30'
         - require:
             - Register rkt-gc timer dropin directory
         - mode: 0664

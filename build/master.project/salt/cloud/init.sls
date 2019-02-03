@@ -1,4 +1,4 @@
-{% set Root = pillar['local']['root'] %}
+{% set Root = pillar["local"]["root"] %}
 
 include:
     - stack
@@ -8,12 +8,12 @@ Install salt-cloud configuration:
     file.managed:
         - template: jinja
         - source: salt://cloud/cloud.conf
-        - name: "{{ Root }}/etc/salt/cloud"
+        - name: '{{ Root }}/etc/salt/cloud'
         - defaults:
             log_level: info
             pool_size: 10
             minion:
-                master: {{ pillar['local']['ip4'] | yaml_dquote }}
+                master: {{ pillar["local"]["ip4"] | yaml_dquote }}
                 startup_states: highstate
 
                 ipv6: false
@@ -58,7 +58,7 @@ Make salt-cloud profiles directory:
 ## Installation of service directories
 Install salt-cloud providers directory:
     file.symlink:
-        - name: "{{ Root }}/etc/salt/cloud.providers.d"
+        - name: '{{ Root }}/etc/salt/cloud.providers.d'
         - target: /srv/cloud/providers
         - require:
             - Make salt configuration directory
@@ -66,7 +66,7 @@ Install salt-cloud providers directory:
 
 Install salt-cloud profiles directory:
     file.symlink:
-        - name: "{{ Root }}/etc/salt/cloud.profiles.d"
+        - name: '{{ Root }}/etc/salt/cloud.profiles.d'
         - target: /srv/cloud/profiles
         - require:
             - Make salt configuration directory
@@ -75,9 +75,9 @@ Install salt-cloud profiles directory:
 ### Example configurations
 Download Salt-Minion windows installer:
     file.managed:
-        - source: {{ pillar['cloud']['windows']['url'] | yaml_dquote }}
-        - name: "/srv/cloud/{{ pillar['cloud']['windows']['installer'] }}"
-        - source_hash: {{ pillar['cloud']['windows']['checksum'] | yaml_dquote }}
+        - source: {{ pillar["cloud"]["windows"]["url"] | yaml_dquote }}
+        - name: '/srv/cloud/{{ pillar["cloud"]["windows"]["installer"] }}'
+        - source_hash: {{ pillar["cloud"]["windows"]["checksum"] | yaml_dquote }}
         - skip_verify: true
         - mode: 0664
 
@@ -106,7 +106,7 @@ Install an example cloud provider:
                       winrm_use_ssl: false
                       winrm_verify_ssl: false
                       winrm_port: 5985
-                      win_installer: "/srv/cloud/{{ pillar['cloud']['windows']['installer'] }}"
+                      win_installer: '/srv/cloud/{{ pillar["cloud"]["windows"]["installer"] }}'
 
         - require:
             - Make salt-cloud providers directory

@@ -1,4 +1,4 @@
-{% set Root = pillar['local']['root'] %}
+{% set Root = pillar["local"]["root"] %}
 
 include:
     - stack
@@ -29,7 +29,7 @@ Install minion-pillar reaction:
         - source: salt://reactor/minion-pillar.state
         - name: /srv/bootstrap/reactor/minion-pillar.sls
         - context:
-            pillar_namespace: "{{ pillar['configuration']['salt'] }}/pillar"
+            pillar_namespace: '{{ pillar["configuration"]["salt"] }}/pillar'
         - require:
             - Make bootstrap reactor directory
         - mode: 0664
@@ -38,7 +38,7 @@ Install a salt-master reactor hightstate for creating the pillar for a minion:
     file.managed:
         - template: jinja
         - source: salt://reactor/default-top-state
-        - name: "{{ Root }}/etc/salt/master.d/minion-pillar.conf"
+        - name: '{{ Root }}/etc/salt/master.d/minion-pillar.conf'
         - context:
             reactor:
                 - 'salt/minion/*/start':
@@ -51,7 +51,7 @@ Install a salt-master reactor hightstate for creating the pillar for a minion:
 ## salt reactor example states
 Add salt-master reactor highstate into master configuration:
     file.symlink:
-        - name: "{{ Root }}/etc/salt/master.d/reactor.conf"
+        - name: '{{ Root }}/etc/salt/master.d/reactor.conf'
         - target: /srv/reactor/top.sls
         - require:
             - Install an example salt-master reactor highstate

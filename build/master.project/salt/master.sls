@@ -1,4 +1,4 @@
-{% set Root = pillar['local']['root'] %}
+{% set Root = pillar["local"]["root"] %}
 
 ### States to bootstrap the salt-master container and install it as a service
 include:
@@ -6,13 +6,13 @@ include:
 
 Check connection to etcd for the master:
     firewall.check:
-        - name: {{ salt['config.get']('root_etcd')['etcd.host'] | yaml_dquote }}
-        - port: {{ salt['config.get']('root_etcd')['etcd.port'] }}
+        - name: {{ salt["config.get"]("root_etcd")["etcd.host"] | yaml_dquote }}
+        - port: {{ salt["config.get"]("root_etcd")["etcd.port"] | yaml_encode }}
 
 ## standard salt-master directories
 Make salt-master cache directory:
     file.directory:
-        - name: "{{ Root }}/var/cache/salt/master"
+        - name: '{{ Root }}/var/cache/salt/master'
         - use:
             - Make salt cache directory
         - require:
@@ -20,7 +20,7 @@ Make salt-master cache directory:
 
 Make salt-master pki directory:
     file.directory:
-        - name: "{{ Root }}/etc/salt/pki/master"
+        - name: '{{ Root }}/etc/salt/pki/master'
         - use:
             - Make salt pki directory
         - require:
@@ -28,7 +28,7 @@ Make salt-master pki directory:
 
 Make salt-master run directory:
     file.directory:
-        - name: "{{ Root }}/var/run/salt/master"
+        - name: '{{ Root }}/var/run/salt/master'
         - use:
             - Make salt run directory
         - require:
@@ -95,7 +95,7 @@ Install an example pillar topfile:
 
 Make salt-master configuration directory:
     file.directory:
-        - name: "{{ Root }}/etc/salt/master.d"
+        - name: '{{ Root }}/etc/salt/master.d'
         - use:
             - Make salt configuration directory
         - require:
@@ -106,7 +106,7 @@ Install salt-master configuration:
     file.managed:
         - template: jinja
         - source: salt://config/salt-master.conf
-        - name: "{{ Root }}/etc/salt/master"
+        - name: '{{ Root }}/etc/salt/master'
         - defaults:
             root_dir: /
             hash_type: sha256
@@ -119,37 +119,37 @@ Install salt-master base configuration:
     file.managed:
         - template: jinja
         - source: salt://config/master.conf
-        - name: "{{ Root }}/etc/salt/master.d/base.conf"
+        - name: '{{ Root }}/etc/salt/master.d/base.conf'
 
         - defaults:
             root_files:
-                - name: "base"
-                  path: "/srv/salt"
+                - name: base
+                  path: /srv/salt
 
-                - name: "master"
-                  path: "/srv/bootstrap/salt"
+                - name: master
+                  path: /srv/bootstrap/salt
 
-                - name: "bootstrap"
-                  path: "/srv/bootstrap/salt"
+                - name: bootstrap
+                  path: /srv/bootstrap/salt
 
             root_pillars:
-                - name: "base"
-                  path: "/srv/pillar"
+                - name: base
+                  path: /srv/pillar
 
-                - name: "master"
-                  path: "/srv/bootstrap/pillar"
+                - name: master
+                  path: /srv/bootstrap/pillar
 
-                - name: "bootstrap"
-                  path: "/srv/bootstrap/pillar"
+                - name: bootstrap
+                  path: /srv/bootstrap/pillar
 
             ext_pillars:
-                - type: "etcd"
-                  name: "root_etcd"
-                  path: "/config"
+                - type: etcd
+                  name: root_etcd
+                  path: /config
 
-                - type: "etcd"
-                  name: "minion_etcd"
-                  path: "{{ pillar['configuration']['salt'] }}/pillar/%(minion_id)s"
+                - type: etcd
+                  name: minion_etcd
+                  path: '{{ pillar["configuration"]["salt"] }}/pillar/%(minion_id)s'
 
         - require:
             - Make salt-master configuration directory
@@ -161,27 +161,27 @@ Install salt-master etcd configuration:
     file.managed:
         - template: jinja
         - source: salt://config/etcd.conf
-        - name: "{{ Root }}/etc/salt/master.d/etcd.conf"
+        - name: '{{ Root }}/etc/salt/master.d/etcd.conf'
         - defaults:
             etcd_cache:
                   host: 127.0.0.1
                   port: 2379
-                  path_prefix: "{{ pillar['configuration']['salt'] }}/cache"
+                  path_prefix: '{{ pillar["configuration"]["salt"] }}/cache'
                   allow_reconnect: true
                   allow_redirect: true
 
             etcd_hosts:
-                - name: "root_etcd"
+                - name: root_etcd
                   host: 127.0.0.1
                   port: 2379
 
-                - name: "minion_etcd"
+                - name: minion_etcd
                   host: 127.0.0.1
                   port: 2379
 
             etcd_returner:
-                returner: "root_etcd"
-                returner_root: "{{ pillar['configuration']['salt'] }}/return"
+                returner: root_etcd
+                returner_root: '{{ pillar["configuration"]["salt"] }}/return'
                 ttl: {{ 60 * 30 }}
 
         - require:
@@ -194,10 +194,10 @@ Install salt-master identification configuration:
     file.managed:
         - template: jinja
         - source: salt://config/custom.conf
-        - name: "{{ Root }}/etc/salt/master.d/id.conf"
+        - name: '{{ Root }}/etc/salt/master.d/id.conf'
         - defaults:
             configuration:
-                master_id: "{{ pillar['local']['machine_id'] }}.{{ pillar['configuration']['project'] }}"
+                master_id: '{{ pillar["local"]["machine_id"] }}.{{ pillar["configuration"]["project"] }}'
 
         - require:
             - Make salt-master configuration directory
@@ -207,7 +207,7 @@ Install salt-master common configuration:
     file.managed:
         - template: jinja
         - source: salt://config/common.conf
-        - name: "{{ Root }}/etc/salt/master.d/common.conf"
+        - name: '{{ Root }}/etc/salt/master.d/common.conf'
         - defaults:
             ipv6: false
             transport: zeromq
@@ -220,7 +220,7 @@ Install salt-master.service:
     file.managed:
         - template: jinja
         - source: salt://stack/salt.service
-        - name: "{{ Root }}/etc/systemd/system/salt-master.service"
+        - name: '{{ Root }}/etc/systemd/system/salt-master.service'
 
         - context:
             description: Salt-Master
@@ -234,11 +234,11 @@ Install salt-master.service:
                 - flanneld.service
 
             network: host
-            container_path: {{ pillar['service']['container']['path'] | yaml_dquote }}
-            image_name: "lol/salt-stack:{{ pillar['container']['salt-stack']['version'] }}"
-            image_path: "salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci"
-            image_uuid_path: "salt-stack:{{ pillar['container']['salt-stack']['version'] }}.aci.id"
-            run_uuid_path: {{ pillar['service']['salt-master']['UUID'] | yaml_dquote }}
+            container_path: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
+            image_name: 'lol/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}'
+            image_path: 'salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
+            image_uuid_path: 'salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci.id'
+            run_uuid_path: {{ pillar["service"]["salt-master"]["UUID"] | yaml_dquote }}
 
         - use:
             - Generate salt-stack container build rules
@@ -252,7 +252,7 @@ Install salt-master.service:
 # systemctl enable the salt-master.service
 Enable systemd multi-user.target wants salt-master.service:
     file.symlink:
-        - name: "{{ Root }}/etc/systemd/system/multi-user.target.wants/salt-master.service"
+        - name: '{{ Root }}/etc/systemd/system/multi-user.target.wants/salt-master.service'
         - target: /etc/systemd/system/salt-master.service
         - require:
             - Install salt-master.service
@@ -263,12 +263,12 @@ Install the script for interacting with salt-master:
     file.managed:
         - template: jinja
         - source: salt://scripts/salt.command
-        - name: "{{ Root }}/opt/bin/salt"
+        - name: '{{ Root }}/opt/bin/salt'
 
         - defaults:
             rkt: /bin/rkt
             unit: salt-master.service
-            run_uuid_path: {{ pillar['service']['salt-master']['UUID'] | yaml_dquote }}
+            run_uuid_path: {{ pillar["service"]["salt-master"]["UUID"] | yaml_dquote }}
 
         - require:
             - Finished building the salt-stack image
@@ -280,7 +280,7 @@ Install the script for interacting with salt-master:
 # everything else can just be a symbolic link
 Link the script for calling salt-api:
     file.symlink:
-        - name: "{{ Root }}/opt/bin/salt-api"
+        - name: '{{ Root }}/opt/bin/salt-api'
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -288,7 +288,7 @@ Link the script for calling salt-api:
 
 Link the script for calling salt-cloud:
     file.symlink:
-        - name: "{{ Root }}/opt/bin/salt-cloud"
+        - name: '{{ Root }}/opt/bin/salt-cloud'
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -296,7 +296,7 @@ Link the script for calling salt-cloud:
 
 Link the script for calling salt-cp:
     file.symlink:
-        - name: "{{ Root }}/opt/bin/salt-cp"
+        - name: '{{ Root }}/opt/bin/salt-cp'
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -304,7 +304,7 @@ Link the script for calling salt-cp:
 
 Link the script for calling salt-key:
     file.symlink:
-        - name: "{{ Root }}/opt/bin/salt-key"
+        - name: '{{ Root }}/opt/bin/salt-key'
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -312,7 +312,7 @@ Link the script for calling salt-key:
 
 Link the script for calling salt-run:
     file.symlink:
-        - name: "{{ Root }}/opt/bin/salt-run"
+        - name: '{{ Root }}/opt/bin/salt-run'
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -320,7 +320,7 @@ Link the script for calling salt-run:
 
 Link the script for calling salt-ssh:
     file.symlink:
-        - name: "{{ Root }}/opt/bin/salt-ssh"
+        - name: '{{ Root }}/opt/bin/salt-ssh'
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -328,7 +328,7 @@ Link the script for calling salt-ssh:
 
 Link the script for calling salt-unity:
     file.symlink:
-        - name: "{{ Root }}/opt/bin/salt-unity"
+        - name: '{{ Root }}/opt/bin/salt-unity'
         - target: salt
         - require:
             - Install the script for interacting with salt-master
@@ -337,7 +337,7 @@ Link the script for calling salt-unity:
 ## States for initializing the etcd namespaces
 Initialize the salt namespace:
     etcd.directory:
-        - name: {{ pillar['configuration']['salt'] | yaml_dquote }}
+        - name: {{ pillar["configuration"]["salt"] | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check connection to etcd
@@ -345,7 +345,7 @@ Initialize the salt namespace:
 # cache
 Initialize the cache namespace:
     etcd.directory:
-        - name: "{{ pillar['configuration']['salt'] }}/cache"
+        - name: '{{ pillar["configuration"]["salt"] }}/cache'
         - use:
             - Initialize the salt namespace
         - requires:
@@ -353,7 +353,7 @@ Initialize the cache namespace:
 
 Initialize the minion cache namespace:
     etcd.directory:
-        - name: "{{ pillar['configuration']['salt'] }}/cache/minions"
+        - name: '{{ pillar["configuration"]["salt"] }}/cache/minions'
         - use:
             - Initialize the cache namespace
         - requires:
@@ -362,7 +362,7 @@ Initialize the minion cache namespace:
 # returner
 Initialize the returner namespace:
     etcd.directory:
-        - name: "{{ pillar['configuration']['salt'] }}/return"
+        - name: '{{ pillar["configuration"]["salt"] }}/return'
         - use:
             - Initialize the salt namespace
         - requires:
@@ -370,7 +370,7 @@ Initialize the returner namespace:
 
 Initialize the minion returner namespace:
     etcd.directory:
-        - name: "{{ pillar['configuration']['salt'] }}/return/minions"
+        - name: '{{ pillar["configuration"]["salt"] }}/return/minions'
         - use:
             - Initialize the returner namespace
         - requires:
@@ -378,7 +378,7 @@ Initialize the minion returner namespace:
 
 Initialize the jobs returner namespace:
     etcd.directory:
-        - name: "{{ pillar['configuration']['salt'] }}/return/jobs"
+        - name: '{{ pillar["configuration"]["salt"] }}/return/jobs'
         - use:
             - Initialize the returner namespace
         - requires:
@@ -387,7 +387,7 @@ Initialize the jobs returner namespace:
 # events
 Initialize the events returner namespace:
     etcd.directory:
-        - name: "{{ pillar['configuration']['salt'] }}/return/events"
+        - name: '{{ pillar["configuration"]["salt"] }}/return/events'
         - use:
             - Initialize the returner namespace
         - requires:
@@ -396,7 +396,7 @@ Initialize the events returner namespace:
 # pillar
 Initialize the nodes pillar namespace:
     etcd.directory:
-        - name: "{{ pillar['configuration']['salt'] }}/pillar"
+        - name: '{{ pillar["configuration"]["salt"] }}/pillar'
         - use:
             - Initialize the salt namespace
         - requires:
