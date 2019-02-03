@@ -468,7 +468,7 @@ endif
 # build json file containing all information about the iso
 $(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
 	@printf '[-] Generating iso variables for %s: %s\n' '$@' '$<'
-	@jq -n --arg checksum_type '$(checksum_type)' --arg url 'file://$<' --slurpfile iso_checksum '$(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": $$checksum_type, "iso-url": $$url, "iso-checksum": $$iso_checksum[0] }' >| '$@'
+	@jq -n --arg checksum_type '$(checksum_type)' --arg url '$<' --slurpfile iso_checksum '$(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": $$checksum_type, "iso-url": $$url, "iso-checksum": $$iso_checksum[0] }' >| '$@'
 
 # build json file containing all information for ssh'ing to the box
 $(boxname_workdir)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa	| $(boxname_workdir)
