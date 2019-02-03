@@ -5,11 +5,7 @@ ROOTDIR := $(realpath $(MAKEDIR)../..)
 
 # mandatory parameters
 ifndef PROJECT
-    $(error [!] Required build variable PROJECT is not specified)
-endif
-
-ifndef PLATFORM
-    $(error [!] Please specify a build platform via the PLATFORM variable that is one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
+    $(error Required build variable PROJECT is not specified)
 endif
 
 # optional parameters
@@ -87,8 +83,13 @@ endif
 ## Platform types
 platform = $(subst $(comma),$(space),$(PLATFORM))
 
+ifneq ($(platform),)
 $(info [*] User has specified the following template type(s): $(platform))
 options := $(options) only='$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))'
+else
+$(warning User has specified no templates types. Assuming all platforms are available.)
+$(info [*] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
+endif
 
 ## Custom configuration
 ifndef INPUT
@@ -98,7 +99,7 @@ else
         $(info [*] Using custom configuration specified by user: $(abspath $(patsubst %/,%,$(INPUT))))
         custom := $(patsubst %/,%,$(INPUT))
     else
-        $(error [*] No custom configuration found in path specified by user: $(abspath (patsubst %/,%,$(INPUT))))
+        $(error No custom configuration found in path specified by user: $(abspath (patsubst %/,%,$(INPUT))))
     endif
 endif
 
@@ -182,6 +183,18 @@ ignition_network_files := $(wildcard $(ignition_config)/network/*.network)
 
 ignition_units_names := $(foreach f,$(wildcard $(ignition_config)/units/*),$(notdir $(f)))
 ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$(notdir $(f)))
+
+### Parameter validation (macros)
+
+# assert_expression '$expr' '$message'
+define assert_expression
+	$(if $(1),@true,@$(2))
+endef
+
+# verify_expression '$expr' '$message'
+define verify_expression
+	$(if $(1),@true,@$(2) && false)
+endef
 
 ### Recipe definitions (macros)
 
@@ -303,7 +316,7 @@ help:
 
 	@printf '\nParameters that are available:\n'
 	@printf '\tPROJECT: (mandatory) Name of the project (also used as the cluster%cs domain)\n' "'"
-	@printf '\tPLATFORM: (mandatory) Virtualization platform to use for building the template (vmware, virtualbox, qemu, parallels, hyperv).\n'
+	@printf '\tPLATFORM: Virtualization platform(s) to build the template with (vmware, virtualbox, qemu, parallels, hyperv).\n'
 	@printf '\tOUTPUT: (default /deploy) Path to move the template, its config, and auth keypair to\n'
 	@printf '\tINPUT: Path of /srv configuration that is deployed to the template after installation of salt\n'
 	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
