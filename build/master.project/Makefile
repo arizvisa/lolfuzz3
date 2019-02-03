@@ -2,9 +2,8 @@ MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ROOTDIR := $(realpath $(MAKEDIR)../..)
 
 ### Parameters that the user can supply
-ifndef OUTPUT
-    OUTPUT := $(ROOTDIR)/deploy
-endif
+BUILDDIR?=$(ROOTDIR)/build.dir
+OUTPUT?=$(ROOTDIR)/deploy
 
 ### Validation of configurable parameters
 noop=
@@ -14,12 +13,12 @@ lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(s
 
 ## project variable
 project := $(call lc,${PROJECT})
-boxname?=$(if $(project),master.$(project),master.unnamed)
+boxname?=$(if $(project),master.$(project),master.null)
 
 ifneq ($(project),)
 $(info [-] Using the specified project name: $(project))
 else
-$(warning No project name was specified. Using the name "$(boxname)" until failure.)
+$(warning No PROJECT was specified. Using the project name "null" until failure.)
 endif
 
 ## output directory
@@ -31,7 +30,7 @@ else
 endif
 
 ## work directory
-workdir?=build.dir
+workdir?=$(BUILDDIR)
 boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
@@ -82,8 +81,8 @@ ifneq ($(platform),)
 $(info [-] User has specified the following template type(s): $(platform))
 options := $(options) only='$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))'
 else
-$(warning User has specified no templates types. Assuming all platforms are available.)
-$(info [!] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
+$(warning User has specified no template types. Assuming all platforms are available.)
+$(info [-] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
 endif
 
 ## Custom configuration
@@ -183,12 +182,12 @@ ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$
 
 # assert_expression '$expr' '$message'
 define assert_expression
-	$(if $(1),@true,@$(2))
+	$(if $(1),@true,$(warning $(2)))
 endef
 
 # verify_expression '$expr' '$message'
 define verify_expression
-	$(if $(1),@true,@$(2) && false)
+	$(if $(1),@true,$(error $(2)))
 endef
 
 ### Recipe definitions (macros)
@@ -231,6 +230,7 @@ endef
 # checksum '$filename' '$checksum' '$checksum_filename'
 define checksum
 $(3): $(1)
+	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
 	@printf '[-] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
 	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\r\n' >| '$$@'
 endef
@@ -238,6 +238,7 @@ endef
 # stage_tool '$target' '$source'
 define stage_tool
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
+	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
 	@printf '[-] Staging file %s in %s\n' '$(1)' '$(2)'
 	@cp -f '$(1)' '$(2)'
 endef
@@ -247,6 +248,7 @@ endef
 # ignition_file '$contents.json' '$target.json' '$filename' '$decimal-mode'
 define ignition_file
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
+	$$(call verify_expression,$(wildcard $<),File not found: $<)
 	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
 	@jq -n --arg name '$(3)' --argjson mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/etc/sysctl.d/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
@@ -254,6 +256,7 @@ endef
 # ignition_unit_file '$unit.service' '$source.service.json-raw' '$output.json'
 define ignition_unit_file
 $(3): $(2)
+	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
 	@printf '[-] Creating ignition unit file %s: %s\n' '$(3)' '$(2)'
 	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, enable: false, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
 endef
@@ -261,6 +264,7 @@ endef
 # ignition_unit_dropins '$target.json' '$space-separated-dropins'
 define ignition_unit_dropins
 $(1): $(2)
+	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
 	@printf '[-] Creating ignition unit dropins %s: %s\n' '$(1)' '$(2)'
 	@jq '[., inputs]' $(2) >| '$(1)'
 endef
@@ -268,6 +272,7 @@ endef
 # ignition_dropin_file '$filename' '$contents' '$target.json'
 define ignition_dropin_file
 $(3): $(2)	| $(patsubst %/,%,$(dir $(3)))
+	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
 	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, contents: $$$$contents[0] }' >| '$(3)'
 endef
 
@@ -314,6 +319,7 @@ help:
 	@printf '\tPLATFORM: Virtualization platform(s) to build the template with (vmware, virtualbox, qemu, parallels, hyperv).\n'
 	@printf '\tOUTPUT: (default /deploy) Path to move the template, its config, and auth keypair to\n'
 	@printf '\tINPUT: Path of /srv configuration that is deployed to the template after installation of salt\n'
+	@printf '\tBUILDDIR: (default /build.dir) Path containing intermediary files for building template\n'
 	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
 	@printf '\tBUILD: (default true) Whether to actually build the template, or to just generate the config\n'
 	@printf '\tVALIDATE: (default true) Whether to validate the config via "%s"\n' "https://coreos.com/validate/"
@@ -457,7 +463,7 @@ endif
 
 # build json file containing all information about the iso
 $(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
-	@printf '[-] Generating ISO variables for %s: %s\n' '$@' '$<'
+	@printf '[-] Generating iso variables for %s: %s\n' '$@' '$<'
 	@jq -n --arg checksum_type '$(checksum_type)' --arg url 'file://$<' --slurpfile iso_checksum '$(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": $$checksum_type, "iso-url": $$url, "iso-checksum": $$iso_checksum[0] }' >| '$@'
 
 # build json file containing all information for ssh'ing to the box
@@ -498,7 +504,7 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 
 
 # generate ssh public/private key
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
-	$(call verify_expression,$(project),printf '[!] No PROJECT was specified. Unable to to generate public/private keypair!\n')
+	$(call verify_expression,$(project),No PROJECT was specified. Unable to to generate public/private keypair!)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
 	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(workdir)/$(boxname).id_rsa' -N ''
 
@@ -583,7 +589,7 @@ $(boxname_workdir)/pillar/acbuild.sls: $(acbuild_files)	| $(boxname_workdir)/pil
 	@printf -- '- Source: %s\n  Algo: %s\n  Hash: %s\n\n' $(foreach f,$^,'$(shell basename $(f))' '$(checksum_type)' "$(shell openssl dgst -$(checksum_type) '$(f)' | rev | cut -d' ' -f1 | rev)") >| '$@'
 
 $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
-	$(call verify_expression,$(project),printf '[!] No PROJECT was specified. Unable to write project name into pillar configuration!\n')
+	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!')
 	@printf '[-] Writing project name into pillar configuration: %s\n' '$@'
 	@printf -- '%s\n' '$(project)' >| '$@'
 
