@@ -184,6 +184,10 @@
             "destination" : "{{user `salt-bootstrap-stage`}}/etc/salt/minion"
         },
         { "type" : "file",
+            "source" : "{{user `salt-bootstrap-config`}}",
+            "destination" : "{{user `salt-bootstrap-stage`}}/etc/salt/master"
+        },
+        { "type" : "file",
             "source" : "{{user `salt-bootstrap-files`}}",
             "destination" : "{{user `salt-bootstrap-stage`}}/srv/bootstrap"
         },
