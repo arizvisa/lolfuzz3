@@ -28,7 +28,6 @@ lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(s
 ## project variable
 project := $(call lc,${PROJECT})
 boxname?=master.$(project)
-boxname_config=master.$(project).config
 
 $(info [-] Using the specified project name: $(project))
 
@@ -54,7 +53,7 @@ validate := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(va
 validate := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(validate)))))
 
 ifeq ($(validate),0)
-    $(warning User has requested to skip validation of configuration: $(boxname_config))
+    $(warning User has requested to skip validation of configuration: $(boxname).config)
 endif
 
 ## Build option
@@ -115,7 +114,7 @@ GH_FETCH := ${FETCH}
 endif
 
 ### Static configuration
-output_names := $(boxname_config) $(boxname).id_rsa $(boxname).id_rsa.pub
+output_names := $(boxname).config $(boxname).id_rsa $(boxname).id_rsa.pub
 
 ## Salt and provisioning
 checksum_type := md5
@@ -417,10 +416,10 @@ clean-ignition:
 	-rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)' '$(boxname_workdir)/ignition-dropins.json-$(name)')
 	@printf '[*] Erasing temporary files for ssh keys: %s\n' '$(boxname_workdir)/$(boxname).id_rsa*'
 	-rm -f '$(boxname_workdir)/$(boxname).id_rsa'*
-	@printf '[*] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network,$(boxname_workdir)/$(boxname_config)-$(name))'
-	-rm -f $(foreach name,original files units users hostname sysctl pubkey network,'$(boxname_workdir)/$(boxname_config)-$(name)')
-	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(boxname_workdir)/$(boxname_config)' '$(boxname_workdir)/$(boxname_config).validate'
-	-rm -f '$(boxname_workdir)/$(boxname_config)' '$(boxname_workdir)/$(boxname_config).validate'
+	@printf '[*] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network,$(boxname_workdir)/$(boxname).config-$(name))'
+	-rm -f $(foreach name,original files units users hostname sysctl pubkey network,'$(boxname_workdir)/$(boxname).config-$(name)')
+	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
+	-rm -f '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
 
 .PHONY: clean-json
 clean-json:
@@ -450,13 +449,13 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 	mv '$<' '$@'
 
 ### Box recipes
-$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname_config) $(coreos_installer_files) $(custom)
+$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(custom)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname_config)' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
+	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname).config' -var 'custom-config-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build %s -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname_config)' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build %s -var-file %c%s%c -var %cguest-config=%s%c -var %ccustom-config-directory=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname).config' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
@@ -509,7 +508,7 @@ $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 ### Bootstrap recipes
 
 ## recipes for validating the configuration
-$(boxname_workdir)/$(boxname_config).validate: $(boxname_workdir)/$(boxname_config)
+$(boxname_workdir)/$(boxname).config.validate: $(boxname_workdir)/$(boxname).config
 ifneq ($(validate),0)
 	@printf '[!] Validating ignition configuration %s: %s\n' '$<' '$(coreos_validate_url)'
 	${PUT} '@$<' '$(coreos_validate_url)' >| '$@'
@@ -518,7 +517,7 @@ else
 	@jq -n . >| '$@'
 endif
 
-$(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config).validate $(boxname_workdir)/$(boxname_config)	| $(workdir)
+$(workdir)/$(boxname).config: $(boxname_workdir)/$(boxname).config.validate $(boxname_workdir)/$(boxname).config	| $(workdir)
 	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$<' | while read y x message; do \
 		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
 	done
@@ -527,45 +526,45 @@ $(workdir)/$(boxname_config): $(boxname_workdir)/$(boxname_config).validate $(bo
 		exit 1; \
 	done
 	@printf '[*] Successfully validated ignition configuration: %s\n' '$@'
-	@cp -f '$(boxname_workdir)/$(boxname_config)' '$@'
+	@cp -f '$(boxname_workdir)/$(boxname).config' '$@'
 
 # combine all ignition jsons into the template
-$(boxname_workdir)/$(boxname_config): $(ignition_template) $(boxname_workdir)/$(boxname_config)-files $(boxname_workdir)/$(boxname_config)-units $(boxname_workdir)/$(boxname_config)-users $(boxname_workdir)/$(boxname_config)-network
+$(boxname_workdir)/$(boxname).config: $(ignition_template) $(boxname_workdir)/$(boxname).config-files $(boxname_workdir)/$(boxname).config-units $(boxname_workdir)/$(boxname).config-users $(boxname_workdir)/$(boxname).config-network
 	@printf '[*] Making ignition configuration with template %s: %s\n' '$<' '$@'
-	@jq --slurpfile files '$(boxname_workdir)/$(boxname_config)-files' --slurpfile units '$(boxname_workdir)/$(boxname_config)-units' --slurpfile users '$(boxname_workdir)/$(boxname_config)-users' --slurpfile networks '$(boxname_workdir)/$(boxname_config)-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
+	@jq --slurpfile files '$(boxname_workdir)/$(boxname).config-files' --slurpfile units '$(boxname_workdir)/$(boxname).config-units' --slurpfile users '$(boxname_workdir)/$(boxname).config-users' --slurpfile networks '$(boxname_workdir)/$(boxname).config-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
 
 # set the hostname using $(boxname) with the mode 420 (0644 in octal)
-$(boxname_workdir)/$(boxname_config)-hostname:	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname).config-hostname:	| $(boxname_workdir)
 	@printf '[-] Building the ignition configuration file for the hostname: %s\n' '$(boxname)'
 	@jq -n --arg content '$(boxname)' '[{ filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ($$content | @uri)) } }]' >| '$@'
 
 # bootstrap for ignition/sysctl directory
-$(boxname_workdir)/$(boxname_config)-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)))
+$(boxname_workdir)/$(boxname).config-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)))
 	@printf '[*] Merging all ignition sysctl files into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $^ >| '$@'
 
 # combine all ignition file jsons into a single one
-$(boxname_workdir)/$(boxname_config)-files: $(boxname_workdir)/$(boxname_config)-hostname $(boxname_workdir)/$(boxname_config)-sysctl
+$(boxname_workdir)/$(boxname).config-files: $(boxname_workdir)/$(boxname).config-hostname $(boxname_workdir)/$(boxname).config-sysctl
 	@printf '[*] Merging the ignition file section into %s: %s\n' '$@' '$^'
 	@jq '. + inputs' $^ >| '$@'
 
 # combining for ignition/units and ignition/dropins
-$(boxname_workdir)/$(boxname_config)-units: $(foreach name,$(ignition_units_names),$(boxname_workdir)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_workdir)/ignition-unit.json-$(name))
+$(boxname_workdir)/$(boxname).config-units: $(foreach name,$(ignition_units_names),$(boxname_workdir)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_workdir)/ignition-unit.json-$(name))
 	@printf '[*] Merging the ignition unit section into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $^ >| '$@'
 
 # generate a json containing the sshAuthorizedKeys field in an object
-$(boxname_workdir)/$(boxname_config)-pubkey: $(boxname_workdir)/$(boxname).id_rsa.pub.json-raw
+$(boxname_workdir)/$(boxname).config-pubkey: $(boxname_workdir)/$(boxname).id_rsa.pub.json-raw
 	@printf '[-] Generating a json with the public key in %s: %s\n' '$@' '$^'
 	@jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0] | rtrimstr("\n")] }' >| '$@'
 
 # combine all joined user objects into a single list
-$(boxname_workdir)/$(boxname_config)-users: $(foreach f,$(ignition_users_files),$(boxname_workdir)/ignition-user.json-$(notdir $(f)))
+$(boxname_workdir)/$(boxname).config-users: $(foreach f,$(ignition_users_files),$(boxname_workdir)/ignition-user.json-$(notdir $(f)))
 	@printf '[*] Merging the ignition user section into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $^ >| '$@'
 
 # combine all joined network dropins into a single list
-$(boxname_workdir)/$(boxname_config)-network: $(foreach f,$(ignition_network_files),$(boxname_workdir)/ignition-network.json-$(notdir $(f)))
+$(boxname_workdir)/$(boxname).config-network: $(foreach f,$(ignition_network_files),$(boxname_workdir)/ignition-network.json-$(notdir $(f)))
 	@printf '[*] Merging all ignition network files into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $^ >| '$@'
 
@@ -643,7 +642,7 @@ $(foreach name,$(filter-out $(ignition_dropins_names),$(ignition_units_names)),$
 $(foreach name,$(filter-out $(ignition_units_names),$(ignition_dropins_names)),$(eval $(call ignition_unit_missing,$(name),$(boxname_workdir)/ignition-unit.json-$(name),$(boxname_workdir)/ignition-dropins.json-$(name))))
 
 # combining each user with the sshAuthorizedKeys (FIXME: allow unique ssh keys per-user)
-$(foreach f,$(ignition_users_files),$(eval $(call ignition_user,$(boxname_workdir)/ignition-user.json-$(notdir $(f)),$(f),$(boxname_workdir)/$(boxname_config)-pubkey)))
+$(foreach f,$(ignition_users_files),$(eval $(call ignition_user,$(boxname_workdir)/ignition-user.json-$(notdir $(f)),$(f),$(boxname_workdir)/$(boxname).config-pubkey)))
 
 # raw ignition_sysctl_files contents
 $(foreach f,$(ignition_sysctl_files),$(eval $(call json_rawfile,$(f),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw)))
