@@ -178,11 +178,16 @@ ignition_network_files := $(wildcard $(ignition_config)/network/*.network)
 ignition_units_names := $(foreach f,$(wildcard $(ignition_config)/units/*),$(notdir $(f)))
 ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$(notdir $(f)))
 
-### Parameter validation (macros)
+### Expression assertion/validation (macros)
 
 # assert_expression '$expr' '$message'
 define assert_expression
 	$(if $(1),@true,$(warning $(2)))
+endef
+
+# assert_expression_not '$expr' '$message'
+define assert_expression_not
+	$(if $(1),$(warning $(2)),@true)
 endef
 
 # verify_expression '$expr' '$message'
@@ -190,15 +195,17 @@ define verify_expression
 	$(if $(1),@true,$(error $(2)))
 endef
 
+# verify_expression_not '$expr' '$message'
+define verify_expression_not
+	$(if $(1),$(error $(2)),@true)
+endef
+
 ### Recipe definitions (macros)
 
 # output_file '$file' '$directory'
 define output_file
 $(2)/$(notdir $(1)): $(1)	| $(2)
-	@if [ -e '$$@' ]; then \
-	    printf '[!] Refusing to deploy %s over already existing file: %s\n' '$(1)' '$$@'; \
-	    false; \
-	fi
+	$$(call verify_expression_not,$$(wildcard $$@),Refusing to deploy $$< over already existing file: $$@)
 	@printf '[*] Copying output file to %s: %s\n' '$(2)' '$$<'
 	@cp '$$<' '$$@'
 endef
@@ -206,6 +213,7 @@ endef
 # json_rawfile '$source.raw' '$target.json'
 define json_rawfile
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
+	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
 	@jq -Rs . '$(1)' >| '$(2)'
 endef
 
@@ -230,7 +238,7 @@ endef
 # checksum '$filename' '$checksum' '$checksum_filename'
 define checksum
 $(3): $(1)
-	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
+	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
 	@printf '[-] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
 	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\r\n' >| '$$@'
 endef
@@ -238,7 +246,7 @@ endef
 # stage_tool '$target' '$source'
 define stage_tool
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
-	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
+	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
 	@printf '[-] Staging file %s in %s\n' '$(1)' '$(2)'
 	@cp -f '$(1)' '$(2)'
 endef
@@ -248,7 +256,6 @@ endef
 # ignition_file '$contents.json' '$target.json' '$filename' '$decimal-mode'
 define ignition_file
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
-	$$(call verify_expression,$(wildcard $<),File not found: $<)
 	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
 	@jq -n --arg name '$(3)' --argjson mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/etc/sysctl.d/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
@@ -256,7 +263,6 @@ endef
 # ignition_unit_file '$unit.service' '$source.service.json-raw' '$output.json'
 define ignition_unit_file
 $(3): $(2)
-	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
 	@printf '[-] Creating ignition unit file %s: %s\n' '$(3)' '$(2)'
 	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, enable: false, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
 endef
@@ -264,7 +270,6 @@ endef
 # ignition_unit_dropins '$target.json' '$space-separated-dropins'
 define ignition_unit_dropins
 $(1): $(2)
-	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
 	@printf '[-] Creating ignition unit dropins %s: %s\n' '$(1)' '$(2)'
 	@jq '[., inputs]' $(2) >| '$(1)'
 endef
@@ -272,7 +277,6 @@ endef
 # ignition_dropin_file '$filename' '$contents' '$target.json'
 define ignition_dropin_file
 $(3): $(2)	| $(patsubst %/,%,$(dir $(3)))
-	$$(call verify_expression,$(wildcard $$<),File not found: $$<)
 	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, contents: $$$$contents[0] }' >| '$(3)'
 endef
 
