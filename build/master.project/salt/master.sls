@@ -226,7 +226,7 @@ Install salt-master.service:
 
         - context:
             description: Salt-Master
-            configuration: /etc/salt/minion
+            configuration: /etc/salt/master
 
             execute: /usr/bin/salt-master
             kill_mode: process
