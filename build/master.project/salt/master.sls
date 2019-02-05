@@ -249,7 +249,7 @@ Install salt-master.service:
             - Install salt-master configuration
             - Finished building the salt-stack image
 
-        - mode: 0664
+        - mode: 0644
 
 # systemctl enable the salt-master.service
 Enable systemd multi-user.target wants salt-master.service:

@@ -202,7 +202,7 @@ Install salt-minion.service:
             - Install salt-minion configuration
             - Install salt-minion common configuration
             - Finished building the salt-stack image
-        - mode: 0664
+        - mode: 0644
 
 # systemctl enable the salt-minion.service
 Enable systemd multi-user.target wants salt-minion.service:

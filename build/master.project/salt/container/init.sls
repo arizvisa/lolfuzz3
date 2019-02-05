@@ -91,7 +91,7 @@ Install container-build.service:
             container_path: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
         - require:
             - Install container-build.service script
-        - mode: 0664
+        - mode: 0644
 
 Install container-build.path:
     file.managed:
@@ -101,7 +101,7 @@ Install container-build.path:
             - Install container-build.service
         - require:
             - Install container-build.service
-        - mode: 0664
+        - mode: 0644
 
 ### container load service
 Install container load script:
@@ -132,7 +132,7 @@ Install container-load.service:
             container_path: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
         - require:
             - Install container-load.service script
-        - mode: 0664
+        - mode: 0644
 
 Install container-load.path:
     file.managed:
@@ -142,7 +142,7 @@ Install container-load.path:
             - Install container-load.service
         - require:
             - Install container-load.service
-        - mode: 0664
+        - mode: 0644
 
 ### container update service
 Install container update script:
@@ -174,7 +174,7 @@ Install container-sync.service:
             container_path: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
         - require:
             - Install container-sync.service script
-        - mode: 0664
+        - mode: 0644
 
 Install container-sync.path:
     file.managed:
@@ -184,7 +184,7 @@ Install container-sync.path:
             - Install container-sync.service
         - require:
             - Install container-sync.service
-        - mode: 0664
+        - mode: 0644
 
 ### symbolic links for all services
 # container-build

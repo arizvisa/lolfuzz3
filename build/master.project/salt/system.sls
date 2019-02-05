@@ -3,14 +3,14 @@
 Make dropin directory for swap.service:
     file.directory:
         - name: /etc/systemd/system/swap.service.d
-        - mode: 0775
+        - mode: 0755
         - makedirs: true
 
 ### Swap file size
 Set the default swap size:
     file.managed:
         - name: /etc/systemd/system/swap.service.d/00-defaults.conf
-        - mode: 0775
+        - mode: 0644
         - contents: |
             [Service]
             Environment="Size={{ pillar["service"]["system"]["swap-size"] }}"

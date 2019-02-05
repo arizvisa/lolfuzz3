@@ -1,4 +1,4 @@
-Install rkt-gc service:
+Install rkt-gc.service:
     file.managed:
         - template: jinja
         - name: /etc/systemd/system/rkt-gc.service
@@ -6,9 +6,9 @@ Install rkt-gc service:
         - context:
             description: Run rkt-gc to clean up any exited pods
             command: /bin/rkt gc
-        - mode: 0664
+        - mode: 0644
 
-Install rkt-gc service timer:
+Install rkt-gc.timer:
     file.managed:
         - template: jinja
         - name: /etc/systemd/system/rkt-gc.timer
@@ -16,17 +16,17 @@ Install rkt-gc service timer:
         - context:
             description: Run rkt-gc at a set interval
         - require:
-            - Install rkt-gc service
-        - mode: 0664
+            - Install rkt-gc.service
+        - mode: 0644
 
-Register rkt-gc timer dropin directory:
+Register rkt-gc.timer dropin directory:
     file.directory:
         - name: /etc/systemd/system/rkt-gc.timer.d
         - require:
-            - Install rkt-gc service timer
-        - mode: 0775
+            - Install rkt-gc.timer
+        - mode: 0755
 
-Install rkt-gc service timer dropin:
+Install rkt-gc.timer interval dropin:
     file.managed:
         - template: jinja
         - name: /etc/systemd/system/rkt-gc.timer.d/50-interval.conf
@@ -35,14 +35,14 @@ Install rkt-gc service timer dropin:
             timer:
                 OnCalendar: '*:00/30'
         - require:
-            - Register rkt-gc timer dropin directory
-        - mode: 0664
+            - Register rkt-gc.timer dropin directory
+        - mode: 0644
 
 Enable systemd multi-user.target wants rkt-gc.timer:
     file.symlink:
         - name: /etc/systemd/system/multi-user.target.wants/rkt-gc.timer
         - target: /etc/systemd/system/rkt-gc.timer
         - require:
-            - Install rkt-gc service timer
-            - Install rkt-gc service timer dropin
+            - Install rkt-gc.timer
+            - Install rkt-gc.timer interval dropin
         - makedirs: true
