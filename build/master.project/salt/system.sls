@@ -14,7 +14,7 @@ Set the default swap size:
         - mode: 0644
         - contents: |
             [Service]
-            Environment="Size={{ pillar["service"]["system"]["swap-size"] }}"
+            Environment="Size={{ pillar["service"]["system"]["swap"] }}"
         - require:
             - Make dropin directory for swap.service
 
