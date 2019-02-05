@@ -1,0 +1,14 @@
+[Unit]
+Description=create a default swap file
+RequiresMountsFor=/var
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+
+ExecStartPre=/bin/mkdir -p /var/swap
+ExecStart=/bin/sh -c 'for file in /var/swap/*; do \
+            /bin/chmod 600 "$file" \
+            /sbin/mkswap "$file" \
+            done \
+            '
