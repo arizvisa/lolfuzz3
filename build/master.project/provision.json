@@ -32,13 +32,9 @@
             "command" : "echo \"[*] Uploading private key for self-service on localhost\""
         },
         { "type" : "shell",
-            "environment_vars" : [
-                "ROOT=/",
-                "LOGFILE=/root/bootstrap.install.log"
-            ],
             "inline" : [
-                "mkdir -vp /home/core/.ssh 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "chmod -vc 0700 /home/core/.ssh 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "mkdir -vp /home/core/.ssh",
+                "chmod -vc 0700 /home/core/.ssh"
             ]
         },
         { "type" : "file",
@@ -46,12 +42,8 @@
             "destination" : "/home/core/.ssh/id_rsa"
         },
         { "type" : "shell",
-            "environment_vars" : [
-                "ROOT=/",
-                "LOGFILE=/root/bootstrap.install.log"
-            ],
             "inline" : [
-                "chmod -vc 0400 /home/core/.ssh/id_rsa 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "chmod -vc 0400 /home/core/.ssh/id_rsa"
             ]
         },
 
