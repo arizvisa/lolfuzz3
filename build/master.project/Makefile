@@ -326,8 +326,8 @@ help:
 	@printf '\tBUILDDIR: (default /build.dir) Path containing intermediary files for building template\n'
 	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
 	@printf '\tBUILD: (default true) Whether to actually build the template, or to just generate the config\n'
-	@printf '\tVALIDATE: (default true) Whether to validate the config via "%s"\n' "https://coreos.com/validate/"
-	@printf '\tDEBUG: (default false) Ask the user if they wish to unregister the template if the build fails\n'
+	@printf '\tVALIDATE: (default true) Whether to validate the config via "%s"\n' "https://coreos.com/validate"
+	@printf '\tDEBUG: (default false) Emit more logging, and ask the user before unregistering (and removing) the template\n'
 
 	@printf '\nThanks for playing!\n'
 
@@ -499,7 +499,11 @@ $(boxname_workdir)/$(boxname)-vars.json.tools: $(foreach f,$(setup_network_envir
 # generate necessary configuration variables for salt-stack
 $(boxname_workdir)/$(boxname)-vars.json.salt: $(boxname_workdir)/salt $(boxname_workdir)/pillar $(foreach name,$(salt_bootstrap_pillar_files),$(boxname_workdir)/pillar/$(name)) $(boxname_workdir)/salt-minion.conf $(workdir)/$(salt_bootstrap_file) $(salt_patches)
 	@printf '[-] Generating bootstrap variables for salt-bootstrap: %s\n' '$^'
-	@jq -n --arg configuration '$(boxname_workdir)/salt-minion.conf' --arg installer '$(workdir)/$(salt_bootstrap_file)' --arg saltdir '$(boxname_workdir)/salt' --arg pillardir '$(boxname_workdir)/pillar' --arg version '$(salt_bootstrap_version)' --arg patchdir '$(salt_patches)' '{ "salt-bootstrap-config": $$configuration, "salt-bootstrap-installer": $$installer, "salt-bootstrap-files": $$saltdir, "salt-bootstrap-pillar": $$pillardir, "salt-bootstrap-version": $$version, "salt-bootstrap-patches": $$patchdir }' >| '$@'
+ifneq ($(debug),0)
+	@jq -n --arg options '-X -d -D' --arg configuration '$(boxname_workdir)/salt-minion.conf' --arg installer '$(workdir)/$(salt_bootstrap_file)' --arg saltdir '$(boxname_workdir)/salt' --arg pillardir '$(boxname_workdir)/pillar' --arg version '$(salt_bootstrap_version)' --arg patchdir '$(salt_patches)' '{ "salt-bootstrap-config": $$configuration, "salt-bootstrap-installer": $$installer, "salt-bootstrap-files": $$saltdir, "salt-bootstrap-pillar": $$pillardir, "salt-bootstrap-version": $$version, "salt-bootstrap-patches": $$patchdir, "salt-bootstrap-options": $$options }' >| '$@'
+else
+	@jq -n --arg options '-X -d' --arg configuration '$(boxname_workdir)/salt-minion.conf' --arg installer '$(workdir)/$(salt_bootstrap_file)' --arg saltdir '$(boxname_workdir)/salt' --arg pillardir '$(boxname_workdir)/pillar' --arg version '$(salt_bootstrap_version)' --arg patchdir '$(salt_patches)' '{ "salt-bootstrap-config": $$configuration, "salt-bootstrap-installer": $$installer, "salt-bootstrap-files": $$saltdir, "salt-bootstrap-pillar": $$pillardir, "salt-bootstrap-version": $$version, "salt-bootstrap-patches": $$patchdir, "salt-bootstrap-options": $$options }' >| '$@'
+endif
 
 # concatenate json template into a single .json file together with plugins
 $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 	| $(boxname_workdir)
