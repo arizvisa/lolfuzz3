@@ -79,7 +79,7 @@
             "command" : "echo \"[*] Performing an upgrade of the toolbox container environment\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "LOGFILE=/root/bootstrap.install.log"
@@ -93,7 +93,7 @@
             "command" : "echo \"[*] Installing miscellaneous tools into the toolbox container environment\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "LOGFILE=/root/bootstrap.install.log"
@@ -115,7 +115,7 @@
             "command" : "echo \"[*] Installing salt-minion dependencies into toolbox\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "LOGFILE=/root/bootstrap.install.log"
@@ -133,7 +133,7 @@
             "command" : "echo \"[*] Installing salt-minion into toolbox\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "STAGE={{user `salt-bootstrap-installer-stage`}}",
@@ -150,7 +150,7 @@
             "command": "echo \"[*] Cleaning temporary files leftover from installing packages\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "inline" : [
                 "dnf -y --enablerepo='*' clean all"
             ]
@@ -168,7 +168,7 @@
             "command": "echo \"[-] Applying patches from {{user `site-packages-stage`}} to site-packages in toolbox instance\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "STAGE={{user `site-packages-stage`}}",
