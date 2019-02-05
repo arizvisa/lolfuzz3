@@ -11,13 +11,34 @@
             ]
         },
 
+
         { "type" : "shell-local",
-            "command" : "echo \"[*] Uploading private key for connecting to localhost\""
+            "command" : "echo \"[*] Preparing system for provisioning\""
         },
         { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
             "inline" : [
-                "mkdir -p /home/core/.ssh",
-                "chmod 0700 /home/core/.ssh"
+                "( echo -n \"System installation began at \"; date -Iseconds ) >| \"$ROOT/$LOGFILE\"",
+                "systemctl stop update-engine 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "mkdir -vp \"$ROOT/var/cache/salt\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
+            "command" : "echo \"[*] Uploading private key for self-service on localhost\""
+        },
+        { "type" : "shell",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
+            "inline" : [
+                "mkdir -vp /home/core/.ssh 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "chmod -vc 0700 /home/core/.ssh 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
         { "type" : "file",
@@ -25,8 +46,12 @@
             "destination" : "/home/core/.ssh/id_rsa"
         },
         { "type" : "shell",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
             "inline" : [
-                "chmod 0400 /home/core/.ssh/id_rsa"
+                "chmod -vc 0400 /home/core/.ssh/id_rsa 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -40,29 +65,16 @@
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
             "environment_vars" : [
+                "ROOT=/",
                 "DEPLOY=/opt",
                 "STAGE={{user `coreos-tools-stage`}}",
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "mkdir -p \"$DEPLOY\"",
-                "find \"$STAGE\" -exec chmod -v 0755 {} + 2>&1 | tee -a \"$LOGFILE\"",
-                "tar -C \"$STAGE\" -cvpf- . | tar -xpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$LOGFILE\"",
-                "rm -rf \"$ROOT/$STAGE\""
-            ]
-        },
-
-        { "type" : "shell-local",
-            "command" : "echo \"[*] Making required salt-minion directories\""
-        },
-        { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
-            "environment_vars" : [
-                "ROOT=/",
-                "LOGFILE=/root/bootstrap.install.log"
-            ],
-            "inline" : [
-                "mkdir -p \"$ROOT/var/cache/salt\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\""
+                "mkdir -vp \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "find \"$STAGE\" -exec chmod -v 0755 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "tar -C \"$STAGE\" -cvpf- . | tar -xpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "rm -vrf \"$ROOT/$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -142,7 +154,7 @@
             ],
             "inline" : [
                 "sh \"$ROOT/$STAGE\"/install-salt.sh {{user `salt-bootstrap-options`}} -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "rm -f \"$ROOT/$STAGE\"/install-salt.sh"
+                "rm -vf \"$ROOT/$STAGE\"/install-salt.sh 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -151,8 +163,12 @@
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/media/root",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
             "inline" : [
-                "dnf -y --enablerepo='*' clean all"
+                "dnf -y --enablerepo='*' clean all 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -178,7 +194,7 @@
                 "until dnf -y {{user `dnf-options`}} install patch; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "cd /usr/lib/python2*/site-packages 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "for fix in \"$ROOT/$STAGE\"/*.patch; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "rm -rf \"$ROOT/$STAGE\""
+                "rm -vrf \"$ROOT/$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -186,10 +202,14 @@
             "command" : "echo \"[-] Creating directory structure in {{user `salt-bootstrap-stage`}} for staging salt-stack configuration\""
         },
         { "type" : "shell",
+            "environment_vars" : [
+                "ROOT=/media/root",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
             "inline" : [
                 "umask 022",
-                "mkdir -p '{{user `salt-bootstrap-stage`}}/etc/salt'",
-                "mkdir -p '{{user `salt-bootstrap-stage`}}/srv/bootstrap/'{salt,pillar}"
+                "mkdir -vp '{{user `salt-bootstrap-stage`}}/etc/salt' 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "mkdir -vp '{{user `salt-bootstrap-stage`}}/srv/bootstrap/'{salt,pillar} 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
         { "type" : "file",
@@ -226,7 +246,7 @@
                 "find \"$ROOT$STAGE\" -type f -exec chmod -v 0644 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$ROOT$STAGE\" -type d -exec chmod -v 0755 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "tar -C \"$ROOT$STAGE\" -cvpf- . | tar -xpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "rm -rf \"$ROOT$STAGE\""
+                "rm -vrf \"$ROOT$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -274,6 +294,7 @@
                 "LOGFILE=/root/bootstrap.state.log"
             ],
             "inline" : [
+                "( echo -n \"Applying states at \"; date -Iseconds ) >| \"$ROOT/$LOGFILE\"",
                 "until salt-call --retcode-passthrough --local state.apply; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
@@ -317,7 +338,7 @@
                 "find \"$STAGE\" -type f -exec chmod -v 0644 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$STAGE\" -type d -exec chmod -v 0755 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "tar -C \"$STAGE\" -cvpf- . | tar -xpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "rm -rf \"$STAGE\""
+                "rm -vrf \"$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
