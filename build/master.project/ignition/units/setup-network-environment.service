@@ -6,9 +6,9 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-#ExecStartPre=-/usr/bin/mkdir -p ${LIBEXEC}"
-#ExecStartPre=/usr/bin/wget -N -P ${LIBEXEC} ${URL}
-#ExecStartPre=/usr/bin/chmod +x ${LIBEXEC}/setup-network-environment
+#ExecStartPre=-/bin/mkdir -p ${LIBEXEC}"
+#ExecStartPre=/bin/wget -N -P ${LIBEXEC} ${URL}
+#ExecStartPre=/bin/chmod +x ${LIBEXEC}/setup-network-environment
 
 ExecStart=/bin/sh -c \
     "${LIBEXEC}/setup-network-environment"
