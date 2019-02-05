@@ -81,7 +81,7 @@ Project key {{ ProjectRoot | join(".") }}:
 # systemctl enable the etcd-member.service
 Enable systemd multi-user.target wants etcd.serice:
     file.symlink:
-        - name: /etc/systemd/system/multi-user.target.wants/etcd.service
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/etcd.service
         - target: /etc/systemd/system/etcd.service
         - makedirs: true
         - require:
@@ -90,7 +90,7 @@ Enable systemd multi-user.target wants etcd.serice:
 # systemctl enable the etcd-master.service
 Enable systemd multi-user.target wants etcd-master.service:
     file.symlink:
-        - name: /etc/systemd/system/multi-user.target.wants/etcd-master.service
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/etcd-master.service
         - target: /etc/systemd/system/etcd-master.service
         - makedirs: true
         - require:
@@ -101,7 +101,7 @@ Enable systemd multi-user.target wants etcd-master.service:
 ## etcd.service
 Make dropin directory for etcd.service:
     file.directory:
-        - name: /etc/systemd/system/etcd.service.d
+        - name: {{ Root }}/etc/systemd/system/etcd.service.d
         - mode: 0755
         - makedirs: true
 
@@ -109,7 +109,7 @@ Dropin a before requisite to etcd.service:
     file.managed:
         - template: jinja
         - source: salt://etcd/requisite-before.dropin
-        - name: /etc/systemd/system/etcd.service.d/15-requisite-before.conf
+        - name: {{ Root }}/etc/systemd/system/etcd.service.d/15-requisite-before.conf
         - defaults:
             units:
                 - flanneld.service
@@ -122,7 +122,7 @@ Dropin a before requisite to etcd.service:
 ## etcd-master.service
 Make dropin directory for etcd-master.service:
     file.directory:
-        - name: /etc/systemd/system/etcd-master.service.d
+        - name: {{ Root }}/etc/systemd/system/etcd-master.service.d
         - mode: 0755
         - makedirs: true
 
@@ -130,7 +130,7 @@ Dropin a before requisite to etcd-master.service:
     file.managed:
         - template: jinja
         - source: salt://etcd/requisite-before.dropin
-        - name: /etc/systemd/system/etcd-master.service.d/15-requisite-before.conf
+        - name: {{ Root }}/etc/systemd/system/etcd-master.service.d/15-requisite-before.conf
         - defaults:
             units:
                 - flanneld.service

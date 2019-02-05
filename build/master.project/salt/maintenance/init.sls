@@ -1,7 +1,9 @@
+{% set Root = pillar["local"]["root"] %}
+
 Install rkt-gc.service:
     file.managed:
         - template: jinja
-        - name: /etc/systemd/system/rkt-gc.service
+        - name: {{ Root }}/etc/systemd/system/rkt-gc.service
         - source: salt://maintenance/command.service
         - context:
             description: Run rkt-gc to clean up any exited pods
@@ -11,7 +13,7 @@ Install rkt-gc.service:
 Install rkt-gc.timer:
     file.managed:
         - template: jinja
-        - name: /etc/systemd/system/rkt-gc.timer
+        - name: {{ Root }}/etc/systemd/system/rkt-gc.timer
         - source: salt://maintenance/command.timer
         - context:
             description: Run rkt-gc at a set interval
@@ -21,7 +23,7 @@ Install rkt-gc.timer:
 
 Register rkt-gc.timer dropin directory:
     file.directory:
-        - name: /etc/systemd/system/rkt-gc.timer.d
+        - name: {{ Root }}/etc/systemd/system/rkt-gc.timer.d
         - require:
             - Install rkt-gc.timer
         - mode: 0755
@@ -29,7 +31,7 @@ Register rkt-gc.timer dropin directory:
 Install rkt-gc.timer interval dropin:
     file.managed:
         - template: jinja
-        - name: /etc/systemd/system/rkt-gc.timer.d/50-interval.conf
+        - name: {{ Root }}/etc/systemd/system/rkt-gc.timer.d/50-interval.conf
         - source: salt://maintenance/timer.dropin
         - context:
             timer:
@@ -40,7 +42,7 @@ Install rkt-gc.timer interval dropin:
 
 Enable systemd multi-user.target wants rkt-gc.timer:
     file.symlink:
-        - name: /etc/systemd/system/multi-user.target.wants/rkt-gc.timer
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/rkt-gc.timer
         - target: /etc/systemd/system/rkt-gc.timer
         - require:
             - Install rkt-gc.timer

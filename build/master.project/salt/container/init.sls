@@ -1,3 +1,4 @@
+{% set Root = pillar["local"]["root"] %}
 
 ### container directory structure
 Make container-root directory:
@@ -86,7 +87,7 @@ Install container-build.service:
     file.managed:
         - template: jinja
         - source: salt://container/container-build.service
-        - name: /etc/systemd/system/container-build.service
+        - name: {{ Root }}/etc/systemd/system/container-build.service
         - defaults:
             container_path: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
         - require:
@@ -96,7 +97,7 @@ Install container-build.service:
 Install container-build.path:
     file.managed:
         - source: salt://container/container-build.path
-        - name: /etc/systemd/system/container-build.path
+        - name: {{ Root }}/etc/systemd/system/container-build.path
         - use:
             - Install container-build.service
         - require:
@@ -127,7 +128,7 @@ Install container-load.service:
     file.managed:
         - template: jinja
         - source: salt://container/container-load.service
-        - name: /etc/systemd/system/container-load.service
+        - name: {{ Root }}/etc/systemd/system/container-load.service
         - defaults:
             container_path: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
         - require:
@@ -137,7 +138,7 @@ Install container-load.service:
 Install container-load.path:
     file.managed:
         - source: salt://container/container-load.path
-        - name: /etc/systemd/system/container-load.path
+        - name: {{ Root }}/etc/systemd/system/container-load.path
         - use:
             - Install container-load.service
         - require:
@@ -169,7 +170,7 @@ Install container-sync.service:
     file.managed:
         - template: jinja
         - source: salt://container/container-sync.service
-        - name: /etc/systemd/system/container-sync.service
+        - name: {{ Root }}/etc/systemd/system/container-sync.service
         - defaults:
             container_path: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
         - require:
@@ -179,7 +180,7 @@ Install container-sync.service:
 Install container-sync.path:
     file.managed:
         - source: salt://container/container-sync.path
-        - name: /etc/systemd/system/container-sync.path
+        - name: {{ Root }}/etc/systemd/system/container-sync.path
         - use:
             - Install container-sync.service
         - require:
@@ -190,7 +191,7 @@ Install container-sync.path:
 # container-build
 Enable systemd multi-user.target wants container-build.path:
     file.symlink:
-        - name: /etc/systemd/system/multi-user.target.wants/container-build.path
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/container-build.path
         - target: /etc/systemd/system/container-build.path
         - require:
             - Install container-build.path
@@ -198,7 +199,7 @@ Enable systemd multi-user.target wants container-build.path:
 
 Enable systemd container-build.path requires container-build.service:
     file.symlink:
-        - name: /etc/systemd/system/container-build.path.requires/container-build.service
+        - name: {{ Root }}/etc/systemd/system/container-build.path.requires/container-build.service
         - target: /etc/systemd/system/container-build.service
         - require:
             - Install container-build.service
@@ -207,7 +208,7 @@ Enable systemd container-build.path requires container-build.service:
 # container-load
 Enable systemd multi-user.target wants container-load.path:
     file.symlink:
-        - name: /etc/systemd/system/multi-user.target.wants/container-load.path
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/container-load.path
         - target: /etc/systemd/system/container-load.path
         - require:
             - Install container-load.path
@@ -215,7 +216,7 @@ Enable systemd multi-user.target wants container-load.path:
 
 Enable systemd container-load.path requires container-load.service:
     file.symlink:
-        - name: /etc/systemd/system/container-load.path.requires/container-load.service
+        - name: {{ Root }}/etc/systemd/system/container-load.path.requires/container-load.service
         - target: /etc/systemd/system/container-load.service
         - require:
             - Install container-load.service
@@ -224,7 +225,7 @@ Enable systemd container-load.path requires container-load.service:
 # container-sync
 Enable systemd multi-user.target wants container-sync.path:
     file.symlink:
-        - name: /etc/systemd/system/multi-user.target.wants/container-sync.path
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/container-sync.path
         - target: /etc/systemd/system/container-sync.path
         - require:
             - Install container-sync.path
@@ -232,7 +233,7 @@ Enable systemd multi-user.target wants container-sync.path:
 
 Enable systemd multi-user.target wants container-sync.service:
     file.symlink:
-        - name: /etc/systemd/system/multi-user.target.wants/container-sync.service
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/container-sync.service
         - target: /etc/systemd/system/container-sync.service
         - require:
             - Install container-sync.service
@@ -240,7 +241,7 @@ Enable systemd multi-user.target wants container-sync.service:
 
 Enable systemd container-sync.path requires container-sync.service:
     file.symlink:
-        - name: /etc/systemd/system/container-sync.path.requires/container-sync.service
+        - name: {{ Root }}/etc/systemd/system/container-sync.path.requires/container-sync.service
         - target: /etc/systemd/system/container-sync.service
         - require:
             - Install container-sync.service
