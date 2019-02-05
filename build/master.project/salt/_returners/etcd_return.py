@@ -129,7 +129,7 @@ def returner(ret):
     # Update the given minion in the external job cache with the current (latest job)
     # This is used by get_fun() to return the last function that was called
     minionp = '/'.join([path, 'minions', ret['id']])
-    jid.debug("sdstack_etcd returner <returner> updating (last) job id (ttl={ttl:d}) of {id:s} at {path:s} with job {jid:s}".format(jid=ret['jid'], id=ret['id'], path=minionp, ttl=ttl))
+    log.debug("sdstack_etcd returner <returner> updating (last) job id (ttl={ttl:d}) of {id:s} at {path:s} with job {jid:s}".format(jid=ret['jid'], id=ret['id'], path=minionp, ttl=ttl))
     res = client.set(minionp, ret['jid'], ttl=ttl)
     if hasattr(res, '_prev_node'):
         log.trace("sdstack_etcd returner <returner> the previous job id {old:s} for {id:s} at {path:s} was set to {new:s}".format(old=res._prev_node.value, id=ret['id'], path=minionp, new=res.value))
@@ -188,7 +188,8 @@ def save_minions(jid, minions, syndic_id=None):  # pylint: disable=unused-argume
     Save/update the minion list for a given jid. The syndic_id argument is
     included for API compatibility only.
     '''
-    client, path = _get_conn(__opts__, read_profile)
+    write_profile = __opts__.get('etcd.returner_write_profile')
+    client, path = _get_conn(__opts__, write_profile)
 
     # Figure out the path that our job should be at
     jobp = '/'.join([path, 'jobs', jid])
@@ -256,7 +257,8 @@ def get_jid(jid):
     # Anything that is a directory should be a minion that contains some results.
     ret = {}
     for item in items.leaves:
-        if not item.dir: continue
+        if not item.dir:
+            continue
 
         # Extract the minion name from the key in the job, and use it to build
         # the path to the return value
