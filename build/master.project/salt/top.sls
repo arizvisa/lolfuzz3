@@ -3,6 +3,7 @@ master:
 
     # first (only) master in cluster
     'G@role:master-bootstrap':
+        - system
 
         # states used for bootstrap
         - bootstrap         # create /etc/bootstrap-environment
@@ -28,6 +29,7 @@ master:
 
     # when master is re-deployed or cloned
     'G@role:master':
+        - system
 
         # states for joining the cluster
         #- reset-id          # remove /etc/machine-id and then restart

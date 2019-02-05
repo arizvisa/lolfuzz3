@@ -2,6 +2,7 @@ master:
 
     # bootstrapping a master
     'G@role:master-bootstrap':
+        - system
         - master
         - master-network
         - project
@@ -18,6 +19,7 @@ master:
 
     # master that has joined the project
     'G@role:master':
+        - system
         - master
         - master-network
         - project
