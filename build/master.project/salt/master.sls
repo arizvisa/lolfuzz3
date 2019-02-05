@@ -112,7 +112,7 @@ Install salt-master configuration:
         - defaults:
             root_dir: /
             hash_type: sha256
-            log_level: info
+            log_level: warning
         - require:
             - Make salt configuration directory
         - mode: 0664
