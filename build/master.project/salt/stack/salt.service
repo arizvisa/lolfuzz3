@@ -15,11 +15,11 @@ LimitNOFILE=16384
 TimeoutStartSec=infinity
 
 {% if volumes is defined -%}
-ExecStartPre=-/usr/bin/mkdir -p {%- for name in volumes %} {{ volumes[name].source }}{% endfor %}
+ExecStartPre=-/bin/mkdir -p {%- for name in volumes %} {{ volumes[name].source }}{% endfor %}
 {% endif -%}
-ExecStartPre=/usr/bin/bash -c \
+ExecStartPre=/bin/bash -c \
     "{{ container_path }}/load.sh {{ container_path }}/image/{{ image_path }} | tee >( cut -d$'\t' -f3 >| {{ container_path }}/image/{{ image_uuid_path }} )"
-ExecStart=/usr/bin/rkt run \
+ExecStart=/bin/rkt run \
             --uuid-file-save={{ run_uuid_path }} \
             --net={{ network }} \
 {%- if exposed is defined -%}
@@ -35,9 +35,9 @@ ExecStart=/usr/bin/rkt run \
             --inherit-env=true \
             -- {{ image_name }} --- --exec={{ execute }}
 
-# ExecStop=/usr/bin/rkt stop --uuid-file={{ run_uuid_path }}
-ExecStopPost=/usr/bin/rkt gc --grace-period=0s --mark-only
-ExecStopPost=/usr/bin/rm -f {{ run_uuid_path }}
+# ExecStop=/bin/rkt stop --uuid-file={{ run_uuid_path }}
+ExecStopPost=/bin/rkt gc --grace-period=0s --mark-only
+ExecStopPost=/bin/rm -f {{ run_uuid_path }}
 
 [Install]
 WantedBy=multi-user.target
