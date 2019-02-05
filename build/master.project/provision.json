@@ -53,6 +53,20 @@
         },
 
         { "type" : "shell-local",
+            "command" : "echo \"[*] Making required salt-minion directories\""
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
+            "inline" : [
+                "mkdir -p \"$ROOT/var/cache/salt\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\""
+            ]
+        },
+
+        { "type" : "shell-local",
             "command" : "echo \"[*] Downloading toolbox container environment\""
         },
         { "type" : "shell",
@@ -119,7 +133,7 @@
             "command" : "echo \"[*] Installing salt-minion into toolbox\""
         },
         { "type" : "shell",
-            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
             "environment_vars" : [
                 "ROOT=/media/root",
                 "STAGE={{user `salt-bootstrap-installer-stage`}}",
@@ -127,7 +141,6 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "mkdir -p \"$ROOT/var/cache/salt\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\"",
                 "sh \"$ROOT/$STAGE\"/install-salt.sh -X -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -f \"$ROOT/$STAGE\"/install-salt.sh"
             ]
