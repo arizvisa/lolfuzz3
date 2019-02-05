@@ -96,18 +96,23 @@ def __virtual__():
 
 def _get_conn(opts, profile=None):
     '''
-    Establish a connection to etcd
+    Establish a connection to an etcd profile.
     '''
     if profile is None:
         profile = opts.get('etcd.returner')
+
+    # Grab the returner_root from the options
     path = opts.get('etcd.returner_root', '/salt/return')
+
+    # Grab a connection using etcd_util, and then return the EtcdClient
+    # from one of its attributes
     wrapper = salt.utils.etcd_util.get_conn(opts, profile)
     return wrapper.client, path
 
 
 def returner(ret):
     '''
-    Return data to an etcd server or cluster
+    Return data to an etcd profile.
     '''
     write_profile = __opts__.get('etcd.returner_write_profile')
     if write_profile:
@@ -116,154 +121,272 @@ def returner(ret):
         ttl = __opts__.get('etcd.ttl')
 
     client, path = _get_conn(__opts__, write_profile)
-    # Make a note of this minion for the external job cache
-    client.set(
-        '/'.join((path, 'minions', ret['id'])),
-        ret['jid'],
-        ttl=ttl,
-    )
 
+    # if a minion is returning a standalone job, get a jid
+    if ret['jid'] == 'req':
+        ret['jid'] = prep_jid(nocache=ret.get('nocache', False))
+
+    # Update the given minion in the external job cache with the current (latest job)
+    # This is used by get_fun() to return the last function that was called
+    minionp = '/'.join([path, 'minions', ret['id']])
+    jid.debug("sdstack_etcd returner <returner> updating (last) job id (ttl={ttl:d}) of {id:s} at {path:s} with job {jid:s}".format(jid=ret['jid'], id=ret['id'], path=minionp, ttl=ttl))
+    res = client.set(minionp, ret['jid'], ttl=ttl)
+    if hasattr(res, '_prev_node'):
+        log.trace("sdstack_etcd returner <returner> the previous job id {old:s} for {id:s} at {path:s} was set to {new:s}".format(old=res._prev_node.value, id=ret['id'], path=minionp, new=res.value))
+
+    # Figure out the path for the specified job and minion
+    jobp = '/'.join([path, 'jobs', ret['jid'], ret['id']])
+    log.debug("sdstack_etcd returner <returner> writing job data (ttl={ttl:d}) for {jid:s} to {path:s} with {data}".format(jid=ret['jid'], path=jobp, ttl=ttl, data=ret))
+
+    # Iterate through all the fields in the return dict and dump them under the
+    # jobs/$jid/id/$field key. We aggregate all the exceptions so that if an
+    # error happens, the rest of the fields will still be written.
+    exceptions = []
     for field in ret:
-        # Not using os.path.join because we're not dealing with file paths
-        dest = '/'.join((
-            path,
-            'jobs',
-            ret['jid'],
-            ret['id'],
-            field
-        ))
-        client.set(dest, salt.utils.json.dumps(ret[field]), ttl=ttl)
+        fieldp = '/'.join([jobp, field])
+        data = salt.utils.json.dumps(ret[field])
+        try:
+            res = client.set(fieldp, data, ttl=ttl)
+        except Exception as E:
+            log.trace("sdstack_etcd returner <returner> unable to set field {field:s} for job {jid:s} at {path:s} to {result}".format(field=field, jid=ret['jid'], path=fieldp, result=ret[field]))
+            exceptions.append((E, field, ret[field]))
+            continue
+        log.trace("sdstack_etcd returner <returner> set field {field:s} for job {jid:s} at {path:s} to {result}".format(field=field, jid=ret['jid'], path=res.key, result=ret[field]))
+
+    # Go back through all the exceptions that occurred while trying to write the
+    # fields and log them.
+    for e, field, value in exceptions:
+        log.exception("sdstack_etcd returner <returner> exception ({exception:s}) was raised while trying to set the field {field:s} for job {jid:s} to {value}".format(exception=e, field=field, jid=ret['jid'], value=value))
+    return
 
 
 def save_load(jid, load, minions=None):
     '''
-    Save the load to the specified jid
+    Save the load to the specified jid.
     '''
-    log.debug('sdstack_etcd returner <save_load> called jid: {0}'.format(jid))
     write_profile = __opts__.get('etcd.returner_write_profile')
     client, path = _get_conn(__opts__, write_profile)
     if write_profile:
         ttl = __opts__.get(write_profile, {}).get('etcd.ttl')
     else:
         ttl = __opts__.get('etcd.ttl')
-    client.set(
-        '/'.join((path, 'jobs', jid, '.load.p')),
-        salt.utils.json.dumps(load),
-        ttl=ttl,
-    )
+
+    # Figure out the path using jobs/$jid/.load.p
+    loadp = '/'.join([path, 'jobs', jid, '.load.p']),
+    log.debug('sdstack_etcd returner <save_load> setting load data (ttl={ttl:d}) for job {jid:s} at {path:s} with {data:s}'.format(jid=jid, ttl=ttl, path=loadp, data=load))
+
+    # Now we can just store the current load
+    data = salt.utils.json.dumps(load)
+    res = client.set(loadp, data, ttl=ttl)
+
+    log.trace('sdstack_etcd returner <save_load> saved load data for job {jid:s} at {path:s} with {data}'.format(jid=jid, path=res.key, data=load))
+    return
 
 
 def save_minions(jid, minions, syndic_id=None):  # pylint: disable=unused-argument
     '''
-    Included for API consistency
+    Save/update the minion list for a given jid. The syndic_id argument is
+    included for API compatibility only.
     '''
-    pass
+    client, path = _get_conn(__opts__, read_profile)
+
+    # Figure out the path that our job should be at
+    jobp = '/'.join([path, 'jobs', jid])
+    log.debug('sdstack_etcd returner <save_minions> adding minions for job {jid:s} to {path:s}'.format(jid=jid, path=jobp))
+
+    # Iterate through all of the minions and add a directory for them to the job path
+    for minion in set(minions):
+        minionp = '/'.join([path, minion])
+        res = client.set(minionp, None, dir=True)
+        log.trace('sdstack_etcd returner <save_minions> added minion {id:s} for job {jid:s} to {path:s}'.format(id=minion, jid=jid, path=res.key))
+    return
 
 
 def clean_old_jobs():
     '''
-    Included for API consistency
+    Included for API consistency.
     '''
+    # Old jobs should be cleaned by the ttl that's written for each key, so therefore
+    # the implementation of this api is not necessary.
     pass
 
 
 def get_load(jid):
     '''
-    Return the load data that marks a specified jid
+    Return the load data that marks a specified jid.
     '''
-    log.debug('sdstack_etcd returner <get_load> called jid: {0}'.format(jid))
     read_profile = __opts__.get('etcd.returner_read_profile')
     client, path = _get_conn(__opts__, read_profile)
 
-    loadp = '/'.join((path, 'jobs', jid, '.load.p'))
+    # Figure out the path that our job should be at
+    loadp = '/'.join([path, 'jobs', jid, '.load.p'])
+    log.debug('sdstack_etcd returner <get_load> reading load data for job {jid:s} from {path:s}'.format(jid=jid, path=loadp))
+
+    # Read it. If EtcdKeyNotFound was raised then the key doesn't exist and so
+    # we need to return None, because that's what our caller expects on a
+    # non-existent job.
     try:
         res = client.get(loadp)
-    except:
-        log.error("etcd returner <get_load> could not find path: {:s}".format(loadp))
+    except salt.utils.etcd_util.etcd.EtcdKeyNotFound as E:
+        log.error("sdstack_etcd returner <get_load> could not find job {jid:s} at the path {path:s}".format(jid=jid, path=loadp))
         return None
+    log.trace('sdstack_etcd returner <get_load> found load data for job {jid:s} at {path:s} with value {data}'.format(jid=jid, path=res.key, data=res.value))
     return salt.utils.json.loads(res.value)
 
 
 def get_jid(jid):
     '''
-    Return the information returned when the specified job id was executed
+    Return the information returned when the specified job id was executed.
     '''
-    log.debug('sdstack_etcd returner <get_jid> called jid: {0}'.format(jid))
-    ret = {}
     client, path = _get_conn(__opts__)
-    items = client.get('/'.join((path, 'jobs', jid)))
-    for item in items.children:
-        if str(item.key).endswith('.load.p'):
-            continue
-        comps = str(item.key).split('/')
 
-        returnp = '/'.join((path, 'jobs', jid, comps[-1], 'return'))
+    # Figure out the path that our job should be at
+    jobp = '/'.join([path, 'jobs', jid])
+    log.debug('sdstack_etcd returner <get_jid> reading job fields for job {jid:s} from {path:s}'.format(jid=jid, path=jobp))
+
+    # Try and read the job directory. If we have a missing key exception then no
+    # minions have returned anything yet and so we return an empty dict for the
+    # caller.
+    try:
+        items = client.get(jobp)
+    except salt.utils.etcd_util.etcd.EtcdKeyNotFound as E:
+        return {}
+
+    # Iterate through all of the children at our job path that are directories.
+    # Anything that is a directory should be a minion that contains some results.
+    ret = {}
+    for item in items.leaves:
+        if not item.dir: continue
+
+        # Extract the minion name from the key in the job, and use it to build
+        # the path to the return value
+        comps = str(item.key).split('/')
+        returnp = '/'.join([path, 'jobs', jid, comps[-1], 'return'])
+
+        # Now we know the minion and the path to the return for its job, we can
+        # just grab it. If the key exists, but the value is missing entirely,
+        # then something that shouldn't happen has happened.
         try:
             res = client.get(returnp)
-        except:
-            log.debug("etcd returner <get_jid> returned nothing for minion: {:s}".format(returnp))
+        except salt.utils.etcd_util.etcd.EtcdKeyNotFound as E:
+            log.debug("sdstack_etcd returner <get_jid> returned nothing from minion {id:s} for job {jid:s} at path {path:s}".format(id=comps[-1], jid=jid, path=returnp))
             continue
-        data = res.value
-        ret[comps[-1]] = {'return': salt.utils.json.loads(data)}
+
+        # We found something, so update our return dict with the minion id and
+        # the result that it returned.
+        ret[comps[-1]] = {'return': salt.utils.json.loads(res.value)}
+        log.trace("sdstack_etcd returner <get_jid> job {jid:s} from minion {id:s} at path {path:s} returned {result}".format(id=comps[-1], jid=jid, path=res.key, result=res.value))
     return ret
 
 
 def get_fun(fun):
     '''
-    Return a dict of the last function called for all minions
+    Return a dict containing the last function called for all the minions that have called a function.
     '''
-    log.debug('sdstack_etcd returner <get_fun> called fun: {0}'.format(fun))
-    ret = {}
     client, path = _get_conn(__opts__)
-    items = client.get('/'.join((path, 'minions')))
-    for item in items.children:
-        comps = str(item.key).split('/')
 
-        funp = '/'.join((path, 'jobs', str(item.value), comps[-1], 'fun'))
+    # Find any minions that had their last function registered by returner()
+    minionsp = '/'.join([path, 'minions'])
+    log.debug('sdstack_etcd returner <get_fun> reading minions at {path:s} for function {fun:s}'.format(path=minionsp, fun=fun))
+
+    # If the minions key isn't found, then no minions registered a function
+    # and thus we need to return an empty dict so the caller knows that
+    # nothing is available.
+    try:
+        items = client.get(minionsp)
+    except salt.utils.etcd_util.etcd.EtcdKeyNotFound as E:
+        return {}
+
+    # Walk through the list of all the minions that have a jid registered,
+    # and cross reference this with the job returns.
+    ret = {}
+    for item in items.leaves:
+
+        # Now that we have a minion and it's last jid, we use it to fetch the
+        # function field (fun) that was registered by returner().
+        comps = str(item.key).split('/')
+        funp = '/'.join([path, 'jobs', str(item.value), comps[-1], 'fun'])
+
+        # Try and read the field, and skip it if it doesn't exist or wasn't
+        # registered for some reason.
         try:
             res = client.get(funp)
-        except:
-            log.debug("etcd returner <get_fun> returned nothing for minion: {:s}".format(returnp))
+        except salt.utils.etcd_util.etcd.EtcdKeyNotFound as E:
+            log.debug("sdstack_etcd returner <get_fun> returned nothing from minion {id:s} for job {jid:s} at path {path:s}".format(id=comps[-1], jid=str(item.value), path=funp))
             continue
-        data = res.value
-        efun = salt.utils.json.loads(data)
-        if efun == fun:
-            ret[comps[-1]] = str(efun)
+
+        # Check if the function field (fun) matches what the user is looking for
+        # If it does, then we can just add the minion to our results
+        data = salt.utils.json.loads(res.value)
+        if data == fun:
+            ret[comps[-1]] = str(data)
+            log.trace("sdstack_etcd returner <get_fun> found job {jid:s} for minion {id:s} using {fun:s} at {path:s}".format(jid=comps[-1], fun=data, id=item.value, path=item.key))
+        continue
     return ret
 
 
 def get_jids():
     '''
-    Return a list of all job ids
+    Return a list of all job ids that have returned something.
     '''
-    log.debug('sdstack_etcd returner <get_jids> called')
-    ret = []
     client, path = _get_conn(__opts__)
-    items = client.get('/'.join((path, 'jobs')))
-    for item in items.children:
-        if item.dir is True:
-            jid = str(item.key).split('/')[-1]
+
+    # Enumerate all the jobs that are available.
+    jobsp = '/'.join([path, 'jobs'])
+    log.debug("sdstack_etcd returner <get_jids> listing jobs at {path:s}".format(path=jobsp))
+
+    # Fetch all the jobs. If the key doesn't exist, then it's likely that no
+    # jobs have been created yet so return an empty list to the caller.
+    try:
+        items = client.get(jobsp)
+    except salt.utils.etcd_util.etcd.EtcdKeyNotFound as E:
+        return []
+
+    # Anything that's a directory is a job id. Since that's all we're returning,
+    # aggregate them into a list.
+    ret = []
+    for item in items.leaves:
+        comps = str(item.key).split('/')
+        if item.dir:
+            jid = comps[-1]
             ret.append(jid)
+            log.trace("sdstack_etcd returner <get_jids> found job {jid:s} at {path:s}".format(jid=comps[-1], path=item.key))
+        continue
     return ret
 
 
 def get_minions():
     '''
-    Return a list of minions
+    Return a list of all minions that have returned something.
     '''
-    log.debug('sdstack_etcd returner <get_minions> called')
-    ret = []
     client, path = _get_conn(__opts__)
-    items = client.get('/'.join((path, 'minions')))
-    for item in items.children:
-        comps = str(item.key).split('/')
-        ret.append(comps[-1])
+
+    # Find any minions that have returned anything
+    minionsp = '/'.join([path, 'minions'])
+    log.debug('sdstack_etcd returner <get_minions> reading minions at {path:s}'.format(path=minionsp))
+
+    # If no minions were found, then nobody has returned anything recently
+    # (due to ttl). In this case, return an empty last for the caller.
+    try:
+        items = client.get(minionsp)
+    except salt.utils.etcd_util.etcd.EtcdKeyNotFound as E:
+        return []
+
+    # We can just walk through everything that isn't a directory. This path
+    # is simply a list of minions and the last job that each one returned.
+    ret = []
+    for item in items.leaves:
+        if not item.dir:
+            comps = str(item.key).split('/')
+            ret.append(comps[-1])
+            log.trace("sdstack_etcd returner <get_minions> found minion {id:s} at {path:s}".format(id=comps[-1], path=item.key))
+        continue
     return ret
 
 
 def prep_jid(nocache=False, passed_jid=None):  # pylint: disable=unused-argument
     '''
-    Do any work necessary to prepare a JID, including sending a custom id
+    Do any work necessary to prepare a JID, including sending a custom id.
     '''
     return passed_jid if passed_jid is not None else salt.utils.jid.gen_jid(__opts__)
 
@@ -275,28 +398,41 @@ def event_return(events):
     Requires that configuration enabled via 'event_return'
     option in master config.
     '''
-    ttl = __opts__.get('etcd.ttl', 5)
-    client, path = _get_conn(__opts__)
+    write_profile = __opts__.get('etcd.returner_write_profile')
+    client, path = _get_conn(__opts__, write_profile)
+    if write_profile:
+        ttl = __opts__.get(write_profile, {}).get('etcd.ttl')
+    else:
+        ttl = __opts__.get('etcd.ttl')
 
+    # Iterate through all the events, and add them to the events path based
+    # on the tag that is labeled in each event. We aggregate all errors into
+    # a list so the writing of the events are as atomic as possible.
     exceptions = []
     for event in events:
+
+        # Package the event data into a value to write into our etcd profile
         package = {
             'tag': event.get('tag', ''),
             'data': event.get('data', ''),
             'master_id': __opts__['id'],
         }
-        path = '/'.join([path, 'events', package['tag']])
-        json = salt.utils.json.dumps(package)
 
+        # Use the tag from the event package to build a watchable path
+        eventp = '/'.join([path, 'events', package['tag']])
+
+        # Now we can write the event package into the event path
         try:
-            res = client.set(path, json, ttl=ttl)
-        except Exception as err:
-            log.exception('etcd: Unable to write event into returner path {:s} due to exception {:s}: {}'.format(path, package, err))
-            exceptions.append(err)
+            json = salt.utils.json.dumps(package)
+            res = client.set(eventp, json, ttl=ttl)
+        except Exception as E:
+            log.trace("sdstack_etcd returner <event_return> unable to write event with the tag {name:s} into the path {path:s} due to exception ({exception}) being raised".format(name=package['tag'], path=eventp, exception=E))
+            exceptions.append((E, package))
             continue
 
-        if not res:
-            log.error('etcd: Unable to write event into returner path {:s}: {}'.format(path, package))
-        continue
+        log.trace("sdstack_etcd returner <event_return> wrote event (ttl={ttl:d}) with the tag {name:s} to {path:s} using {data}".format(path=res.key, name=package['tag'], ttl=ttl, data=res.value))
 
+    # Go back through all of the exceptions that occurred and log them.
+    for e, pack in exceptions:
+        log.exception("sdstack_etcd returner <event_return> exception ({exception}) was raised while trying to write event {name:s} with the data {data}".format(exception=e, name=pack['tag'], data=pack))
     return
