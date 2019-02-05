@@ -8,7 +8,7 @@ RemainAfterExit=true
 
 ExecStartPre=/bin/mkdir -p /var/swap
 ExecStart=/bin/sh -c 'for file in /var/swap/*; do \
-            /bin/chmod 600 "$file" \
-            /sbin/mkswap "$file" \
+            /bin/chmod 600 "$file"; \
+            /sbin/mkswap "$file"; \
             done \
             '
