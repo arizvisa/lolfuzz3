@@ -1,8 +1,7 @@
 {
   "ignition": {
     "version": "2.1.0",
-    "config": {},
-    "security": {}
+    "config": {}
   },
   "storage": {
     "disks": [],
