@@ -191,9 +191,13 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "shopt -s nullglob",
+                "shopt -s dotglob",
                 "until dnf -y {{user `dnf-options`}} install patch; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "cd /usr/lib/python2*/site-packages 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "for fix in \"$ROOT/$STAGE\"/*.patch; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "files=( \"$ROOT/$STAGE\"/*.patch )",
+                "set -- \"${files[@]}\"",
+                "for fix; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -vrf \"$ROOT/$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
