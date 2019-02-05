@@ -8,16 +8,16 @@ Synchronize all modules for the master:
     salt.runner:
         - name: saltutil.sync_all
         - kwarg:
-            saltenv: {{ saltenv }}
+            saltenv: master
         - require:
             - sls: master
             - sls: master-minion
 
 Synchronize all modules for the minion:
     module.run:
-        - name: saltutil.sync_all
-        - refresh: true
-        - saltenv: {{ saltenv }}
+        - saltutil.sync_all:
+            - refresh: true
+            - saltenv: master
         - require:
             - sls: master
         - sls: master-minion
