@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ramdisk>
+  <config>
+    <useraccess>{{ useraccess | capitalize }}</useraccess>
+    <locallinks>{{ locallinks | capitalize }}</locallinks>
+    <trayicon>{{ trayicon | capitalize }}</trayicon>
+    <alloweject>{{ alloweject | capitalize }}</alloweject>
+  </config>
+  <mount/>
+  <autorun/>
+</ramdisk>

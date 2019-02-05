@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ramdisk>
+{%- if mount is defined %}
+  <mount>
+{%- for item in mount %}
+    <item>
+{%- if item.filesystem.lower() == "raw" %}
+      <filesystem>0</filesystem>
+{%- elif item.filesystem.lower() == "fat" %}
+      <filesystem>1</filesystem>
+{%- elif item.filesystem.lower() == "fat32" %}
+      <filesystem>2</filesystem>
+{%- elif item.filesystem.lower() == "ntfs" %}
+      <filesystem>3</filesystem>
+{%- else %}
+      {{ raise("Invalid filesystem was chosen: " + filesystem) }}
+{%- endif %}
+      <folders/>
+      <letter>{{ item.drive | upper }}</letter>
+      <size>{{ item.size }}</size>
+      <image>
+        <filename>{{ item.filename }}</filename>
+      </image>
+      <savetoimage>{{ item.save | capitalize }}</savetoimage>
+      <removable>{{ item.removable | capitalize }}</removable>
+      <label>{{ item.label }}</label>
+      <compressed>{{ item.compressed | capitalize }}</compressed>
+      <autoflush>{{ item.flush.enable | capitalize }}</autoflush>
+      <flushtime>{{ item.flush.time }}</flushtime>
+      <hddemulation>{{ item.emulation }}</hddemulation>
+      <numanode>{{ item.numanode }}</numanode>
+      <specnuma>{{ item.specnuma }}</specnuma>
+    </item>
+{%- endfor %}
+  </mount>
+{%- else %}
+  <mount />
+{%- endif %}
+{%- if boot is defined %}
+  <boot>
+{%- for item in boot %}
+    <item>
+{%- if item.filesystem.lower() == "raw" %}
+      <filesystem>0</filesystem>
+{%- elif item.filesystem.lower() == "fat" %}
+      <filesystem>1</filesystem>
+{%- elif item.filesystem.lower() == "fat32" %}
+      <filesystem>2</filesystem>
+{%- elif item.filesystem.lower() == "ntfs" %}
+      <filesystem>3</filesystem>
+{%- else %}
+      {{ raise("Invalid filesystem was chosen: " + filesystem) }}
+{%- endif %}
+      <folders/>
+      <letter>{{ item.drive | upper }}</letter>
+      <size>{{ item.size }}</size>
+      <image>
+        <filename>{{ item.filename | capitalize }}</filename>
+      </image>
+      <savetoimage>{{ item.save | capitalize }}</savetoimage>
+      <removable>{{ item.removable | capitalize }}</removable>
+      <label>{{ item.label }}</label>
+      <compressed>{{ item.compressed | capitalize }}</compressed>
+      <autoflush>{{ item.flush.enable | capitalize }}</autoflush>
+      <flushtime>{{ item.flush.time }}</flushtime>
+      <hddemulation>{{ item.emulation | capitalize }}</hddemulation>
+      <numanode>{{ item.numanode }}</numanode>
+      <specnuma>{{ item.specnuma }}</specnuma>
+    </item>
+{%- endfor %}
+  </boot>
+{%- else %}
+  <boot />
+{%- endif %}
+</ramdisk>
+
