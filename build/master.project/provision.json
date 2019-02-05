@@ -141,7 +141,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "sh \"$ROOT/$STAGE\"/install-salt.sh -X -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "sh \"$ROOT/$STAGE\"/install-salt.sh {{user `salt-bootstrap-options`}} -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -f \"$ROOT/$STAGE\"/install-salt.sh"
             ]
         },
