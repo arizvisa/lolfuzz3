@@ -230,10 +230,6 @@ Install salt-master.service:
 
             execute: /usr/bin/salt-master
             kill_mode: process
-            after:
-                - flanneld.service
-            requires:
-                - flanneld.service
 
             network: host
             container_path: {{ pillar["service"]["container"]["path"] | yaml_dquote }}

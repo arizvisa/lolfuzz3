@@ -182,9 +182,8 @@ Install salt-minion.service:
             execute: /usr/bin/salt-minion
             kill_mode: control-group
             after:
-                - flanneld.service
+                - salt-master.service
             requires:
-                - flanneld.service
                 - salt-master.service
 
             network: host
