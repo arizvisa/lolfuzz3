@@ -443,10 +443,13 @@ clean-ignition:
 	-rm -f $(foreach name,$(ignition_units_names),'$(boxname_workdir)/ignition-units.json-$(name)'{,.json-raw})
 	-rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)'-* '$(boxname_workdir)/ignition-dropins.json-$(name)'-*)
 	-rm -f $(foreach name,$(ignition_dropins_names),'$(boxname_workdir)/ignition-unit.json-$(name)' '$(boxname_workdir)/ignition-dropins.json-$(name)')
+	@printf '[*] Erasing temporary files for ignition rootfs: %s\n' '$(boxname_workdir)/rootfs'
+	-rm -f $(foreach name,$(ignition_root_files),'$(boxname_workdir)/rootfs/$(name)'{,.json-raw})
+	-rm -rf '$(boxname_workdir)/rootfs'
 	@printf '[*] Erasing temporary files for ssh keys: %s\n' '$(boxname_workdir)/$(boxname).id_rsa*'
 	-rm -f '$(boxname_workdir)/$(boxname).id_rsa'*
-	@printf '[*] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network,$(boxname_workdir)/$(boxname).config-$(name))'
-	-rm -f $(foreach name,original files units users hostname sysctl pubkey network,'$(boxname_workdir)/$(boxname).config-$(name)')
+	@printf '[*] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network rootfs,$(boxname_workdir)/$(boxname).config-$(name))'
+	-rm -f $(foreach name,original files units users hostname sysctl pubkey network rootfs,'$(boxname_workdir)/$(boxname).config-$(name)')
 	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
 	-rm -f '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
 
