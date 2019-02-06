@@ -204,8 +204,8 @@
             ],
             "inline" : [
                 "umask 022",
-                "mkdir -vp '{{user `salt-bootstrap-stage`}}/etc/salt' 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "mkdir -vp '{{user `salt-bootstrap-stage`}}/srv/bootstrap/'{salt,pillar} 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "mkdir -vp '{{user `salt-bootstrap-stage`}}/etc/salt'",
+                "mkdir -vp '{{user `salt-bootstrap-stage`}}/srv/bootstrap/'{salt,pillar}"
             ]
         },
         { "type" : "file",
