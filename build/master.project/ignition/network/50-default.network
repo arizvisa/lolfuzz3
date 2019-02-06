@@ -1,17 +1,21 @@
 [Match]
 Name=en*
 
-[Link]
-RequiredForOnline=yes
-
 [Network]
 DHCP=yes
 IPv6AcceptRA=yes
-CriticalConnection=yes
 
 [DHCP]
 UseDNS=yes
+UseNTP=yes
 UseMTU=yes
+UseHostname=no
+UseDomains=no
+UseRoutes=yes
+UseTimezone=yes
+CriticalConnection=yes
+RequestBroadcast=yes
 
-[IPV6ACCEPTRA]
+[IPv6AcceptRA]
 UseDNS=yes
+UseDomains=no
