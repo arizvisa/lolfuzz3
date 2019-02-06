@@ -6,4 +6,12 @@ RequiredForOnline=yes
 
 [Network]
 DHCP=yes
+IPv6AcceptRA=yes
 CriticalConnection=yes
+
+[DHCP]
+UseDNS=yes
+UseMTU=yes
+
+[IPV6ACCEPTRA]
+UseDNS=yes
