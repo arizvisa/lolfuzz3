@@ -101,6 +101,7 @@ endif
 DOWNLOAD := curl -L -C- --progress-bar
 FETCH := curl -L -s -S
 PUT := curl -L -s -S -X PUT --data-binary
+MODE := stat -c%a
 
 ifneq ($(wildcard $(ROOTDIR)/github.token),)
 GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
@@ -180,7 +181,7 @@ ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$
 ignition_root_files := $(if $(wildcard $(ignition_config)/files),$(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type f -print))))
 ignition_root_directories := $(if $(wildcard $(ignition_config)/files),$(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type d -print))))
 
-### Expression assertion/validation (macros)
+### Commands (macros)
 
 # assert_expression '$expr' '$message'
 define assert_expression
@@ -200,6 +201,13 @@ endef
 # verify_expression_not '$expr' '$message'
 define verify_expression_not
 	$(if $(1),$(error $(2)),@true)
+endef
+
+### Expressions (macros)
+
+# decimal_mode '$file'
+define decimal_mode
+$(shell printf '%d' $$(( 8#$(shell ${MODE} '$(1)') )) )
 endef
 
 ### Recipe definitions (macros)
