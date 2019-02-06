@@ -3,8 +3,12 @@ Description={{ description }}
 ConditionPathExists={{ container_path }}/image/{{ image_path }}
 ConditionPathExists={{ configuration }}
 Wants=network.target
+{% if after is defined -%}
 After={{ after | join(' ') }}
+{%- endif %}
+{% if requires is defined -%}
 Requires={{ requires | join(' ') }}
+{%- endif %}
 
 [Service]
 Type=notify
