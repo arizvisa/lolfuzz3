@@ -1,3 +1,6 @@
+## Default configuration for systemd.network
+# https://github.com/systemd/systemd/blob/v235/man/systemd.network.xml
+
 [Match]
 Name=en*
 
