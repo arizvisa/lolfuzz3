@@ -684,10 +684,10 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 
 ## Ignition components
 
-# making the ignition sysctl list (the permission 0644 is 420 in decimal)
-$(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_sysctl,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),$(notdir $(f)),420)))
+# making the ignition sysctl list
+$(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_sysctl,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),$(notdir $(f)),$(call decimal_mode,$(f)))))
 
-# making the ignition network list (the permission 0644 is 420 in decimal)
+# making the ignition network list
 $(foreach f,$(ignition_network_files),$(eval $(call ignition_dropin_file,$(notdir $(f)),$(boxname_workdir)/ignition-network.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-network.json-$(notdir $(f)))))
 
 # making the ignition units list
@@ -732,5 +732,5 @@ $(foreach name,$(ignition_root_directories),$(eval $(call make_directory,$(boxna
 # raw ignition root files
 $(foreach name,$(ignition_root_files),$(eval $(call json_rawfile,$(ignition_config)/files/$(name),$(boxname_workdir)/rootfs/$(name).json-raw)))
 
-# making the file entries for the ignition root files (the permission 0644 is 420 in decimal)
-$(foreach name,$(ignition_root_files),$(eval $(call ignition_root_file,$(boxname_workdir)/rootfs/$(name).json-raw,$(boxname_workdir)/rootfs/$(name),$(name),420)))
+# making the file entries for the ignition root files
+$(foreach name,$(ignition_root_files),$(eval $(call ignition_root_file,$(boxname_workdir)/rootfs/$(name).json-raw,$(boxname_workdir)/rootfs/$(name),$(name),$(call decimal_mode,$(ignition_config)/files/$(name)))))
