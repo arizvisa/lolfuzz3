@@ -174,12 +174,11 @@ ignition_template := $(MAKEDIR)default.json
 ignition_sysctl_files := $(wildcard $(ignition_config)/sysctl/*.conf)
 ignition_users_files := $(wildcard $(ignition_config)/users/*)
 ignition_network_files := $(wildcard $(ignition_config)/network/*.network)
-
 ignition_units_names := $(foreach f,$(wildcard $(ignition_config)/units/*),$(notdir $(f)))
 ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$(notdir $(f)))
 
-ignition_root_files := $(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type f -print)))
-ignition_root_directories := $(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type d -print)))
+ignition_root_files := $(if $(wildcard $(ignition_config)/files),$(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type f -print))))
+ignition_root_directories := $(if $(wildcard $(ignition_config)/files),$(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type d -print))))
 
 ### Expression assertion/validation (macros)
 
@@ -563,13 +562,25 @@ $(boxname_workdir)/$(boxname).config-hostname:	| $(boxname_workdir)
 	@jq -n --arg content '$(boxname)' '[{ filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ($$content | @uri)) } }]' >| '$@'
 
 # bootstrap for ignition/sysctl directory
+ifneq ($(ignition_sysctl_files),)
 $(boxname_workdir)/$(boxname).config-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)))
 	@printf '[*] Merging all ignition sysctl files into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $(foreach file,$^,'$(file)') >| '$@'
+else
+$(boxname_workdir)/$(boxname).config-sysctl:
+	@printf '[-] Generating an empty ignition sysctl file list: %s\n' '$@'
+	@jq -n '[]' >| '$@'
+endif
 
+ifneq ($(ignition_root_files),)
 $(boxname_workdir)/$(boxname).config-rootfs: $(foreach name,$(ignition_root_files),$(boxname_workdir)/rootfs/$(name))
 	@printf '[*] Merging all ignition root files into %s: %s\n' '$@' '$^'
-	@jq '[., inputs]' $(foreach file,$^,'$(file)') >| '$@'
+	jq '[., inputs]' $(foreach file,$^,'$(file)') >| '$@'
+else
+$(boxname_workdir)/$(boxname).config-rootfs:
+	@printf '[-] Generating an empty ignition root file list: %s\n' '$@'
+	@jq -n '[]' >| '$@'
+endif
 
 # combine all ignition file jsons into a single one
 $(boxname_workdir)/$(boxname).config-files: $(boxname_workdir)/$(boxname).config-hostname $(boxname_workdir)/$(boxname).config-sysctl $(boxname_workdir)/$(boxname).config-rootfs
@@ -577,9 +588,15 @@ $(boxname_workdir)/$(boxname).config-files: $(boxname_workdir)/$(boxname).config
 	@jq 'reduce inputs as $$item (.; . + $$item)' $(foreach config,$^,'$(config)') >| '$@'
 
 # combining for ignition/units and ignition/dropins
+ifneq ($(ignition_units_names)$(ignition_dropins_names),)
 $(boxname_workdir)/$(boxname).config-units: $(foreach name,$(ignition_units_names),$(boxname_workdir)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_workdir)/ignition-unit.json-$(name))
 	@printf '[*] Merging the ignition unit section into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $(foreach unit,$^,'$(unit)') >| '$@'
+else
+$(boxname_workdir)/$(boxname).config-units:
+	@printf '[-] Generating an empty ignition unit list: %s\n' '$@'
+	@jq -n '[]' >| '$@'
+endif
 
 # generate a json containing the sshAuthorizedKeys field in an object
 $(boxname_workdir)/$(boxname).config-pubkey: $(boxname_workdir)/$(boxname).id_rsa.pub.json-raw
@@ -587,14 +604,27 @@ $(boxname_workdir)/$(boxname).config-pubkey: $(boxname_workdir)/$(boxname).id_rs
 	@jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0] | rtrimstr("\n")] }' >| '$@'
 
 # combine all joined user objects into a single list
+ifneq ($(ignition_users_files),)
 $(boxname_workdir)/$(boxname).config-users: $(foreach f,$(ignition_users_files),$(boxname_workdir)/ignition-user.json-$(notdir $(f)))
 	@printf '[*] Merging the ignition user section into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $(foreach user,$^,'$(user)') >| '$@'
+else
+$(boxname_workdir)/$(boxname).config-users:
+	$(error Not having any users defined may make it impossible to authenticate to template: $@)
+	@printf '[-] Generating an empty ignition user section: %s\n' '$@'
+	@jq -n '[]' >| '$@'
+endif
 
 # combine all joined network dropins into a single list
+ifneq ($(ignition_network_files),)
 $(boxname_workdir)/$(boxname).config-network: $(foreach f,$(ignition_network_files),$(boxname_workdir)/ignition-network.json-$(notdir $(f)))
 	@printf '[*] Merging all ignition network files into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $(foreach config,$^,'$(config)') >| '$@'
+else
+$(boxname_workdir)/$(boxname).config-network:
+	@printf '[-] Generating an empty ignition network file list: %s\n' '$@'
+	@jq -n '[]' >| '$@'
+endif
 
 ### Provisioning recipes
 $(boxname_workdir)/salt $(boxname_workdir)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files)	| $(boxname_workdir)
