@@ -474,8 +474,11 @@ $(eval $(call make_directory,$(custom),))
 
 ### Output recipes
 $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
+	$(call verify_expression_not,$(wildcard $@),Refusing to deploy $< over already existing file: $@)
 	@printf '[*] Moving template %s: %s\n' '$<' '$(dir $@)'
 	mv '$<' '$@'
+	@printf '[*] Leaving an empty directory as a placeholder: %s\n' '$<'
+	mkdir -p '$<'
 
 ### Box recipes
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(custom)
