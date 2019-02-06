@@ -178,6 +178,9 @@ ignition_network_files := $(wildcard $(ignition_config)/network/*.network)
 ignition_units_names := $(foreach f,$(wildcard $(ignition_config)/units/*),$(notdir $(f)))
 ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$(notdir $(f)))
 
+ignition_root_files := $(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type f -print)))
+ignition_root_directories := $(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type d -print)))
+
 ### Expression assertion/validation (macros)
 
 # assert_expression '$expr' '$message'
@@ -201,6 +204,12 @@ define verify_expression_not
 endef
 
 ### Recipe definitions (macros)
+
+# make_directory '$target' '$deps'
+define make_directory
+$(1): $(2)
+	@test -d '$$@' || mkdir -p '$$@'
+endef
 
 # output_file '$file' '$directory'
 define output_file
@@ -253,8 +262,8 @@ endef
 
 # XXX: because fuck CoreOS for breaking cloud-init right before deprecating it
 
-# ignition_file '$contents.json' '$target.json' '$filename' '$decimal-mode'
-define ignition_file
+# ignition_sysctl '$contents.json' '$target.json' '$filename' '$decimal-mode'
+define ignition_sysctl
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
 	@jq -n --arg name '$(3)' --argjson mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/etc/sysctl.d/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
@@ -284,7 +293,7 @@ endef
 define ignition_unit
 $(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
 	@printf '[*] Combining ignition unit %s: %s %s\n' '$(1)' '$(2)' '$(3)'
-	@jq '.dropins = (inputs // .dropins)' $$^ >| '$(1)'
+	@jq '.dropins = (inputs // .dropins)' $$(foreach dropin,$$^,'$$(dropin)') >| '$(1)'
 endef
 
 # ignition_unit_missing '$unit.service' '$target.json' '$dropins.json'
@@ -299,6 +308,13 @@ define ignition_user
 $(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
 	@printf '[*] Combining files for user into %s: %s\n' '$(1)' '$$^'
 	@jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
+endef
+
+# ignition_root_file '$contents.json' '$target.json' '$filename' '$decimal-mode'
+define ignition_root_file
+$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
+	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
+	@jq -n --arg name '$(3)' --argjson mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
 
 ### General recipes
@@ -440,14 +456,11 @@ clean-json:
 $(outdir) $(workdir):
 	@test -d '$@' || mkdir -p '$@'
 
-$(boxname_workdir):	$(workdir)
-	@test -d '$@' || mkdir -p '$@'
-
 $(filesdir) $(toolsdir) $(toolsdir)/bin $(toolsdir)/libexec $(toolsdir)/sbin: $(workdir)
 	@test -d '$@' || mkdir -p '$@'
 
-$(custom):
-	@test -d '$@' || mkdir -p '$@'
+$(eval $(call make_directory,$(boxname_workdir),$(workdir)))
+$(eval $(call make_directory,$(custom),))
 
 ### Output recipes
 $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
@@ -489,7 +502,7 @@ endif
 # concatenate entire template configuration into a single .json file
 $(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workdir)/$(boxname)-vars.json.iso $(boxname_workdir)/$(boxname)-vars.json.ssh $(boxname_workdir)/$(boxname)-vars.json.salt $(boxname_workdir)/$(boxname)-vars.json.tools $(boxname_workdir)/$(boxname)-vars.json.base
 	@printf '[*] Merging build variables together into %s: %s\n' '$@' '$^'
-	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
+	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach json,$^,'$(json)') >| '$@'
 
 # grab all the specified tools into the tools directory and build a json for it
 $(boxname_workdir)/$(boxname)-vars.json.tools: $(foreach f,$(setup_network_environment_files),$(toolsdir)/libexec/$(f)) $(foreach f,$(extra_tools_files),$(toolsdir)/bin/$(f))	| $(boxname_workdir)
@@ -508,7 +521,7 @@ endif
 # concatenate json template into a single .json file together with plugins
 $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 	| $(boxname_workdir)
 	@printf '[*] Merging box with enabled plugins into %s: %s\n' '$@' '$^'
-	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach d,$^,'$(d)') >| '$@'
+	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach json,$^,'$(json)') >| '$@'
 
 # generate ssh public/private key
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
@@ -552,17 +565,21 @@ $(boxname_workdir)/$(boxname).config-hostname:	| $(boxname_workdir)
 # bootstrap for ignition/sysctl directory
 $(boxname_workdir)/$(boxname).config-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)))
 	@printf '[*] Merging all ignition sysctl files into %s: %s\n' '$@' '$^'
-	@jq '[., inputs]' $^ >| '$@'
+	@jq '[., inputs]' $(foreach file,$^,'$(file)') >| '$@'
+
+$(boxname_workdir)/$(boxname).config-rootfs: $(foreach name,$(ignition_root_files),$(boxname_workdir)/rootfs/$(name))
+	@printf '[*] Merging all ignition root files into %s: %s\n' '$@' '$^'
+	@jq '[., inputs]' $(foreach file,$^,'$(file)') >| '$@'
 
 # combine all ignition file jsons into a single one
-$(boxname_workdir)/$(boxname).config-files: $(boxname_workdir)/$(boxname).config-hostname $(boxname_workdir)/$(boxname).config-sysctl
+$(boxname_workdir)/$(boxname).config-files: $(boxname_workdir)/$(boxname).config-hostname $(boxname_workdir)/$(boxname).config-sysctl $(boxname_workdir)/$(boxname).config-rootfs
 	@printf '[*] Merging the ignition file section into %s: %s\n' '$@' '$^'
-	@jq '. + inputs' $^ >| '$@'
+	@jq 'reduce inputs as $$item (.; . + $$item)' $(foreach config,$^,'$(config)') >| '$@'
 
 # combining for ignition/units and ignition/dropins
 $(boxname_workdir)/$(boxname).config-units: $(foreach name,$(ignition_units_names),$(boxname_workdir)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_workdir)/ignition-unit.json-$(name))
 	@printf '[*] Merging the ignition unit section into %s: %s\n' '$@' '$^'
-	@jq '[., inputs]' $^ >| '$@'
+	@jq '[., inputs]' $(foreach unit,$^,'$(unit)') >| '$@'
 
 # generate a json containing the sshAuthorizedKeys field in an object
 $(boxname_workdir)/$(boxname).config-pubkey: $(boxname_workdir)/$(boxname).id_rsa.pub.json-raw
@@ -572,12 +589,12 @@ $(boxname_workdir)/$(boxname).config-pubkey: $(boxname_workdir)/$(boxname).id_rs
 # combine all joined user objects into a single list
 $(boxname_workdir)/$(boxname).config-users: $(foreach f,$(ignition_users_files),$(boxname_workdir)/ignition-user.json-$(notdir $(f)))
 	@printf '[*] Merging the ignition user section into %s: %s\n' '$@' '$^'
-	@jq '[., inputs]' $^ >| '$@'
+	@jq '[., inputs]' $(foreach user,$^,'$(user)') >| '$@'
 
 # combine all joined network dropins into a single list
 $(boxname_workdir)/$(boxname).config-network: $(foreach f,$(ignition_network_files),$(boxname_workdir)/ignition-network.json-$(notdir $(f)))
 	@printf '[*] Merging all ignition network files into %s: %s\n' '$@' '$^'
-	@jq '[., inputs]' $^ >| '$@'
+	@jq '[., inputs]' $(foreach config,$^,'$(config)') >| '$@'
 
 ### Provisioning recipes
 $(boxname_workdir)/salt $(boxname_workdir)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files)	| $(boxname_workdir)
@@ -594,10 +611,10 @@ $(boxname_workdir)/salt-minion.conf: $(MAKEDIR)salt-minion.conf	| $(boxname_work
 
 $(boxname_workdir)/pillar/acbuild.sls: $(acbuild_files)	| $(boxname_workdir)/pillar
 	@printf '[-] Generating default pillar configuration: %s\n' '$^'
-	@printf -- '- Source: %s\n  Algo: %s\n  Hash: %s\n\n' $(foreach f,$^,'$(shell basename $(f))' '$(checksum_type)' "$(shell openssl dgst -$(checksum_type) '$(f)' | rev | cut -d' ' -f1 | rev)") >| '$@'
+	@printf -- '- Source: %s\n  Algo: %s\n  Hash: %s\n\n' $(foreach f,$^,'$(shell basename $(f))' '$(checksum_type)' '$(shell openssl dgst -$(checksum_type) "$(f)" | rev | cut -d" " -f1 | rev)') >| '$@'
 
 $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
-	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!')
+	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!)
 	@printf '[-] Writing project name into pillar configuration: %s\n' '$@'
 	@printf -- '%s\n' '$(project)' >| '$@'
 
@@ -630,7 +647,7 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 ## Ignition components
 
 # making the ignition sysctl list (the permission 0644 is 420 in decimal)
-$(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_file,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),$(notdir $(f)),420)))
+$(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_sysctl,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),$(notdir $(f)),420)))
 
 # making the ignition network list (the permission 0644 is 420 in decimal)
 $(foreach f,$(ignition_network_files),$(eval $(call ignition_dropin_file,$(notdir $(f)),$(boxname_workdir)/ignition-network.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-network.json-$(notdir $(f)))))
@@ -670,3 +687,12 @@ $(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_confi
 
 # raw ssh pubkey contents
 $(eval $(call json_rawfile,$(workdir)/$(boxname).id_rsa.pub,$(boxname_workdir)/$(boxname).id_rsa.pub.json-raw))
+
+# directory structure for the ignition root files
+$(foreach name,$(ignition_root_directories),$(eval $(call make_directory,$(boxname_workdir)/rootfs/$(name))))
+
+# raw ignition root files
+$(foreach name,$(ignition_root_files),$(eval $(call json_rawfile,$(ignition_config)/files/$(name),$(boxname_workdir)/rootfs/$(name).json-raw)))
+
+# making the file entries for the ignition root files (the permission 0644 is 420 in decimal)
+$(foreach name,$(ignition_root_files),$(eval $(call ignition_root_file,$(boxname_workdir)/rootfs/$(name).json-raw,$(boxname_workdir)/rootfs/$(name),$(name),420)))
