@@ -1,4 +1,5 @@
 # configuration of system services
-service:
-    system:
-        swap: 4096m
+system:
+    swap:
+        name: default
+        size: 4096m
