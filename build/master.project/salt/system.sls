@@ -23,7 +23,7 @@ Set the default swap size:
 ### Update dependency
 Update swap.service dependency:
     file.managed:
-        - name: {{ Root }}/etc/systemd/system/swap.service.d/var-swap-default.service.d/50-var-swap-default.conf
+        - name: {{ Root }}/etc/systemd/system/swap.service.d/50-var-swap-default.conf
         - mode: 0644
         - contents: |
             [Service]
