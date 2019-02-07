@@ -54,3 +54,11 @@ Install all required Python modules:
         - require:
             - Install minion common configuration
             - Install minion etcd configuration
+
+Synchronize all modules for the minion:
+    module.run:
+        - func: saltutil.sync_all
+        - kwargs:
+            saltenv: bootstrap
+        - require:
+            - Install all required Python modules

@@ -21,17 +21,10 @@ Re-install minion configuration:
                 startup_states: highstate
                 saltenv: base
                 pillarenv: base
-        - mode: 0664
 
-Synchronize all modules for the minion:
-    module.run:
-        - func: saltutil.sync_all
-        - kwargs:
-            refresh: true
-            saltenv: bootstrap
         - require:
             - sls: remote-minion-config
-            - Re-install minion configuration
+        - mode: 0664
 
 Restart minion with new configuration:
     module.run:
