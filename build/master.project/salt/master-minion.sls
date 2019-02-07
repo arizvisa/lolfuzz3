@@ -121,11 +121,12 @@ Install salt-minion etcd configuration:
             - Make salt-minion configuration directory
         - mode: 0664
 
-{% set id = salt["file.grep"](Root + "/etc/os-release", "ID=")["stdout"].split("=")[-1] %}
-{% set fullname = salt["file.grep"](Root + "/etc/lsb-release", "ID=")["stdout"].split("=")[-1] %}
-{% set release = salt["file.grep"](Root + "/etc/lsb-release", "RELEASE=")["stdout"].split("=")[-1] %}
-{% set codename = salt["file.grep"](Root + "/etc/lsb-release", "CODENAME=")["stdout"].split("=")[-1] %}
-{% set version = salt["file.grep"](Root + "/etc/os-release", "VERSION=")["stdout"].split("=")[-1] %}
+{% set id = salt["file.grep"](Root + "/etc/os-release", "^ID=")["stdout"].split("=")[-1] %}
+{% set fullname = salt["file.grep"](Root + "/etc/lsb-release", "^DISTRIB_ID=")["stdout"].split("=")[-1] %}
+{% set release = salt["file.grep"](Root + "/etc/lsb-release", "^DISTRIB_RELEASE=")["stdout"].split("=")[-1] %}
+{% set codename = salt["file.grep"](Root + "/etc/lsb-release", "^DISTRIB_CODENAME=")["stdout"].split("=")[-1] %}
+{% set version = salt["file.grep"](Root + "/etc/os-release", "^VERSION=")["stdout"].split("=")[-1] %}
+{% set build = salt["file.grep"](Root + "/etc/os-release", "^BUILD_ID=")["stdout"].split("=")[-1] %}
 
 Install salt-minion identification configuration:
     file.managed:
@@ -151,6 +152,7 @@ Install salt-minion identification configuration:
                     osfullname: {{ fullname | yaml_dquote }}
                     osmajorrelease: {{ release | yaml_dquote }}
                     osrelease: {{ release | yaml_dquote }}
+                    osbuild: {{ build | yaml_dquote }}
 
         - require:
             - Make salt-minion configuration directory
