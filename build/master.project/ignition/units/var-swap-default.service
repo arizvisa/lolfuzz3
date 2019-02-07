@@ -1,0 +1,14 @@
+[Unit]
+Description=Create a default swap file
+Before=swap.service
+
+RequiresMountsFor=/var
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+
+ExecStartPre=/bin/mkdir -p /var/swap
+ExecStartPre=/bin/fallocate -l ${Size} /var/swap/${Name}
+ExecStartPre=/bin/chmod 600 /var/swap/${Name}
+ExecStart=/sbin/mkswap /var/swap/${Name}

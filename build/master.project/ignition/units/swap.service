@@ -1,14 +1,16 @@
 [Unit]
-Description=create a default swap file
+Description=Enable any swap files that are available
+Requires=multi-user.target
+
 RequiresMountsFor=/var
 
 [Service]
 Type=oneshot
 RemainAfterExit=true
 
-ExecStartPre=/bin/mkdir -p /var/swap
-ExecStart=/bin/sh -c 'for file in /var/swap/*; do \
-            /bin/chmod 600 "$file"; \
-            /sbin/mkswap "$file"; \
-            done \
-            '
+ExecStartPre=/bin/sh -c 'chmod 0600 -v ${Path}/*'
+ExecStart=/bin/sh -c '/sbin/swapon -v ${Path}/*'
+ExecStop=/bin/sh -c '/sbin/swapoff -v ${Path}/*'
+
+[Install]
+WantedBy=multi-user.target

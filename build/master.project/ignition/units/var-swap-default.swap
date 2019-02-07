@@ -1,7 +1,0 @@
-[Unit]
-Description=Enable the default swapfile
-Requires=swap.service
-After=swap.service
-
-[Install]
-WantedBy=multi-user.target
