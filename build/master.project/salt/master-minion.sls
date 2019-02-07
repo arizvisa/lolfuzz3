@@ -253,7 +253,7 @@ Check etcd is reachable by the minion:
 
 Register the pillar for the salt-minion:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/pillar/{{ grains["id"] }}'
+        - name: '{{ pillar["configuration"]["salt"] }}/pillar/{{ pillar["local"]["machine_id"] }}.{{ pillar["configuration"]["project"] }}'
         - profile: root_etcd
         - requires:
             - Check etcd is reachable by the minion
