@@ -3,14 +3,14 @@
 ### Dropins for the different swap units
 Make dropin directory for swap.service:
     file.directory:
-        - name: {{ Root }}/etc/systemd/system/var-default-swap.service.d
+        - name: {{ Root }}/etc/systemd/system/var-swap-default.service.d
         - mode: 0755
         - makedirs: true
 
 ### Swap file size
 Set the default swap size:
     file.managed:
-        - name: {{ Root }}/etc/systemd/system/var-default-swap.service.d/00-defaults.conf
+        - name: {{ Root }}/etc/systemd/system/var-swap-default.service.d/00-defaults.conf
         - mode: 0644
         - contents: |
             [Service]
@@ -23,7 +23,7 @@ Set the default swap size:
 ### Update dependency
 Update swap.service dependency:
     file.managed:
-        - name: {{ Root }}/etc/systemd/system/swap.service.d/var-default-swap.service.d/50-var-swap-default.conf
+        - name: {{ Root }}/etc/systemd/system/swap.service.d/var-swap-default.service.d/50-var-swap-default.conf
         - mode: 0644
         - contents: |
             [Service]
