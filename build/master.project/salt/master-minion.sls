@@ -134,7 +134,7 @@ Install salt-minion identification configuration:
         - name: '{{ Root }}/etc/salt/minion.d/id.conf'
         - defaults:
             configuration:
-                id: '{{ pillar["local"]["machine_id"] }}.{{ pillar["configuration"]["project"] }}'
+                id: '{{ pillar["local"]["machine_id"] }}'
                 master: localhost
 
                 saltenv: master
@@ -253,7 +253,7 @@ Check etcd is reachable by the minion:
 
 Register the pillar for the salt-minion:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/pillar/{{ pillar["local"]["machine_id"] }}.{{ pillar["configuration"]["project"] }}'
+        - name: '{{ pillar["configuration"]["salt"] }}/pillar/{{ pillar["local"]["machine_id"] }}'
         - profile: root_etcd
         - requires:
             - Check etcd is reachable by the minion

@@ -199,7 +199,7 @@ Install salt-master identification configuration:
         - name: '{{ Root }}/etc/salt/master.d/id.conf'
         - defaults:
             configuration:
-                master_id: '{{ pillar["local"]["machine_id"] }}.{{ pillar["configuration"]["project"] }}'
+                master_id: '{{ pillar["local"]["machine_id"] }}'
 
         - require:
             - Make salt-master configuration directory
