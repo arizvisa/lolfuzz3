@@ -25,9 +25,10 @@ Re-install minion configuration:
 
 Synchronize all modules for the minion:
     module.run:
-        - saltutil.sync_all:
-            - refresh: true
-            - saltenv: bootstrap
+        - func: saltutil.sync_all
+        - kwargs:
+            refresh: true
+            saltenv: bootstrap
         - require:
             - sls: remote-minion-config
             - Re-install minion configuration
