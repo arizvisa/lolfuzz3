@@ -13,8 +13,10 @@ Set the default swap size:
         - name: {{ Root }}/etc/systemd/system/var-swap-default.service.d/00-defaults.conf
         - mode: 0644
         - contents: |
-            [Service]
+            [Unit]
             ConditionPathExists=!/var/swap/{{ pillar["system"]["swap"]["name"] }}
+
+            [Service]
             Environment="Name={{ pillar["system"]["swap"]["name"] }}"
             Environment="Size={{ pillar["system"]["swap"]["size"] }}"
         - require:
@@ -26,9 +28,9 @@ Update swap.service dependency:
         - name: {{ Root }}/etc/systemd/system/swap.service.d/50-var-swap-default.conf
         - mode: 0644
         - contents: |
-            [Service]
-            ConditionPathExists=/var/swap/{{ pillar["system"]["swap"]["name"] }}
+            [Unit]
             Requires=var-swap-default.service
+            ConditionPathExists=/var/swap/{{ pillar["system"]["swap"]["name"] }}
         - require:
             - Set the default swap size
 
