@@ -1,0 +1,15 @@
+[Unit]
+Description=git-daemon
+
+[Service]
+Restart=always
+RestartSec=5000ms
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=git-daemon
+
+ExecStart=/usr/bin/git daemon --verbose --reuseaddr --export-all ${Path}
+
+[Install]
+WantedBy=multi-user.target
