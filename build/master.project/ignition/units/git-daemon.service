@@ -5,7 +5,7 @@ Description=git-daemon
 Restart=always
 RestartSec=10s
 
-ExecStart=/usr/bin/git daemon \
+ExecStart=/usr/libexec/git-core/git-daemon \
     --syslog --verbose --informative-errors \
     --export-all --enable=upload-pack --enable=upload-archive --enable=receive-pack \
     ${Path}
