@@ -109,6 +109,9 @@ else
 GH_FETCH := ${FETCH}
 endif
 
+in_github_api_format=$(MAKEDIR)/github.url
+github_api_format=$(file <$(in_github_api_format))
+
 ### Static configuration
 output_names := $(boxname).config $(boxname).id_rsa $(boxname).id_rsa.pub
 
@@ -120,8 +123,7 @@ salt_pillar := $(MAKEDIR)pillar
 salt_patches := $(MAKEDIR)patches
 tools_config := $(MAKEDIR)tools
 
-in_github_url_format=$(MAKEDIR)github.url
-github_url_format=$(file <$(in_github_url_format))
+github_repo_format=$(shell printf -- '$(github_api_format)' 'repos/%s/releases/latest')
 
 ## Container Linux
 in_coreos=$(MAKEDIR)coreos.url
@@ -146,14 +148,14 @@ filesdir=$(workdir)/files
 
 ## acbuild
 in_acbuild_repo=$(MAKEDIR)acbuild.repo
-acbuild_metaurl != printf -- '$(github_url_format)' '$(file <$(in_acbuild_repo))'
+acbuild_metaurl != printf -- '$(github_repo_format)' '$(file <$(in_acbuild_repo))'
 
 # required files for acbuild
 acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].name'),$(filesdir)/$(f))
 
 ## kelseyhightower's setup-network-environment (/opt/libexec)
 in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
-setup_network_environment_metaurl != printf -- '$(github_url_format)' '$(file <$(in_setup_network_environment_repo))'
+setup_network_environment_metaurl != printf -- '$(github_repo_format)' '$(file <$(in_setup_network_environment_repo))'
 
 setup_network_environment_files := $(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name')
 
