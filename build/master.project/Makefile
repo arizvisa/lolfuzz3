@@ -101,7 +101,19 @@ endif
 DOWNLOAD := curl -L -C- --progress-bar
 FETCH := curl -L -s -S
 PUT := curl -L -s -S -X PUT --data-binary
-MODE := stat -c%a
+
+# Figure out which version of stat we have available
+GSTAT?=stat
+
+ifndef MODE
+    ifeq ($(findstring GNU,$(shell $(GSTAT) --version 2>/dev/null)),GNU)
+        $(info [-] Found a gnu-compatible version of stat. Using standard format for determining the file mode.)
+        MODE := '$(GSTAT)' -c%a
+    else
+        $(info [-] Found a gnu-incompatible version of stat. Using alternative format for determining the file mode.)
+        MODE := '$(GSTAT)' -f%A
+    endif
+endif
 
 ifneq ($(wildcard $(ROOTDIR)/github.token),)
 GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
