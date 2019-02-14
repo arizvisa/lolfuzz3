@@ -16,15 +16,15 @@ project := $(call lc,${PROJECT})
 boxname?=$(if $(project),master.$(project),master.null)
 
 ifneq ($(project),)
-$(info [-] Using the specified project name: $(project))
+$(info [-] Using project name: $(project))
 else
-$(warning No PROJECT was specified. Using the project name "null" until failure.)
+$(warning No PROJECT was specified. Using project name "null" until failure.)
 endif
 
 ## output directory
 outdir := $(patsubst %/,%,$(OUTPUT))
 ifeq ($(wildcard $(outdir)/$(boxname)),)
-    $(info [-] Using the following output path for $(boxname): $(abspath $(outdir)/$(boxname)))
+    $(info [-] Using the output path for $(boxname): $(abspath $(outdir)/$(boxname)))
 else
     $(warning The output path for $(boxname) already exists (output will fail): $(abspath $(outdir)/$(boxname)))
 endif
@@ -34,7 +34,7 @@ workdir?=$(BUILDDIR)
 boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
-$(info [-] Using the following work directory: $(abspath $(workdir)))
+$(info [-] Using the work directory: $(abspath $(workdir)))
 
 ## Validation option
 VALIDATE ?= 1
@@ -109,8 +109,34 @@ else
 GH_FETCH := ${FETCH}
 endif
 
+### Setup the github api url and check the rate limit
 in_github_api_format=$(MAKEDIR)/github.url
 github_api_format=$(file <$(in_github_api_format))
+
+# Check the rate limit
+rate_limit.url=$(shell printf -- '$(github_api_format)' 'rate_limit')
+rate_limit.json=$(shell ${GH_FETCH} '$(rate_limit.url)' | jq -cr '.rate')
+
+rate_limit.minimum=5
+rate_limit=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .limit')
+rate_limit.remaining=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .remaining')
+rate_limit.reset=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .reset')
+
+# Warn the user if we're approaching GitHub's limit
+ifneq ($(shell [ '$(rate_limit.remaining)' -le '$(rate_limit.minimum)' ] && echo 1 || echo 0),0)
+    $(warning --------------------------------------------------------------------------)
+    $(warning You are approaching or have reached the GitHub rate limit and thus are    )
+    $(warning unable to download some of the required prequisites. These are the        )
+    $(warning kelseyhightower/setup-network-environment, and the container/build        )
+    $(warning applications which are necessary to provision "master.$(project)". Please )
+    $(warning consider generating an authorization token via your GitHub user profile   )
+    $(warning to bypass the GitHub rate limit. After generating the token, you can then )
+    $(warning write it to $(ROOTDIR)/github.token to proceed.)
+    $(warning --------------------------------------------------------------------------)
+    $(error Current GitHub rate limit is less than $(rate_limit.minimum) ($(rate_limit.remaining)/$(rate_limit)).)
+else
+    $(info [-] Current GitHub rate limit: $(rate_limit.remaining)/$(rate_limit))
+endif
 
 ### Static configuration
 output_names := $(boxname).config $(boxname).id_rsa $(boxname).id_rsa.pub
