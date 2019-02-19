@@ -62,3 +62,8 @@ Synchronize all modules for the minion:
             saltenv: bootstrap
         - require:
             - Install all required Python modules
+
+Deploy the salt.utils.templates module directly into the remote-minion's site-packages:
+    file.managed:
+        - name: {{ grains["saltpath"] }}/utils/templates.py
+        - source: salt://_utils/templates.py
