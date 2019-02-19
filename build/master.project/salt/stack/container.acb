@@ -27,14 +27,16 @@ run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 lib
 # Python dependencies containing some binaries which are needed by Salt
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pycurl {{python}}-Cython {{python}}-dbus {{python}}-systemd {{python}}-markupsafe {{python}}-msgpack {{python}}-tornado {{python}}-zmq
 
-# Python dependencies containing binaries which are used some of the different available modules in Salt
+# Python dependencies containing binaries which are used by some of the available modules in Salt
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-gitdb {{python}}-psutil {{python}}-cffi {{python}}-pycryptodomex {{python}}-cryptography {{python}}-pygit2 {{python}}-pyyaml {{python}}-setproctitle
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-ldap {{python}}-kerberos {{python}}-backports-lzma {{python}}-lxml {{python}}-impacket {{python}}-augeas {{python}}-celery
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-cheetah
 
 ## Python packages used by the stack
 run -- {{pip}} --retries=65536 install --upgrade pip
-run -- {{pip}} --retries=65536 install backports_abc python-dateutil gitpython ioflo Jinja2 libnacl Mako pycparser smmap
+run -- {{pip}} --retries=65536 install backports_abc python-dateutil gitpython ioflo libnacl pycparser smmap
 run -- {{pip}} --retries=65536 install raet python-etcd
+run -- {{pip}} --retries=65536 install Genshi hjson Jinja2 Mako wempy
 
 # Optional modules which are used by Salt
 run -- {{pip}} --retries=65536 install dnspython tldextract click pyvmomi trollius certifi singledispatch twilio pyinotify textfsm netmiko paramiko pyroute2 pyOpenSSL
