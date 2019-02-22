@@ -3,7 +3,7 @@
 {% set ConfigDir = Config.rsplit("/" if Config.startswith("/") else "\\", 1)[0] %}
 
 include:
-    - remote-minion-config
+    - remote-minion-common
 
 Re-install minion configuration:
     file.managed:
