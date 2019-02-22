@@ -15,7 +15,7 @@ master:
         # states related to salt-stack
         - stack             # common salt-stack configuration
         - maintenance       # install services that perform regular maintenance
-        - sync              # synchronize all the modules
+        - master-sync       # synchronize all the modules to the salt-master
 
         # salt-master container and services
         - master
@@ -36,7 +36,7 @@ master:
         # states for joining the cluster
         #- reset-id          # remove /etc/machine-id and then restart
         #- join-master       # register master cluster with etcd
-        - master-minion-sync # synchronize the minion
+        - master-minion-sync # synchronize all the modules to the salt-minion
 
         # states used for services
         - container         # create container-directory and build-scripts
