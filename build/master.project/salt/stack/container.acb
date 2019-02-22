@@ -57,7 +57,11 @@ run -- bash /root/install-salt.sh -b -x {{python}} -L -F -P -X -N -M git v{{vers
 # Custom commands
 {% for cmd in commands -%}
 {%- for type in cmd -%}
+{%- if type.lower() == "run" -%}
+{{type}} -- {{cmd[type]}}
+{% else -%}
 {{type}} {{cmd[type]}}
+{% endif -%}
 {% endfor -%}
 {%- endfor %}
 {%- endif %}
