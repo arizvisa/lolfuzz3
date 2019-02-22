@@ -6,7 +6,6 @@ base:
         - windows-drivers
         - windows-audio
         - windows-ramdisk
-        - windows-ramdisk-configuration
 
     # All linux targets
     'not G@os_family:Windows':
