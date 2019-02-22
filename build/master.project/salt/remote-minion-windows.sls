@@ -23,7 +23,7 @@ Re-install minion configuration:
                 pillarenv: base
 
         - require:
-            - sls: remote-minion-config
+            - sls: remote-minion-common
 
 Restart minion with new configuration:
     module.run:

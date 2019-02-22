@@ -23,7 +23,7 @@ Re-install minion configuration:
                 pillarenv: base
 
         - require:
-            - sls: remote-minion-config
+            - sls: remote-minion-common
         - mode: 0664
 
 Restart minion with new configuration:
