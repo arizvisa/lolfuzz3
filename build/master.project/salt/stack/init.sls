@@ -47,6 +47,7 @@ Generate salt-stack container build rules:
         - name: '{{ pillar["service"]["container"]["path"] }}/build/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb'
 
         - context:
+            bootstrap: {{ pillar["container"]["salt-stack"]["bootstrap"] | yaml_dquote }}
             version: {{ pillar["container"]["salt-stack"]["version"] | yaml_dquote }}
             python: {{ pillar["container"]["salt-stack"]["python"] | yaml_dquote }}
             pip: {{ pillar["container"]["salt-stack"]["pip"] | yaml_dquote }}
