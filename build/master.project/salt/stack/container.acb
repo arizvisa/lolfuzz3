@@ -1,7 +1,7 @@
 begin --insecure docker://fedora
 set-name lol/salt-stack
 
-label add version {{ version }}
+label add version {{version}}
 label add arch amd64
 label add os linux
 label add distro fedora
@@ -50,14 +50,14 @@ run -- {{pip}} --retries=65536 install pywinrm pywinrm[kerberos] pywinrm[credssp
 # run -- {{pip}} -- retries=65536 install python-gssapi
 
 ### Installation of the stack (via bootstrap)
-run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
-run -- bash /root/install-salt.sh -b -x {{python}} -L -F -P -X -N -M git v{{ version }}
+run -- curl -L -o /root/install-salt.sh "{{bootstrap}}"
+run -- bash /root/install-salt.sh -b -x {{python}} -L -F -P -X -N -M git v{{version}}
 
 {% if commands -%}
 # Custom commands
 {% for cmd in commands -%}
 {%- for type in cmd -%}
-{{ type }} {{ cmd[type] }}
+{{type}} {{cmd[type]}}
 {% endfor -%}
 {%- endfor %}
 {%- endif %}
@@ -71,11 +71,11 @@ port add salt-job tcp 4505
 port add salt-result tcp 4506
 
 # Filesystems that need to be created and mounted
-run -- mkdir -p {%- for name in volumes %} {{ volumes[name].mount }} {%- endfor %}
+run -- mkdir -p {%- for name in volumes %} {{volumes[name].mount}} {%- endfor %}
 
 # available volumes
 {%- for name in volumes %}
-mount add {{ name }} {{ volumes[name].mount }}
+mount add {{name}} {{volumes[name].mount}}
 {%- endfor %}
 
 ### Container options
