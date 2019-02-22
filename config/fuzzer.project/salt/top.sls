@@ -3,7 +3,6 @@ base:
     'G@os_family:Windows':
         - identity
         - windows-updates
-        - windows-drivers
         - windows-audio
         - windows-ramdisk
 
