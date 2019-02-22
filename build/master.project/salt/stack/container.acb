@@ -43,29 +43,38 @@ run -- {{pip}} --retries=65536 install dnspython tldextract click pyvmomi trolli
 run -- {{pip}} --retries=65536 install pywinrm pywinrm[kerberos] pywinrm[credssp] IPy netaddr jsonschema progressbar fernet json5 smbprotocol
 
 # XXX: Disabled because timelib requires compilation and there's no distro package for it.
-# run -- {{pip }} -- retries=65536 install timelib
+# run -- {{pip}} -- retries=65536 install timelib
 
 # XXX: Disabled because python-gssapi requires compilation and yet paramiko depends on it.
 #      paramiko has a fix to use a newer library, but it hasn't been merged yet.
-# run -- {{pip }} -- retries=65536 install python-gssapi
+# run -- {{pip}} -- retries=65536 install python-gssapi
 
 ### Installation of the stack (via bootstrap)
 run -- curl -L -o /root/install-salt.sh https://bootstrap.saltstack.com
 run -- bash /root/install-salt.sh -b -x {{python}} -L -F -P -X -N -M git v{{ version }}
 
-## Final package upgrade and clean up
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 upgrade
+{% if commands -%}
+# Custom commands
+{% for cmd in commands -%}
+{%- for type in cmd -%}
+{{ type }} {{ cmd[type] }}
+{% endfor -%}
+{%- endfor %}
+{%- endif %}
+## Clean up
 run -- dnf -y clean all --enablerepo='*'
 
 ### Miscellaneous configuration
+
 # Exposed tcp ports for services provided
 port add salt-job tcp 4505
 port add salt-result tcp 4506
 
 # Filesystems that need to be created and mounted
-run -- mkdir -p {%- for name in volumes %} {{ volumes[name].mount }}{% endfor %}
+run -- mkdir -p {%- for name in volumes %} {{ volumes[name].mount }} {%- endfor %}
 
-{% for name in volumes %}
+# available volumes
+{%- for name in volumes %}
 mount add {{ name }} {{ volumes[name].mount }}
 {%- endfor %}
 

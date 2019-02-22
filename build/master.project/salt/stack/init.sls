@@ -51,6 +51,9 @@ Generate salt-stack container build rules:
             python: {{ pillar["container"]["salt-stack"]["python"] | yaml_dquote }}
             pip: {{ pillar["container"]["salt-stack"]["pip"] | yaml_dquote }}
 
+            commands:
+                - run: dnf -y --setopt=fastestmirror=true --setopt=retries=0 upgrade
+
         - defaults:
             volumes:
                 dbus-socket:
