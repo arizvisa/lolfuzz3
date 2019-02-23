@@ -30,5 +30,5 @@ Restart minion with new configuration:
         - system.reboot:
             - timeout: 0
         - require:
+            - sls: remote-minion-common
             - Re-install minion configuration
-            - Synchronize all modules for the minion

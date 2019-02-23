@@ -30,5 +30,5 @@ Restart minion with new configuration:
     module.run:
         - name: minion.restart
         - require:
+            - sls: remote-minion-common
             - Re-install minion configuration
-            - Synchronize all modules for the minion
