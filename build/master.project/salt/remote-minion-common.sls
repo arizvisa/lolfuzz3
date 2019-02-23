@@ -69,3 +69,10 @@ Deploy the salt.utils.templates module directly into the remote-minion's site-pa
         - source: salt://_utils/templates.py
         - require:
             - Install all required Python modules
+
+Deploy the salt.utils.path module directly into the remote-minion's site-packages:
+    file.managed:
+        - name: {{ grains["saltpath"] }}/utils/path.py
+        - source: salt://_utils/path.py
+        - require:
+            - Install all required Python modules
