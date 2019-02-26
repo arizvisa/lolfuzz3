@@ -42,7 +42,6 @@ Install minion etcd configuration:
             etcd_returner:
                 returner: root_etcd
                 returner_root: '{{ pillar["salt"] }}/return'
-                ttl: {{ 60 * 30 }}
 
         - require:
             - Create minion configuration directory

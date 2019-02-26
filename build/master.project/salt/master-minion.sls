@@ -115,7 +115,6 @@ Install salt-minion etcd configuration:
             etcd_returner:
                 returner: root_etcd
                 returner_root: '{{ pillar["configuration"]["salt"] }}/return'
-                ttl: {{ 60 * 30 }}
 
         - require:
             - Make salt-minion configuration directory
