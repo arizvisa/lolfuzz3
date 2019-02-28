@@ -23,7 +23,7 @@ Extract certificate from audio driver:
         {% if grains["cpuarch"] == "AMD64" or grains["cpuarch"] == "x86_64" -%}
         - name: '{{ pillar["Drivers"]["Tools"] }}/Extract-Certificate.ps1 -Source "vadrv/vaud_wdmx64.cat" -Output "vadrv.cer"'
         {% else -%}
-        - name: '{{ Tools["Drivers"]["Tools"] }}/Extract-Certificate.ps1 -Source "vadrv/vaud_wdmx86.cat" -Output "vadrv.cer"'
+        - name: '{{ pillar["Drivers"]["Tools"] }}/Extract-Certificate.ps1 -Source "vadrv/vaud_wdmx86.cat" -Output "vadrv.cer"'
         {% endif -%}
         - creates:
             - {{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv.cer
