@@ -4,6 +4,6 @@ local:
     machine_id: {{ grains["id"].rsplit(".", 1)[0] | yaml_dquote }}
 
     # networking information on linux minion
-    interface: {{ grains["hwaddr_interfaces"] | first | yaml_dquote }}
-    ip4: {{ grains["ipv4"] | first | yaml_dquote }}
-    ip6: {{ grains["ipv6"] | first | yaml_dquote }}
+    interface: {{ grains.get("hwaddr_interfaces", ["lo"]) | first | yaml_dquote }}
+    ip4: {{ grains.get("ipv4", ["127.0.0.1"]) | first | yaml_dquote }}
+    ip6: {{ grains.get("ipv6", ["::1"]) | first | yaml_dquote }}
