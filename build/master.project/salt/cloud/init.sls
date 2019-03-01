@@ -30,6 +30,15 @@ Install salt-cloud configuration:
         - mode: 0664
 
 ### Service directories
+Make salt-cloud cache directory:
+    file.directory:
+        - name: /var/cache/salt/cloud
+        - mode: 0770
+        - require:
+            - Make salt cache directory
+        - use:
+            - Make salt cache directory
+
 Make salt-cloud configuration directory:
     file.directory:
         - name: /srv/cloud
