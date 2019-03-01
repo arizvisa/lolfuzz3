@@ -49,7 +49,7 @@ Everything is up to date:
 ## Rebooting the machine after success or failure
 Reboot after updates:
     event.send:
-        - name: salt/minion/{{ grains['id'] }}/log
+        - name: salt/minion/{{ grains["id"] }}/log
         - data:
             level: info
             message: "Rebooting due to updates"
@@ -65,7 +65,7 @@ Reboot after updates:
 
 Reboot after failure:
     event.send:
-        - name: salt/minion/{{ grains['id'] }}/log
+        - name: salt/minion/{{ grains["id"] }}/log
         - data:
             level: info
             message: "Rebooting due to a failure while updating"
