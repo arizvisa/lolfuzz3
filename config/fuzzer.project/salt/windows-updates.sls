@@ -17,7 +17,13 @@ Install Windows Update -- {{ file.name }}:
     cmd.run:
         - name: {{ salt["environ.get"]("TEMP") }}\{{ file.name }} /quiet
         - cwd: {{ salt["environ.get"]("TEMP") }}
+        - require:
+            - Download Windows Update -- {{ file.name }}
 {% endfor -%}
+
+Install all manual updates (dummy state):
+    test.succeed_with_changes:
+        - name: test.succeed_with_changes
 
 ## Begin the update cycle. The following states will continue
 ## downloading, updates, applying them, and restarting until there
@@ -28,6 +34,11 @@ Download Windows Updates:
         - name: win_wua.list
         - download: true
         - skip_installed: true
+        - require:
+            - Install all manual updates (dummy state)
+            {% for file in pillar["Updates"] -%}
+            - Install Windows Update -- {{ file.name }}
+            {% endfor %}
 
 Install Windows Updates:
     module.run:
