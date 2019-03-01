@@ -14,6 +14,7 @@ Install minion common configuration:
         - defaults:
             ipv6: false
             transport: zeromq
+            http_connect_timeout: 60
         - require:
             - Create minion configuration directory
 
