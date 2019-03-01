@@ -15,7 +15,7 @@ Download Windows Update -- {{ file.name }}:
 {% for file in pillar["Updates"] -%}
 Install Windows Update -- {{ file.name }}:
     cmd.run:
-        - name: {{ salt["environ.get"]("TEMP") }}\{{ file.name }} /quiet
+        - name: {{ salt["environ.get"]("TEMP") }}\{{ file.name }} /quiet /norestart
         - cwd: {{ salt["environ.get"]("TEMP") }}
         - require:
             - Download Windows Update -- {{ file.name }}
