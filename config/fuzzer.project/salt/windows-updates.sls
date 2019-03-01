@@ -1,4 +1,28 @@
-## Updates
+## Manually download and install any updates required to use the
+## Windows Update system.
+
+# Download each update
+{% for file in pillar["Updates"] -%}
+Download Windows Update -- {{ file.name }}:
+    file.managed:
+        - name: {{ salt["environ.get"]("TEMP") }}\{{ file.name }}
+        - source: {{ file.source }}
+        - source_hash: {{ file.hash }}
+
+{% endfor -%}
+
+# Install each update
+{% for file in pillar["Updates"] -%}
+Install Windows Update -- {{ file.name }}:
+    cmd.run:
+        - name: {{ salt["environ.get"]("TEMP") }}\{{ file.name }} /quiet
+        - cwd: {{ salt["environ.get"]("TEMP") }}
+{% endfor -%}
+
+## Begin the update cycle. The following states will continue
+## downloading, updates, applying them, and restarting until there
+## are no more available.
+
 Download Windows Updates:
     module.run:
         - name: win_wua.list
@@ -22,7 +46,7 @@ Everything is up to date:
         - require:
             - Install Windows Updates
 
-## Rebooting after changes
+## Rebooting the machine after success or failure
 Reboot after updates:
     event.send:
         - name: salt/minion/{{ grains['id'] }}/log
@@ -55,7 +79,7 @@ Reboot after failure:
         - onfail:
             - Everything is up to date
 
-## Final reboot if it is pending
+## Final reboot if any updates are pending
 Reboot if necessary:
     system.reboot:
         - message: Reboot to satisfy pending changes
