@@ -55,10 +55,22 @@ Install certificate import tool on target:
             param (
                 [Parameter(Mandatory=$true)][string]$Certificate
             )
-            Import-Certificate -CertStoreLocation cert:/LocalMachine/TrustedPublisher -File $Certificate
+            $contents = Get-item $Certificate
+            $x509 = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+            $x509.Import($contents)
+
+            $StoreLocation = [System.Security.Cryptography.X509Certificates.StoreLocation]"LocalMachine"
+            $StoreName = [System.Security.Cryptography.X509Certificates.StoreName]"TrustedPublisher"
+
+            $Store = New-Object System.Security.Cryptography.X509Certificates.X509Store("$StoreName",$StoreLocation)
+            $Store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]"ReadWrite")
+
+            $Store.Add($x509)
             if ($?) {
+                $Store.Close()
                 Exit 0
             }
+            $Store.Close()
             Exit 1
         - require:
             - Make driver tools directory
