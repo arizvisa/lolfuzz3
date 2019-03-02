@@ -19,11 +19,12 @@ Extract certificate from audio driver:
     cmd.run:
         - shell: powershell
         - cwd: {{ pillar["Drivers"]["Audio"]["Path"] }}
-        - onlyif: '{{ pillar["Drivers"]["Tools"] }}/Find-Device.ps1 -Id "VAud_WDM"'
         {% if grains["cpuarch"] == "AMD64" or grains["cpuarch"] == "x86_64" -%}
         - name: '{{ pillar["Drivers"]["Tools"] }}/Extract-Certificate.ps1 -Source "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv/vaud_wdmx64.cat" -Output "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv.cer"'
+        - unless: 'if (( & "bin/devcon-64.exe" status VAud_WDM) -like "*Driver is running.*") { Exit 0 } else { Exit 1 }'
         {% else -%}
         - name: '{{ pillar["Drivers"]["Tools"] }}/Extract-Certificate.ps1 -Source "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv/vaud_wdmx86.cat" -Output "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv.cer"'
+        - unless: 'if (( & "bin/devcon-32.exe" status VAud_WDM) -like "*Driver is running.*") { Exit 0 } else { Exit 1 }'
         {% endif -%}
         - creates:
             - {{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv.cer
@@ -36,7 +37,11 @@ Trust audio driver certificate:
     cmd.run:
         - shell: powershell
         - cwd: {{ pillar["Drivers"]["Audio"]["Path"] }}
-        - onlyif: '{{ pillar["Drivers"]["Tools"] }}/Find-Device.ps1 -Id "VAud_WDM"'
+        {% if grains["cpuarch"] == "AMD64" or grains["cpuarch"] == "x86_64" -%}
+        - unless: 'if (( & "bin/devcon-64.exe" status VAud_WDM) -like "*Driver is running.*") { Exit 0 } else { Exit 1 }'
+        {% else -%}
+        - unless: 'if (( & "bin/devcon-32.exe" status VAud_WDM) -like "*Driver is running.*") { Exit 0 } else { Exit 1 }'
+        {% endif -%}
         - name: '{{ pillar["Drivers"]["Tools"] }}/Trust-Certificate.ps1 -Certificate "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv.cer"'
         - require:
             - Install device finder tool on target
@@ -47,11 +52,12 @@ Install audio drivers using devcon:
     cmd.run:
         - shell: powershell
         - cwd: {{ pillar["Drivers"]["Audio"]["Path"] }}
-        - onlyif: '{{ pillar["Drivers"]["Tools"] }}/Find-Device.ps1 -Id "VAud_WDM"'
         {% if grains["cpuarch"] == "AMD64" or grains["cpuarch"] == "x86_64" -%}
         - name: 'bin/devcon-64.exe install vadrv/VAud_WDM.inf VAud_WDM'
+        - unless: 'if (( & "bin/devcon-64.exe" status VAud_WDM) -like "*Driver is running.*") { Exit 0 } else { Exit 1 }'
         {% else -%}
         - name: 'bin/devcon-32.exe install vadrv/VAud_WDM.inf VAud_WDM'
+        - unless: 'if (( & "bin/devcon-32.exe" status VAud_WDM) -like "*Driver is running.*") { Exit 0 } else { Exit 1 }'
         {% endif -%}
         - require:
             - Install device finder tool on target
