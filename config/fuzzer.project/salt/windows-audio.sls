@@ -21,9 +21,9 @@ Extract certificate from audio driver:
         - cwd: {{ pillar["Drivers"]["Audio"]["Path"] }}
         - onlyif: '{{ pillar["Drivers"]["Tools"] }}/Find-Device.ps1 -Id "VAud_WDM"'
         {% if grains["cpuarch"] == "AMD64" or grains["cpuarch"] == "x86_64" -%}
-        - name: '{{ pillar["Drivers"]["Tools"] }}/Extract-Certificate.ps1 -Source "vadrv/vaud_wdmx64.cat" -Output "vadrv.cer"'
+        - name: '{{ pillar["Drivers"]["Tools"] }}/Extract-Certificate.ps1 -Source "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv/vaud_wdmx64.cat" -Output "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv.cer"'
         {% else -%}
-        - name: '{{ pillar["Drivers"]["Tools"] }}/Extract-Certificate.ps1 -Source "vadrv/vaud_wdmx86.cat" -Output "vadrv.cer"'
+        - name: '{{ pillar["Drivers"]["Tools"] }}/Extract-Certificate.ps1 -Source "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv/vaud_wdmx86.cat" -Output "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv.cer"'
         {% endif -%}
         - creates:
             - {{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv.cer
@@ -37,7 +37,7 @@ Trust audio driver certificate:
         - shell: powershell
         - cwd: {{ pillar["Drivers"]["Audio"]["Path"] }}
         - onlyif: '{{ pillar["Drivers"]["Tools"] }}/Find-Device.ps1 -Id "VAud_WDM"'
-        - name: '{{ pillar["Drivers"]["Tools"] }}/Trust-Certificate.ps1 -Certificate "vadrv.cer"'
+        - name: '{{ pillar["Drivers"]["Tools"] }}/Trust-Certificate.ps1 -Certificate "{{ pillar["Drivers"]["Audio"]["Path"] }}/vadrv.cer"'
         - require:
             - Install device finder tool on target
             - Install certificate import tool on target
