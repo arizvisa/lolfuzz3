@@ -18,7 +18,7 @@ Download Windows Update -- {{ file.name }}:
 {% for file in pillar["Updates"] -%}
 Install Windows Update -- {{ file.name }}:
     cmd.run:
-        - name: {{ salt["environ.get"]("TEMP") }}\{{ file.name }} /quiet /norestart
+        - name: {{ salt["environ.get"]("TEMP") }}\{{ file.name }} /quiet
         - cwd: {{ salt["environ.get"]("TEMP") }}
         - require:
             - Download Windows Update -- {{ file.name }}
@@ -36,6 +36,7 @@ Download Windows Updates:
     module.run:
         - name: win_wua.list
         - download: true
+        - onlyif: 'if ( [System.Version]( Get-ItemProperty -Path ($env:windir + "/System32/wuaueng.dll")).VersionInfo.ProductVersion -ge [System.Version]"7.6.7600.256" ) { Exit 0 } else { Exit 1 }'
         - skip_installed: true
         - require:
             - Install all manual updates (dummy state)
