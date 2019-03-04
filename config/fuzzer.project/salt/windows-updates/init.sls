@@ -20,6 +20,7 @@ Install Windows Update Agent -- {{ file.name }}:
     cmd.run:
         - name: {{ salt["environ.get"]("TEMP") }}\{{ file.name }} /quiet
         - cwd: {{ salt["environ.get"]("TEMP") }}
+        - unless: 'if ( [System.Version]( Get-ItemProperty -Path ($env:windir + "/System32/wuaueng.dll")).VersionInfo.ProductVersion -ge [System.Version]"{{ file.version }}" ) { Exit 0 } else { Exit 1 }'
         - require:
             - Download Windows Update Agent -- {{ file.name }}
 {% endfor -%}
@@ -44,22 +45,6 @@ Installed all manual updates:
     test.succeed_without_changes:
         - name: test.succeed_without_changes
 {%- endif %}
-
-Validate that the Windows Update Agent is of the correct version:
-    event.send:
-        - name: salt/minion/{{ grains["id"] }}/log
-        - unless: 'if ( [System.Version]( Get-ItemProperty -Path ($env:windir + "/System32/wuaueng.dll")).VersionInfo.ProductVersion -ge [System.Version]"7.6.7600.256" ) { Exit 0 } else { Exit 1 }'
-        - data:
-            level: info
-            message: "The Windows Update Agent is older than the required version."
-        - require:
-            - Installed all manual updates
-
-    test.fail_without_changes:
-        - name: test.fail_without_changes
-        - unless: 'if ( [System.Version]( Get-ItemProperty -Path ($env:windir + "/System32/wuaueng.dll")).VersionInfo.ProductVersion -ge [System.Version]"7.6.7600.256" ) { Exit 0 } else { Exit 1 }'
-        - require:
-            - Installed all manual updates
 
 ## Begin the update cycle. The following states will continue
 ## downloading, updates, applying them, and restarting until there
@@ -134,16 +119,20 @@ Reboot after failure:
             level: info
             message: "Rebooting due to a failure while updating"
         - onfail:
-            - Validate that the Windows update Agent is of the correct version
             - Everything is up to date
+            {% for file in pillar["Updates"]["Agent"] -%}
+            - Install Windows Update Agent -- {{ file.name }}
+            {% endfor %}
 
     system.reboot:
         - message: Rebooting due to updates
         - timeout: 0
         - only_on_pending_reboot: false
         - onfail:
-            - Validate that the Windows update Agent is of the correct version
             - Everything is up to date
+            {% for file in pillar["Updates"]["Agent"] -%}
+            - Install Windows Update Agent -- {{ file.name }}
+            {% endfor %}
 
 ## Final reboot if any updates are pending
 Reboot if necessary:
