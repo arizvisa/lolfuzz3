@@ -11,8 +11,9 @@ Environment="CONTAINER_DIR={{ container_path }}"
 Environment="BUILDDIR={{ container_build_path }}"
 Environment="IMAGEDIR={{ container_image_path }}"
 Environment="TOOLDIR={{ container_tools_path }}"
+Environment="SERVICEDIR={{ container_service_path }}"
 ExecStart=/bin/sh -c \
-    "${CONTAINER_DIR}"/container-build.sh
+    "${SERVICEDIR}"/container-build.sh
 
 [Install]
 RequiredBy=container-build.path

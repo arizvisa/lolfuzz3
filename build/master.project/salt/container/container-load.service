@@ -9,8 +9,9 @@ Type=oneshot
 RemainAfterExit=yes
 Environment="CONTAINER_DIR={{ container_path }}"
 Environment="IMAGEDIR={{ container_image_path }}"
+Environment="SERVICEDIR={{ container_service_path }}"
 ExecStart=/bin/sh -c \
-    "${CONTAINER_DIR}"/container-load.sh
+    "${SERVICEDIR}"/container-load.sh
 
 [Install]
 RequiredBy=container-load.path

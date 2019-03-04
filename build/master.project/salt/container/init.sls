@@ -93,6 +93,7 @@ Install container-build.service:
             container_build_path: {{ pillar["service"]["container"]["paths"]["build"] | yaml_dquote }}
             container_image_path: {{ pillar["service"]["container"]["paths"]["image"] | yaml_dquote }}
             container_tools_path: {{ pillar["service"]["container"]["paths"]["tools"] | yaml_dquote }}
+            container_service_path: {{ pillar["service"]["container"]["paths"]["service-tools"] | yaml_dquote }}
         - require:
             - Install container-build.service script
         - mode: 0644
@@ -135,6 +136,7 @@ Install container-load.service:
         - defaults:
             container_path: {{ pillar["service"]["container"]["paths"]["base"] | yaml_dquote }}
             container_image_path: {{ pillar["service"]["container"]["paths"]["image"] | yaml_dquote }}
+            container_service_path: {{ pillar["service"]["container"]["paths"]["service-tools"] | yaml_dquote }}
         - require:
             - Install container-load.service script
         - mode: 0644
@@ -178,6 +180,7 @@ Install container-sync.service:
         - defaults:
             container_path: {{ pillar["service"]["container"]["paths"]["base"] | yaml_dquote }}
             container_image_path: {{ pillar["service"]["container"]["paths"]["image"] | yaml_dquote }}
+            container_service_path: {{ pillar["service"]["container"]["paths"]["service-tools"] | yaml_dquote }}
         - require:
             - Install container-sync.service script
         - mode: 0644
