@@ -9,6 +9,7 @@ service:
             build: /srv/container/build
             image: /srv/container/image
             tools: /srv/container/tools
+            service-tools: /srv/container
 
         tools:
             {% for file in acbuild_files -%}

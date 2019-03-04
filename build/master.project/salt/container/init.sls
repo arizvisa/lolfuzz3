@@ -65,7 +65,7 @@ Extract container-root tools:
 Install container build script:
     file.managed:
         - source: salt://container/build.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}/build.sh'
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh'
         - require:
             - Make container-root directory
             - Extract container-root tools
@@ -74,7 +74,7 @@ Install container build script:
 Install container-build.service script:
     file.managed:
         - source: salt://container/container-build.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}/container-build.sh'
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/container-build.sh'
         - use:
             - file: Install container build script
         - require:
@@ -111,7 +111,7 @@ Install container-build.path:
 Install container load script:
     file.managed:
         - source: salt://container/load.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}/load.sh'
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/load.sh'
         - require:
             - Make container-root directory
         - mode: 0775
@@ -119,7 +119,7 @@ Install container load script:
 Install container-load.service script:
     file.managed:
         - source: salt://container/container-load.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}/container-load.sh'
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/container-load.sh'
         - use:
             - Install container load script
         - require:
@@ -153,7 +153,7 @@ Install container-load.path:
 Install container update script:
     file.managed:
         - source: salt://container/update.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}/update.sh'
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/update.sh'
         - require:
             - Make container-root directory
             - Make container-root image directory
@@ -162,7 +162,7 @@ Install container update script:
 Install container-sync.service script:
     file.managed:
         - source: salt://container/container-update.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}/container-update.sh'
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/container-update.sh'
         - use:
             - Install container update script
         - require:
