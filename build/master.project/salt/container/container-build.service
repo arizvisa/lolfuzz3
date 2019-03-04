@@ -7,7 +7,6 @@ After=network-online.target
 User=root
 Type=oneshot
 RemainAfterExit=yes
-Environment="CONTAINER_DIR={{ container_path }}"
 Environment="BUILDDIR={{ container_build_path }}"
 Environment="IMAGEDIR={{ container_image_path }}"
 Environment="TOOLSDIR={{ container_tools_path }}"

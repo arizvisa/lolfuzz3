@@ -7,7 +7,6 @@ After=container-build.service
 User=root
 Type=oneshot
 RemainAfterExit=yes
-Environment="CONTAINER_DIR={{ container_path }}"
 Environment="IMAGEDIR={{ container_image_path }}"
 Environment="SERVICEDIR={{ container_service_path }}"
 ExecStart=/bin/sh -c \
