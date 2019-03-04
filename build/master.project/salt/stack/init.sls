@@ -97,18 +97,17 @@ Build the salt-stack image:
             -o UserKnownHostsFile=/dev/null
             --
             {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }}
-            sudo -H -E
-            "CONTAINER_DIR={{ pillar["service"]["container"]["paths"]["base"] }}"
+            sudo
+            "BUILDDIR={{ pillar["service"]["container"]["paths"]["build"] }}"
+            "IMAGEDIR={{ pillar["service"]["container"]["paths"]["image"] }}"
+            "TOOLDIR={{ pillar["service"]["container"]["paths"]["tools"] }}"
             --
             "{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh"
             "{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"
 
-        - cwd: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}'
         - use_vt: true
         - hide_output: true
         - creates: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["image"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
-        - env:
-            - CONTAINER_DIR: {{ pillar["service"]["container"]["paths"]["base"] | yaml_dquote }}
         - require:
             - Generate salt-stack container build rules
             - Install container build script
