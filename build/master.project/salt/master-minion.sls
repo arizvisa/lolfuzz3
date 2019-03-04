@@ -191,6 +191,7 @@ Install salt-minion.service:
             exposed: []
 
             container_path: {{ pillar["service"]["container"]["paths"]["base"] | yaml_dquote }}
+            container_image_path: {{ pillar["service"]["container"]["paths"]["image"] | yaml_dquote }}
             image_name: 'lol/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}'
             image_path: 'salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
             image_uuid_path: 'salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.id'
