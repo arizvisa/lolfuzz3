@@ -9,7 +9,13 @@ Install a default gitignore file:
         - name: {{ Root }}/srv/.gitignore
         - replace: false
         - contents: |
-            /bootstrap/*
+            # bootstrap files which prepare the master and newly joined minions
+            bootstrap/**
+
+            # container buidling scripts
+            !container/
+            container/*
+            !container/build/
         - mode: 0644
 
 Enable systemd multi-user.target wants git-daemon.service:
