@@ -2,10 +2,10 @@
 # Update images that are in the repository to the latest available
 #   version on the filesystem according to the timestamp.
 
+IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
+
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$CONTAINER_DIR
 umask 077
-
-IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
 
 [ ! -d "$IMAGEDIR" ] && printf 'IMAGEDIR (%s) does not exist. Exiting...\n' "$IMAGEDIR" 1>&2 && exit 1
 

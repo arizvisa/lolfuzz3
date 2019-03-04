@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Build an image based on the rules within the filesystem
-export PATH=/sbin:/bin:/usr/sbin:/usr/bin
-umask 027
 
-# Set some default variables
 BUILDDIR=${BUILDDIR:-"$CONTAINER_DIR/build"}
 IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
 TOOLDIR=${TOOLDIR:-"$CONTAINER_DIR/tools"}
+
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+umask 027
 
 # Check for existence of the acbuild tool.
 ACBUILD=`type -P acbuild 2>/dev/null || type -P "$TOOLDIR"/*/acbuild`
