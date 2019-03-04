@@ -22,7 +22,7 @@ TimeoutStartSec=infinity
 ExecStartPre=-/bin/mkdir -p {%- for name in volumes %} {{ volumes[name].source }}{% endfor %}
 {% endif -%}
 ExecStartPre=/bin/bash -c \
-    "{{ container_path }}/load.sh {{ container_image_path }}/{{ image_path }} | tee >( cut -d$'\t' -f3 >| {{ container_image_path }}/{{ image_uuid_path }} )"
+    "{{ container_service_path }}/load.sh {{ container_image_path }}/{{ image_path }} | tee >( cut -d$'\t' -f3 >| {{ container_image_path }}/{{ image_uuid_path }} )"
 ExecStart=/bin/rkt run \
             --uuid-file-save={{ run_uuid_path }} \
             --net={{ network }} \
