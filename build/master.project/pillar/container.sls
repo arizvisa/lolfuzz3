@@ -4,7 +4,12 @@
 
 service:
     container:
-        path: /srv/container
+        paths:
+            base: /srv/container
+            build: /srv/container/build
+            image: /srv/container/image
+            tools: /srv/container/tools
+
         tools:
             {% for file in acbuild_files -%}
             - {% for attribute in file -%}

@@ -44,7 +44,7 @@ Generate salt-stack container build rules:
     file.managed:
         - template: jinja
         - source: salt://stack/container.acb
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["path"] }}/build/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb'
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb'
 
         - context:
             bootstrap: {{ pillar["container"]["salt-stack"]["bootstrap"] | yaml_dquote }}
@@ -90,20 +90,20 @@ Generate salt-stack container build rules:
 # building the salt-stack container
 Build the salt-stack image:
     cmd.run:
-        - name: /usr/bin/ssh -i "{{ Root }}{{ pillar["toolbox"]["self-service"]["key"] }}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }} sudo -H -E "CONTAINER_DIR={{ pillar["service"]["container"]["path"] }}" -- "{{ pillar["service"]["container"]["path"] }}/build.sh" "{{ pillar["service"]["container"]["path"] }}/build/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"
-        - cwd: '{{ Root }}/{{ pillar["service"]["container"]["path"] }}'
+        - name: /usr/bin/ssh -i "{{ Root }}{{ pillar["toolbox"]["self-service"]["key"] }}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }} sudo -H -E "CONTAINER_DIR={{ pillar["service"]["container"]["paths"]["base"] }}" -- "{{ pillar["service"]["container"]["paths"]["base"] }}/build.sh" "{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"
+        - cwd: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}'
         - use_vt: true
         - hide_output: true
-        - creates: '{{ Root }}/{{ pillar["service"]["container"]["path"] }}/image/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
+        - creates: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["image"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
         - env:
-            - CONTAINER_DIR: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
+            - CONTAINER_DIR: {{ pillar["service"]["container"]["paths"]["base"] | yaml_dquote }}
         - require:
             - Generate salt-stack container build rules
             - Install container build script
 
 Finished building the salt-stack image:
     file.managed:
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["path"] }}/image/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["image"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
         - mode: 0664
         - replace: false
         - watch:
