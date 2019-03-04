@@ -234,7 +234,7 @@ Install salt-master.service:
             container_path: {{ pillar["service"]["container"]["path"] | yaml_dquote }}
             image_name: 'lol/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}'
             image_path: 'salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
-            image_uuid_path: 'salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci.id'
+            image_uuid_path: 'salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.id'
             run_uuid_path: {{ pillar["service"]["salt-master"]["UUID"] | yaml_dquote }}
 
         - use:
