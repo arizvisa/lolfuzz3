@@ -13,8 +13,8 @@ ACBUILD=`type -P acbuild 2>/dev/null || type -P "$TOOLDIR"/*/acbuild`
 if [ ! -x "$ACBUILD" ]; then
     # If not, then check to see if we can internet...
     printf '`%s` not found on host.\n' 'acbuild' 1>&2
-    printf 'Unable to locate acbuild tool in path. Skipping automatic image building.\n' 1>&2
-    exit 0
+    printf 'Unable to locate acbuild tool in path. Unable to build the requested image.\n' 1>&2
+    exit 1
 fi
 
 # Check existence of the rule provided as the argument.
