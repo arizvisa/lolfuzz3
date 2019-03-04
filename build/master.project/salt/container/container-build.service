@@ -8,6 +8,9 @@ User=root
 Type=oneshot
 RemainAfterExit=yes
 Environment="CONTAINER_DIR={{ container_path }}"
+Environment="BUILDDIR={{ container_path }}/build"
+Environment="IMAGEDIR={{ container_path }}/image"
+Environment="TOOLDIR={{ container_path }}/tools"
 ExecStart=/bin/sh -c \
     "${CONTAINER_DIR}"/container-build.sh
 

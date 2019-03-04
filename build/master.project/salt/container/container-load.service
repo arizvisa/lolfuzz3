@@ -8,6 +8,7 @@ User=root
 Type=oneshot
 RemainAfterExit=yes
 Environment="CONTAINER_DIR={{ container_path }}"
+Environment="IMAGEDIR={{ container_path }}/image"
 ExecStart=/bin/sh -c \
     "${CONTAINER_DIR}"/container-load.sh
 
