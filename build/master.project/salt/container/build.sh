@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Build an image based on the rules within the filesystem
 
-BUILDDIR=${BUILDDIR:-"$CONTAINER_DIR/build"}
 IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
 TOOLDIR=${TOOLDIR:-"$CONTAINER_DIR/tools"}
 
@@ -94,7 +93,7 @@ imgtemp="$IMAGEDIR/${imgfull}.tmp"
 trap "[ -f \"${imgtemp}\" ] && /bin/rm -f \"${imgtemp}\"; exit" SIGHUP SIGINT SIGTERM
 
 # And now we can execute it..
-if "${shtype}" "$BUILDDIR/${rule}" >| "${imgtemp}"; then
+if "${shtype}" "${rule}" >| "${imgtemp}"; then
     rm -f "${imgtemp}"
     printf 'Error trying to build image for rule "%s".\n' "${rule}" 1>&2
     exit 1

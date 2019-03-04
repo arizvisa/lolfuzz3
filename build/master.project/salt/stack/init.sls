@@ -98,7 +98,6 @@ Build the salt-stack image:
             --
             {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }}
             sudo
-            "BUILDDIR={{ pillar["service"]["container"]["paths"]["build"] }}"
             "IMAGEDIR={{ pillar["service"]["container"]["paths"]["image"] }}"
             "TOOLDIR={{ pillar["service"]["container"]["paths"]["tools"] }}"
             --
