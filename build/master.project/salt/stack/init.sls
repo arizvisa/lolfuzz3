@@ -90,7 +90,7 @@ Generate salt-stack container build rules:
 # building the salt-stack container
 Build the salt-stack image:
     cmd.run:
-        - name: /usr/bin/ssh -i "{{ Root }}{{ pillar["toolbox"]["self-service"]["key"] }}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }} sudo -H -E "CONTAINER_DIR={{ pillar["service"]["container"]["paths"]["base"] }}" -- "{{ pillar["service"]["container"]["paths"]["base"] }}/build.sh" "{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"
+        - name: /usr/bin/ssh -i "{{ Root }}{{ pillar["toolbox"]["self-service"]["key"] }}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -- {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }} sudo -H -E "CONTAINER_DIR={{ pillar["service"]["container"]["paths"]["base"] }}" -- "{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh" "{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"
         - cwd: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}'
         - use_vt: true
         - hide_output: true
