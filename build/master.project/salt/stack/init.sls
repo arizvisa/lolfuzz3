@@ -99,7 +99,7 @@ Build the salt-stack image:
             {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }}
             sudo
             "IMAGEDIR={{ pillar["service"]["container"]["paths"]["image"] }}"
-            "TOOLDIR={{ pillar["service"]["container"]["paths"]["tools"] }}"
+            "TOOLSDIR={{ pillar["service"]["container"]["paths"]["tools"] }}"
             --
             "{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh"
             "{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"

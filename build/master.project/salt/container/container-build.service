@@ -10,7 +10,7 @@ RemainAfterExit=yes
 Environment="CONTAINER_DIR={{ container_path }}"
 Environment="BUILDDIR={{ container_build_path }}"
 Environment="IMAGEDIR={{ container_image_path }}"
-Environment="TOOLDIR={{ container_tools_path }}"
+Environment="TOOLSDIR={{ container_tools_path }}"
 Environment="SERVICEDIR={{ container_service_path }}"
 ExecStart=/bin/sh -c \
     "${SERVICEDIR}"/container-build.sh
