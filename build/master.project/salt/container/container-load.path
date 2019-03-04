@@ -2,7 +2,7 @@
 Description=Watch for any images that need to be loaded.
 
 [Path]
-PathChanged={{ container_path }}/image/
+PathChanged={{ container_image_path }}/
 Unit=container-load.service
 
 [Install]

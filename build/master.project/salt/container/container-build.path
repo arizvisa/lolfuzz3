@@ -2,7 +2,7 @@
 Description=Watch for any images that need to be built.
 
 [Path]
-PathChanged={{ container_path }}/build/
+PathChanged={{ container_build_path }}/
 Unit=container-build.service
 
 [Install]
