@@ -14,13 +14,13 @@ Install a default salt-minion beacon highstate:
             beacon:
                 inotify:
                     - files:
-                        '{{ pillar["service"]["container"]["path"]}}/build':
+                        '{{ Root }}/{{ pillar["service"]["container"]["path"]}}/build':
                             mask:
                                 - create
                                 - delete
                                 - modify
                             recurse: true
-                        '{{ pillar["service"]["container"]["path"]}}/image':
+                        '{{ Root }}/{{ pillar["service"]["container"]["path"]}}/image':
                             mask:
                                 - create
                                 - delete
