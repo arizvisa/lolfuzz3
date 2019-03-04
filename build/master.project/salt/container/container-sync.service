@@ -7,7 +7,7 @@ After=container-load.service
 User=root
 Type=oneshot
 Environment="CONTAINER_DIR={{ container_path }}"
-Environment="IMAGEDIR={{ container_path }}/image"
+Environment="IMAGEDIR={{ container_image_path }}"
 ExecStart=/bin/sh -c \
     "${CONTAINER_DIR}"/container-update.sh
 
