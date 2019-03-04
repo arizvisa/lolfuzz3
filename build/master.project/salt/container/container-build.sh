@@ -3,8 +3,9 @@
 
 BUILDDIR=${BUILDDIR:-"$CONTAINER_DIR/build"}
 IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
+SERVICEDIR=${SERVICEDIR:-"$CONTAINER_DIR"}
 
-export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$CONTAINER_DIR
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$SERVICEDIR
 umask 027
 
 [ ! -d "$BUILDDIR" ] && printf 'Build-directory "%s" is not found. Nothing needed to be built. Exiting.\n' "$BUILDDIR" 1>&2 && exit 0

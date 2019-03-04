@@ -2,8 +2,9 @@
 # Add images into the repository using the images available on the filesystem.
 
 IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
+SERVICEDIR=${SERVICEDIR:-"$CONTAINER_DIR"}
 
-export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$CONTAINER_DIR
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$SERVICEDIR
 umask 077
 
 [ ! -d "$IMAGEDIR" ] && printf 'Image-directory "%s" is not found. Exiting...\n' "$IMAGEDIR" 1>&2 && exit 1

@@ -3,8 +3,9 @@
 #   version on the filesystem according to the timestamp.
 
 IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
+SERVICEDIR=${SERVICEDIR:-"$CONTAINER_DIR"}
 
-export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$CONTAINER_DIR
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$SERVICEDIR
 umask 077
 
 [ ! -d "$IMAGEDIR" ] && printf 'IMAGEDIR (%s) does not exist. Exiting...\n' "$IMAGEDIR" 1>&2 && exit 1
