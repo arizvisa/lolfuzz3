@@ -54,7 +54,7 @@ Transfer container-root tools ({{ item.Source }}):
     file.managed:
         - source: 'salt://files/{{ item.Source }}'
         - source_hash: '{{ item.Algo }}={{ item.Hash }}'
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}/{{ item.Source }}'
+        - name: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ item.Source }}'
         - require:
             - Make container-root tools directory
         - mode: 0640
@@ -62,7 +62,7 @@ Transfer container-root tools ({{ item.Source }}):
 
 Extract container-root tools:
     archive.extracted:
-        - source: '{{ pillar["service"]["container"]["paths"]["tools"] }}/{{ pillar["service"]["container"]["tools"] | map(attribute="Source") | first }}'
+        - source: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ pillar["service"]["container"]["tools"] | map(attribute="Source") | first }}'
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}'
         - require:
         {% for item in pillar["service"]["container"]["tools"] %}
