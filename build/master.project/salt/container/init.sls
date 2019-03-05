@@ -49,6 +49,11 @@ Make container-root service-tools directory:
         - file_mode: 0664
 
 ### container tools
+Create temporary directory for container-root tools:
+    file.directory:
+        - name: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}'
+        - makedirs: true
+
 {% for item in pillar["service"]["container"]["tools"] %}
 Transfer container-root tools ({{ item.Source }}):
     file.managed:
@@ -56,20 +61,36 @@ Transfer container-root tools ({{ item.Source }}):
         - source_hash: '{{ item.Algo }}={{ item.Hash }}'
         - name: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ item.Source }}'
         - require:
-            - Make container-root tools directory
+            - Create temporary directory for container-root tools
         - mode: 0640
 {% endfor %}
+
+Create temporary tools-extraction directory:
+    file.directory:
+        - name: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
+        - makedirs: true
 
 Extract container-root tools:
     archive.extracted:
         - source: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ pillar["service"]["container"]["tools"] | map(attribute="Source") | first }}'
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}'
+        - name: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
         - require:
+            - Create temporary tools-extraction directory
         {% for item in pillar["service"]["container"]["tools"] %}
             - Transfer container-root tools ({{ item.Source }})
         {% endfor %}
         - user: root
         - group: root
+
+Deploy container-root tools:
+    cmd.run:
+        - name: 'mv -v {{ pillar["service"]["container"]["tools-extract"]["match"] }} "{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}"'
+        - cwd: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
+        - use_vt: true
+        - require:
+            - Extract container-root tools
+            - Create temporary tools-extraction directory:
+            - Make container-root tools directory
 
 ### container-build service
 Install container build script:
