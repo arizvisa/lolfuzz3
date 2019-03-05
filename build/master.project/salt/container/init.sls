@@ -38,6 +38,16 @@ Make container-root tools directory:
         - dir_mode: 0755
         - file_mode: 0664
 
+Make container-root service-tools directory:
+    file.directory:
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}'
+        - use:
+            - Make container-root directory
+        - require:
+            - Make container-root directory
+        - dir_mode: 0755
+        - file_mode: 0664
+
 ### container tools
 {% for item in pillar["service"]["container"]["tools"] %}
 Transfer container-root tools ({{ item.Source }}):
@@ -67,7 +77,7 @@ Install container build script:
         - source: salt://container/build.sh
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh'
         - require:
-            - Make container-root directory
+            - Make container-root service-tools directory
             - Extract container-root tools
         - mode: 0775
 
@@ -113,7 +123,7 @@ Install container load script:
         - source: salt://container/load.sh
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/load.sh'
         - require:
-            - Make container-root directory
+            - Make container-root service-tools directory
         - mode: 0775
 
 Install container-load.service script:
@@ -155,7 +165,7 @@ Install container update script:
         - source: salt://container/update.sh
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/update.sh'
         - require:
-            - Make container-root directory
+            - Make container-root service-tools directory
             - Make container-root image directory
         - mode: 0775
 
