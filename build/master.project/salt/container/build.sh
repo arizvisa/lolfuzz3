@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build an image based on the rules within the filesystem
 
-IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
+IMAGEDIR=${IMAGEDIR:-"/var/lib/container"}
 
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin
 umask 027
