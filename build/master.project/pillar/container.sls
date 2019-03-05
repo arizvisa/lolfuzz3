@@ -5,10 +5,10 @@
 service:
     container:
         paths:
-            build: /srv/container/build
-            image: /srv/container/image
-            tools: /srv/container/tools
-            service-tools: /srv/container
+            build: /srv/container
+            image: /var/lib/container
+            tools: /opt/bin
+            service-tools: /opt/libexec/container
 
         # directories used to extract the tools listed below
         tools-extract:
