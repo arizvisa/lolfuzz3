@@ -5,7 +5,6 @@
 service:
     container:
         paths:
-            base: /srv/container
             build: /srv/container/build
             image: /srv/container/image
             tools: /srv/container/tools
