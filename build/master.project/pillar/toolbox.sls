@@ -4,3 +4,4 @@ toolbox:
     self-service:
         host: core@localhost
         key: /home/core/.ssh/id_rsa
+        temporary: /home/core
