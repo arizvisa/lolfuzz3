@@ -54,7 +54,7 @@ Transfer container-root tools ({{ item.Source }}):
     file.managed:
         - source: 'salt://files/{{ item.Source }}'
         - source_hash: '{{ item.Algo }}={{ item.Hash }}'
-        - name: '{{ pillar["service"]["container"]["paths"]["tools"] }}/{{ item.Source }}'
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}/{{ item.Source }}'
         - require:
             - Make container-root tools directory
         - mode: 0640
