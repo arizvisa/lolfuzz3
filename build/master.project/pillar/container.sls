@@ -11,6 +11,15 @@ service:
             tools: /srv/container/tools
             service-tools: /srv/container
 
+        # directories used to extract the tools listed below
+        tools-extract:
+            # temporary directory that archive gets extracted to
+            temporary: /tmp/container
+
+            # glob that matches the files that we care about from the archive
+            match: */*
+
+        # the tools that get extracted
         tools:
             {% for file in acbuild_files -%}
             - {% for attribute in file -%}
