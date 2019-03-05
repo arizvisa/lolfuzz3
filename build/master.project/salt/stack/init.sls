@@ -83,7 +83,7 @@ Generate salt-stack container build rules:
                     mount: /srv
 
         - require:
-            - Make container-root build directory
+            - Make container build directory
             - Install container-build.service
         - mode: 0664
 

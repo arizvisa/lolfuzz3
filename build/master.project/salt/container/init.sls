@@ -1,67 +1,48 @@
 {% set Root = pillar["local"]["root"] %}
 
 ### container directory structure
-Make container-root directory:
-    file.directory:
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["base"] }}'
-        - dir_mode: 1755
-        - file_mode: 0664
-        - makedirs: true
-
-Make container-root build directory:
+Make container build directory:
     file.directory:
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["build"] }}'
-        - use:
-            - Make container-root directory
-        - require:
-            - Make container-root directory
+        - makedirs: true
         - dir_mode: 1755
         - file_mode: 0664
 
-Make container-root image directory:
+Make container image directory:
     file.directory:
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["image"] }}'
-        - use:
-            - Make container-root directory
-        - require:
-            - Make container-root directory
-        - dir_mode: 1755
-        - file_mode: 0664
-
-Make container-root tools directory:
-    file.directory:
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}'
-        - use:
-            - Make container-root directory
-        - require:
-            - Make container-root directory
+        - makedirs: true
         - dir_mode: 0755
         - file_mode: 0664
 
-Make container-root service-tools directory:
+Make container tools directory:
+    file.directory:
+        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}'
+        - makedirs: true
+        - dir_mode: 0755
+        - file_mode: 0664
+
+Make container service-tools directory:
     file.directory:
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}'
-        - use:
-            - Make container-root directory
-        - require:
-            - Make container-root directory
+        - makedirs: true
         - dir_mode: 0755
         - file_mode: 0664
 
 ### container tools
-Create temporary directory for container-root tools:
+Create temporary directory for container tools:
     file.directory:
         - name: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}'
         - makedirs: true
 
 {% for item in pillar["service"]["container"]["tools"] %}
-Transfer container-root tools ({{ item.Source }}):
+Transfer container tools ({{ item.Source }}):
     file.managed:
         - source: 'salt://files/{{ item.Source }}'
         - source_hash: '{{ item.Algo }}={{ item.Hash }}'
         - name: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ item.Source }}'
         - require:
-            - Create temporary directory for container-root tools
+            - Create temporary directory for container tools
         - mode: 0640
 {% endfor %}
 
@@ -70,27 +51,27 @@ Create temporary tools-extraction directory:
         - name: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
         - makedirs: true
 
-Extract container-root tools:
+Extract container tools:
     archive.extracted:
         - source: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ pillar["service"]["container"]["tools"] | map(attribute="Source") | first }}'
         - name: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
         - require:
             - Create temporary tools-extraction directory
         {% for item in pillar["service"]["container"]["tools"] %}
-            - Transfer container-root tools ({{ item.Source }})
+            - Transfer container tools ({{ item.Source }})
         {% endfor %}
         - user: root
         - group: root
 
-Deploy container-root tools:
+Deploy container tools:
     cmd.run:
         - name: 'mv -v {{ pillar["service"]["container"]["tools-extract"]["match"] }} "{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}"'
         - cwd: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
         - use_vt: true
         - require:
-            - Extract container-root tools
+            - Extract container tools
             - Create temporary tools-extraction directory
-            - Make container-root tools directory
+            - Make container tools directory
 
 ### container-build service
 Install container build script:
@@ -98,8 +79,8 @@ Install container build script:
         - source: salt://container/build.sh
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh'
         - require:
-            - Make container-root service-tools directory
-            - Deploy container-root tools
+            - Make container service-tools directory
+            - Deploy container tools
         - mode: 0775
 
 Install container-build.service script:
@@ -110,8 +91,8 @@ Install container-build.service script:
             - file: Install container build script
         - require:
             - Install container build script
-            - Make container-root build directory
-            - Make container-root image directory
+            - Make container build directory
+            - Make container image directory
         - mode: 0775
 
 Install container-build.service:
@@ -144,7 +125,7 @@ Install container load script:
         - source: salt://container/load.sh
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/load.sh'
         - require:
-            - Make container-root service-tools directory
+            - Make container service-tools directory
         - mode: 0775
 
 Install container-load.service script:
@@ -154,7 +135,7 @@ Install container-load.service script:
         - use:
             - Install container load script
         - require:
-            - Make container-root image directory
+            - Make container image directory
             - Install container load script
         - mode: 0775
 
@@ -186,8 +167,8 @@ Install container update script:
         - source: salt://container/update.sh
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/update.sh'
         - require:
-            - Make container-root service-tools directory
-            - Make container-root image directory
+            - Make container service-tools directory
+            - Make container image directory
         - mode: 0775
 
 Install container-sync.service script:
@@ -197,7 +178,7 @@ Install container-sync.service script:
         - use:
             - Install container update script
         - require:
-            - Make container-root image directory
+            - Make container image directory
             - Install container update script
         - mode: 0775
 
