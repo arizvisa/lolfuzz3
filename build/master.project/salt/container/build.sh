@@ -8,7 +8,7 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 027
 
 # Check for existence of the acbuild tool.
-ACBUILD=`type -P acbuild 2>/dev/null || type -P "$TOOLSDIR"/*/acbuild`
+ACBUILD=`type -P acbuild 2>/dev/null || type -P "$TOOLSDIR"/acbuild 2>/dev/null || type -P "$TOOLSDIR"/*/acbuild`
 if [ ! -x "$ACBUILD" ]; then
     # If not, then check to see if we can internet...
     printf '`%s` not found on host.\n' 'acbuild' 1>&2
