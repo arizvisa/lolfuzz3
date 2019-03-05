@@ -17,7 +17,7 @@ service:
             temporary: /tmp/container
 
             # glob that matches the files that we care about from the archive
-            match: */*
+            match: '*/*'
 
         # the tools that get extracted
         tools:
