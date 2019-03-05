@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Add a versioned image into the rkt repository.
 
-export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin
 umask 077
 
 # ripped from stackoverflow.com/questions/4023830

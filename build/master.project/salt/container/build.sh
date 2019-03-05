@@ -4,7 +4,7 @@
 IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
 TOOLSDIR=${TOOLSDIR:-"$CONTAINER_DIR/tools"}
 
-export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin
 umask 027
 
 # Check for existence of the acbuild tool.

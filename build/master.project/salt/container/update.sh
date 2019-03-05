@@ -4,7 +4,7 @@
 
 IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
 
-export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin
 umask 077
 
 # ripped from stackoverflow.com/questions/4023830
