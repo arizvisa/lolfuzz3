@@ -103,7 +103,6 @@ Install container-build.service:
         - defaults:
             container_build_path: {{ pillar["service"]["container"]["paths"]["build"] | yaml_dquote }}
             container_image_path: {{ pillar["service"]["container"]["paths"]["image"] | yaml_dquote }}
-            container_tools_path: {{ pillar["service"]["container"]["paths"]["tools"] | yaml_dquote }}
             container_service_path: {{ pillar["service"]["container"]["paths"]["service-tools"] | yaml_dquote }}
         - require:
             - Install container-build.service script

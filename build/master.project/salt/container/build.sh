@@ -2,13 +2,12 @@
 # Build an image based on the rules within the filesystem
 
 IMAGEDIR=${IMAGEDIR:-"$CONTAINER_DIR/image"}
-TOOLSDIR=${TOOLSDIR:-"$CONTAINER_DIR/tools"}
 
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin
 umask 027
 
 # Check for existence of the acbuild tool.
-ACBUILD=`type -P acbuild 2>/dev/null || type -P "$TOOLSDIR"/acbuild 2>/dev/null || type -P "$TOOLSDIR"/*/acbuild`
+ACBUILD=${ACBUILD:-"`type -P acbuild 2>/dev/null`"}
 if [ ! -x "$ACBUILD" ]; then
     # If not, then check to see if we can internet...
     printf '`%s` not found on host.\n' 'acbuild' 1>&2
