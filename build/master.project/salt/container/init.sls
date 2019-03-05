@@ -89,7 +89,7 @@ Deploy container-root tools:
         - use_vt: true
         - require:
             - Extract container-root tools
-            - Create temporary tools-extraction directory:
+            - Create temporary tools-extraction directory
             - Make container-root tools directory
 
 ### container-build service
@@ -99,7 +99,7 @@ Install container build script:
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh'
         - require:
             - Make container-root service-tools directory
-            - Extract container-root tools
+            - Deploy container-root tools
         - mode: 0775
 
 Install container-build.service script:
