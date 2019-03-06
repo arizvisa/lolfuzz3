@@ -104,8 +104,6 @@ Build the salt-stack image:
             "{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh"
             "{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"
 
-        - use_vt: true
-        - hide_output: true
         - creates: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["image"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
         - require:
             - Generate salt-stack container build rules

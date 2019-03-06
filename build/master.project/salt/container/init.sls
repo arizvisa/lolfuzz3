@@ -67,7 +67,6 @@ Deploy container tools:
     cmd.run:
         - name: 'mv -v {{ pillar["service"]["container"]["tools-extract"]["match"] }} "{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}"'
         - cwd: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
-        - use_vt: true
         - require:
             - Extract container tools
             - Create temporary tools-extraction directory
