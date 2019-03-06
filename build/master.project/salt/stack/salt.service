@@ -15,7 +15,7 @@ Type=notify
 Restart=always
 NotifyAccess=all
 KillMode={{ kill_mode }}
-LimitNOFILE=16384
+LimitNOFILE=65536
 TimeoutStartSec=infinity
 
 {% if volumes is defined -%}

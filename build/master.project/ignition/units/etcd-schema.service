@@ -11,7 +11,7 @@ Documentation=https://github.com/coreos/etcd
 Type=notify
 Restart=on-failure
 RestartSec=5s
-LimitNOFILE=40000
+LimitNOFILE=32768
 TimeoutStartSec=0
 
 Environment="ETCD_DATA_DIR=/var/lib/etcd"
