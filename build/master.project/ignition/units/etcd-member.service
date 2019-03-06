@@ -11,6 +11,8 @@
 [Unit]
 Description=etcd - member
 Documentation=https://github.com/coreos/etcd
+PartOf=etcd.service
+After=etcd.service
 
 [Service]
 Type=notify

@@ -1,0 +1,16 @@
+### Summary
+# This is a pseudo service that is responsible for starting one of
+# the etcd services (master or member).
+
+[Unit]
+Description=etcd
+Documentation=https://github.com/coreos/etcd
+Wants=etcd-member.service etcd-master.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/true
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
