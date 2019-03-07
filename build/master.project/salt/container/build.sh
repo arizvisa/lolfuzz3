@@ -18,6 +18,7 @@ fi
 # Check existence of the rule provided as the argument.
 rule="$1"
 [ ! -f "${rule}" ] && printf 'Rule %s not found. Terminating.\n' "${rule}" 1>&2 && exit 1
+ruledir=`dirname "${rule}"`
 
 case "$rule" in
 # If this is an acbuild-type rule.
@@ -31,7 +32,9 @@ case "$rule" in
     imgfile="${imgname}:${imgver}.aci"
     [ -f "$IMAGEDIR/${imgfile}" ] && printf 'Skipping build of %s due to %s already existing.\n' "${imgfull}" "$IMAGEDIR/${imgfile}" 1>&2 && printf $'%s\t%s\n' "${imgname}" "${imgver}" && exit 0
 
+    pushd "${ruledir}"
     cat "${rule}" <( printf 'write --overwrite %s\n' "$IMAGEDIR/${imgfile}" ) | "$ACBUILD" script /dev/stdin
+    popd
 
     if [ $? -ne 0 ] || [ ! -f "$IMAGEDIR/${imgname}:${imgver}.aci" ]; then
         printf 'Error trying to build image: "%s:%s"\n' "${imgname}" "${imgver}" 1>&2
@@ -92,6 +95,7 @@ imgtemp="$IMAGEDIR/${imgfull}.tmp"
 trap "[ -f \"${imgtemp}\" ] && /bin/rm -f \"${imgtemp}\"; exit" SIGHUP SIGINT SIGTERM
 
 # And now we can execute it..
+pushd "${ruledir}"
 if "${shtype}" "${rule}" >| "${imgtemp}"; then
     rm -f "${imgtemp}"
     printf 'Error trying to build image for rule "%s".\n' "${rule}" 1>&2
@@ -99,6 +103,7 @@ if "${shtype}" "${rule}" >| "${imgtemp}"; then
 else
     mv -f "${imgtemp}" "$IMAGEDIR/${imgfile}"
 fi
+popd
 
 # ..and now we can inform the user that it's there.
 printf 'Successfully built image "%s:%s" at %s.\n' "${imgname}" "${imgver}" "$IMAGEDIR/${imgfile}" 1>&2
