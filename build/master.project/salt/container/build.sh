@@ -34,9 +34,10 @@ case "$rule" in
 
     pushd "${ruledir}" >/dev/null
     cat "${rule}" <( printf 'write --overwrite %s\n' "$IMAGEDIR/${imgfile}" ) | "$ACBUILD" script /dev/stdin
+    err=$?
     popd >/dev/null
 
-    if [ $? -ne 0 ] || [ ! -f "$IMAGEDIR/${imgname}:${imgver}.aci" ]; then
+    if [ $err -ne 0 ] || [ ! -f "$IMAGEDIR/${imgname}:${imgver}.aci" ]; then
         printf 'Error trying to build image: "%s:%s"\n' "${imgname}" "${imgver}" 1>&2
         rm -f "$IMAGEDIR/${imgname}:${imgver}.aci"
         exit 1
@@ -96,14 +97,17 @@ trap "[ -f \"${imgtemp}\" ] && /bin/rm -f \"${imgtemp}\"; exit" SIGHUP SIGINT SI
 
 # And now we can execute it..
 pushd "${ruledir}" >/dev/null
-if cat "${rule}" <( printf 'acbuild write --overwrite %s\nacbuild end\n' "${imgtemp}" ) | "${shtype}" /dev/stdin; then
-    rm -f "${imgtemp}"
+cat "${rule}" <( printf 'acbuild write --overwrite %s\nacbuild end\n' "${imgtemp}" ) | "${shtype}" /dev/stdin
+err=$?
+popd >/dev/null
+
+if [ $err -ne 0 ] || [ ! -f "${imgtemp}" ]; then
     printf 'Error trying to build image for rule "%s".\n' "${rule}" 1>&2
+    rm -f "${imgtemp}"
     exit 1
 else
     mv -f "${imgtemp}" "$IMAGEDIR/${imgfile}"
 fi
-popd >/dev/null
 
 # ..and now we can inform the user that it's there.
 printf 'Successfully built image "%s:%s" at %s.\n' "${imgname}" "${imgver}" "$IMAGEDIR/${imgfile}" 1>&2
