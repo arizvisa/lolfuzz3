@@ -3,10 +3,10 @@ Description={{ description }}
 ConditionPathExists={{ container_image_path }}/{{ image_path }}
 ConditionPathExists={{ configuration }}
 Wants=network.target
-{% if after is defined -%}
+{%- if after is defined %}
 After={{ after | join(' ') }}
 {%- endif %}
-{% if requires is defined -%}
+{%- if requires is defined %}
 Requires={{ requires | join(' ') }}
 {%- endif %}
 
