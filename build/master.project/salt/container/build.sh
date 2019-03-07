@@ -96,7 +96,7 @@ trap "[ -f \"${imgtemp}\" ] && /bin/rm -f \"${imgtemp}\"; exit" SIGHUP SIGINT SI
 
 # And now we can execute it..
 pushd "${ruledir}"
-if "${shtype}" "${rule}" >| "${imgtemp}"; then
+if cat "${rule}" <( printf 'acbuild write --overwrite %s\nacbuild end\n' "${imgtemp}" ) | "${shtype}" /dev/stdin; then
     rm -f "${imgtemp}"
     printf 'Error trying to build image for rule "%s".\n' "${rule}" 1>&2
     exit 1
