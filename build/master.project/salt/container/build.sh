@@ -16,7 +16,7 @@ if [ ! -x "$ACBUILD" ]; then
 fi
 
 # Check existence of the rule provided as the argument.
-rule="$1"
+rule=`readlink -f "$1"`
 [ ! -f "${rule}" ] && printf 'Rule %s not found. Terminating.\n' "${rule}" 1>&2 && exit 1
 ruledir=`dirname "${rule}"`
 
