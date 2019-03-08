@@ -201,7 +201,7 @@ def which(exe=None):
         This returns truth if posixy semantics (which python simulates on
         windows) states that this is executable.
         '''
-        return os.path.isfile(path) or os.access(path, os.X_OK)
+        return os.path.isfile(path) and os.access(path, os.X_OK)
 
     def resolve(path):
         '''
