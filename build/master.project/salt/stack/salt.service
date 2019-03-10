@@ -11,6 +11,7 @@ Requires={{ requires | join(' ') }}
 {%- endif %}
 
 [Service]
+Slice=machine.slice
 Type=notify
 Restart=always
 NotifyAccess=all
