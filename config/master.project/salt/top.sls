@@ -1,12 +1,12 @@
 base:
     # All windows targets
     'G@os_family:Windows':
-        - id
+        - identity
         - windows
 
     # All linux targets
     'not G@os_family:Windows':
-        - id
+        - identity
         - linux
 
     # All targets
