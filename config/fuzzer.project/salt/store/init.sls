@@ -37,7 +37,7 @@ Check that the {{ pillar["container"]["minio"]["name"] }} image has been fetched
 
 Make dropin directory for {{ pillar["container"]["minio"]["name"] }}.service:
     file.directory:
-        - name: {{ Root }}/etc/systemd/system/{{ pilar["container"]["minio"]["name"] }.service.d
+        - name: {{ Root }}/etc/systemd/system/{{ pillar["container"]["minio"]["name"] }}.service.d
         - mode: 0755
         - makedirs: true
 
@@ -73,7 +73,7 @@ Dropin an environment configuration to the {{ pillar["container"]["minio"]["name
     file.managed:
         - template: jinja
         - source: salt://store/minio-configuration.dropin
-        - name: {{ Root }}/etc/systemd/system/{{ pilar["container"]["minio"]["name"] }.service.d/50-configuration.conf
+        - name: {{ Root }}/etc/systemd/system/{{ pillar["container"]["minio"]["name"] }}.service.d/50-configuration.conf
         - defaults:
             configuration:
                 access_key: {{ mpillar["project"] }}
