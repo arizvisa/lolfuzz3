@@ -3,7 +3,7 @@
 
 {% set Root = mpillar["local"]["root"] %}
 
-Create the minio.service data store:
+Create the {{ pillar["container"]["minio"]["name"] }}.service data store:
     file.directory:
         - name: '{{ Root }}/{{ pillar["store"]["minio"]["root"] }}'
         - mode: 0775
@@ -35,11 +35,11 @@ Check that the minio image has been fetched:
         - require:
             - Fetch the minio image
 
-Install the minio.service systemd unit:
+Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit:
     file.managed:
         - template: jinja
         - source: salt://store/minio.service
-        - name: '{{ Root }}/etc/systemd/system/minio.service'
+        - name: '{{ Root }}/etc/systemd/system/{{ pillar["container"]["minio"]["name"] }}.service'
         - defaults:
             configuration:
                 access_key: {{ mpillar["project"] }}
@@ -65,16 +65,16 @@ Install the minio.service systemd unit:
             uuid_path: {{ pillar["container"]["minio"]["uuid"] }}
 
         - require:
-            - Create the minio.service data store
+            - Create the {{ pillar["container"]["minio"]["name"] }}.service data store
             - Check that the minio image has been fetched
         - mode: 0664
 
-Enable systemd multi-user.target wants minio.service:
+Enable systemd multi-user.target wants {{ pillar["container"]["minio"]["name"] }}.service:
     file.symlink:
-        - name: '{{ Root }}/etc/systemd/system/multi-user.target.wants/minio.service'
-        - target: '/etc/systemd/system/minio.service'
+        - name: '{{ Root }}/etc/systemd/system/multi-user.target.wants/{{ pillar["container"]["minio"]["name"] }}.service'
+        - target: '/etc/systemd/system/{{ pillar["container"]["minio"]["name"] }}.service'
         - require:
-            - Install the minio.service systemd unit
+            - Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit
         - makedirs: true
 
 Fetch the minio-client image:
