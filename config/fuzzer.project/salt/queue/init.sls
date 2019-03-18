@@ -3,7 +3,7 @@
 
 {% set Root = mpillar["local"]["root"] %}
 
-Fetch the zetcd image:
+Fetch the {{ pillar["container"]["zetcd"]["name"] }} image:
     cmd.run:
         - name: >-
             /usr/bin/ssh
@@ -22,17 +22,17 @@ Fetch the zetcd image:
 
         - creates: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["zetcd"]["name"] }}:{{ pillar["container"]["zetcd"]["version"] }}.id'
 
-Check that the zetcd image has been fetched:
+Check that the {{ pillar["container"]["zetcd"]["name"] }} image has been fetched:
     file.exists:
         - name: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["zetcd"]["name"] }}:{{ pillar["container"]["zetcd"]["version"] }}.id'
         - require:
-            - Fetch the zetcd image
+            - Fetch the {{ pillar["container"]["zetcd"]["name"] }} image
 
-Install the zetcd.service systemd unit:
+Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit:
     file.managed:
         - template: jinja
         - source: salt://queue/zetcd.service
-        - name: '{{ Root }}/etc/systemd/system/zetcd.service'
+        - name: '{{ Root }}/etc/systemd/system/{{ pillar["container"]["zetcd"]["name"] }}.service'
         - defaults:
             network: host
             arguments:
@@ -43,15 +43,15 @@ Install the zetcd.service systemd unit:
             uuid_path: {{ pillar["container"]["zetcd"]["uuid"] }}
 
         - require:
-            - Check that the zetcd image has been fetched
+            - Check that the {{ pillar["container"]["zetcd"]["name"] }} image has been fetched
         - mode: 0664
 
-Enable systemd multi-user.target wants zetcd.service:
+Enable systemd multi-user.target wants {{ pillar["container"]["zetcd"]["name"] }}.service:
     file.symlink:
-        - name: '{{ Root }}/etc/systemd/system/multi-user.target.wants/zetcd.service'
-        - target: '/etc/systemd/system/zetcd.service'
+        - name: '{{ Root }}/etc/systemd/system/multi-user.target.wants/{{ pillar["container"]["zetcd"]["name"] }}.service'
+        - target: '/etc/systemd/system/{{ pillar["container"]["zetcd"]["name"] }}.service'
         - require:
-            - Install the zetcd.service systemd unit
+            - Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit
         - makedirs: true
 
 Check that the apache-kafka container exists:
@@ -84,6 +84,9 @@ Install the apache-kafka.service systemd unit:
         - source: salt://queue/kafka.service
         - name: '{{ Root }}/etc/systemd/system/apache-kafka.service'
         - defaults:
+            dependencies:
+                - {{ pillar["container"]["zetcd"]["name"] }}.service
+
             container_name: {{ pillar["container"]["kafka"]["image"] }}:{{ pillar["container"]["kafka"]["version"] }}
             image_name: {{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}
             uuid_path: {{ pillar["container"]["kafka"]["uuid"] }}
@@ -102,7 +105,7 @@ Install the apache-kafka.service systemd unit:
             container_image_path: {{ mpillar["service"]["container"]["paths"]["image"] }}
 
         - require:
-            - Install the zetcd.service systemd unit
+            - Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit
             - Build the apace-kafka image
         - mode: 0664
 

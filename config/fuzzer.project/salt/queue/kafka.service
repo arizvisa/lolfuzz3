@@ -2,8 +2,8 @@
 Description=Apache Kafka
 Documentation=https://kafka.apache.org
 
-Requires=zetcd.service
-After=zetcd.service
+Requires={{ dependencies | join(" ") }}
+After={{ dependencies | join (" ") }}
 Wants=network.target
 
 [Service]
