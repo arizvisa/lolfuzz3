@@ -1,0 +1,4 @@
+[Service]
+{%- for name in configuration %}
+Environment="KAFKA_{{ name | upper }}={{ configuration[name] }}"
+{%- endfor %}

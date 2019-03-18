@@ -16,10 +16,6 @@ TimeoutStartSec=infinity
 Environment="SERVICEDIR={{ container_service_path }}"
 Environment="IMAGEDIR={{ container_image_path }}"
 
-{%- for name in configuration %}
-Environment="KAFKA_{{ name | upper }}={{ configuration[name] }}"
-{%- endfor %}
-
 ExecStartPre=/bin/bash -c \
     "${SERVICEDIR}/load.sh ${IMAGEDIR}/{{ image_name }}.aci | tee >( cut -d$'\t' -f3 >| ${IMAGEDIR}/{{ image_name }}.id )"
 

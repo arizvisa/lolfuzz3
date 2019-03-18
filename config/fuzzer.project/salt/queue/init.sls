@@ -52,6 +52,7 @@ Enable systemd multi-user.target wants {{ pillar["container"]["zetcd"]["name"] }
         - target: '/etc/systemd/system/{{ pillar["container"]["zetcd"]["name"] }}.service'
         - require:
             - Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit
+            - Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - makedirs: true
 
 Check that the {{ pillar["container"]["kafka"]["name"] }} container exists:
@@ -91,11 +92,6 @@ Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
             image_name: {{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}
             uuid_path: {{ pillar["container"]["kafka"]["uuid"] }}
 
-            configuration:
-                zookeeper_connect: 127.0.0.1:2181
-                broker_id: 0
-                listeners: PLAINTEXT://{{ mpillar["local"]["ip4"] }}:9092
-
             volumes:
                 - name: kafka-root
                   mount: /kafka
@@ -107,6 +103,20 @@ Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
         - require:
             - Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit
             - Build the {{ pillar["container"]["kafka"]["name"] }} image
+        - mode: 0664
+
+Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
+    file.managed:
+        - template: jinja
+        - source: salt://queue/kafka-configuration.dropin
+        - name: {{ Root }}/etc/systemd/system/{{ pilar["container"]["kafka"]["name"] }.service.d/50-configuration.conf
+        - defaults:
+            configuration:
+                zookeeper_connect: 127.0.0.1:2181
+                broker_id: 0
+                listeners: PLAINTEXT://{{ mpillar["local"]["ip4"] }}:9092
+        - require:
+            - Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - mode: 0664
 
 {% for toolname in pillar["queue"]["kafka"]["tools"] -%}
@@ -123,5 +133,6 @@ Install tool for {{ pillar["container"]["kafka"]["name"] }} image -- {{ toolname
             command: {{ pillar["queue"]["kafka"]["tools"][toolname] }}
         - require:
             - Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
+            - Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - mode: 0775
 {% endfor %}
