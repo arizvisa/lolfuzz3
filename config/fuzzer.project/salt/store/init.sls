@@ -9,7 +9,7 @@ Create the {{ pillar["container"]["minio"]["name"] }}.service data store:
         - mode: 0775
         - makedirs: true
 
-Fetch the minio image:
+Fetch the {{ pillar["container"]["minio"]["name"] }} image:
     cmd.run:
         - name: >-
             /usr/bin/ssh
@@ -29,11 +29,11 @@ Fetch the minio image:
 
         - creates: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio"]["name"] }}:{{ pillar["container"]["minio"]["version"] }}.id'
 
-Check that the minio image has been fetched:
+Check that the {{ pillar["container"]["minio"]["name"] }} image has been fetched:
     file.exists:
         - name: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio"]["name"] }}:{{ pillar["container"]["minio"]["version"] }}.id'
         - require:
-            - Fetch the minio image
+            - Fetch the {{ pillar["container"]["minio"]["name"] }} image
 
 Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit:
     file.managed:
@@ -66,7 +66,7 @@ Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit:
 
         - require:
             - Create the {{ pillar["container"]["minio"]["name"] }}.service data store
-            - Check that the minio image has been fetched
+            - Check that the {{ pillar["container"]["minio"]["name"] }} image has been fetched
         - mode: 0664
 
 Enable systemd multi-user.target wants {{ pillar["container"]["minio"]["name"] }}.service:
