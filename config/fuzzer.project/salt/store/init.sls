@@ -77,7 +77,7 @@ Enable systemd multi-user.target wants {{ pillar["container"]["minio"]["name"] }
             - Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit
         - makedirs: true
 
-Fetch the minio-client image:
+Fetch the {{ pillar["container"]["minio-client"]["name"] }} image:
     cmd.run:
         - name: >-
             /usr/bin/ssh
@@ -97,13 +97,13 @@ Fetch the minio-client image:
 
         - creates: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio-client"]["name"] }}:{{ pillar["container"]["minio-client"]["version"] }}.id'
 
-Check that the minio-client image has been fetched:
+Check that the {{ pillar["container"]["minio-client"]["name"] }} image has been fetched:
     file.exists:
         - name: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio-client"]["name"] }}:{{ pillar["container"]["minio-client"]["version"] }}.id'
         - require:
-            - Fetch the minio-client image
+            - Fetch the {{ pillar["container"]["minio-client"]["name"] }} image
 
-Deploy the minio-client command:
+Deploy the {{ pillar["container"]["minio-client"]["name"] }} command:
     file.managed:
         - template: jinja
         - source: salt://store/minio-client.command
@@ -126,5 +126,5 @@ Deploy the minio-client command:
             image_name: {{ pillar["container"]["minio-client"]["name"] }}
             image_id_path: {{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio-client"]["name"] }}:{{ pillar["container"]["minio-client"]["version"] }}.id
         - require:
-            - Check that the minio-client image has been fetched
+            - Check that the {{ pillar["container"]["minio-client"]["name"] }} image has been fetched
         - mode: 0775
