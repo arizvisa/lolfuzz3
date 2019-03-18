@@ -1,0 +1,48 @@
+[Unit]
+Description=Apache Kafka
+Documentation=https://kafka.apache.org
+
+Requires=zetcd.service
+After=zetcd.service
+Wants=network.target
+
+[Service]
+Slice=machine.slice
+Type=simple
+KillMode=process
+Restart=always
+TimeoutStartSec=infinity
+
+Environment="SERVICEDIR={{ container_service_path }}"
+Environment="IMAGEDIR={{ container_image_path }}"
+
+{%- for name in configuration %}
+Environment="KAFKA_{{ name | upper }}={{ configuration[name] }}"
+{%- endfor %}
+
+ExecStartPre=/bin/bash -c \
+    "${SERVICEDIR}/load.sh ${IMAGEDIR}/{{ image_name }}.aci | tee >( cut -d$'\t' -f3 >| ${IMAGEDIR}/{{ image_name }}.id )"
+
+ExecStart=/bin/rkt run \
+            --uuid-file-save {{ uuid_path }} \
+            --inherit-env=true \
+            --net=host \
+            --hostname=localhost \
+{%- if exposed is defined -%}
+{%- for port in exposed %}
+            --port={{ port.name }}:{{ port.number }} \
+{%- endfor %}
+{%- endif %}
+{%- if volumes is defined -%}
+{%- for volume in volumes %}
+            --volume={{ volume.name }},kind=host,source={{ volume.source }} \
+{%- endfor %}
+{%- endif %}
+            -- "{{ container_name }}"
+
+ExecStopPost=/bin/rkt stop --uuid-file={{ uuid_path }}
+ExecStopPost=/bin/rkt gc --grace-period=0s --mark-only
+ExecStopPost=/bin/rm -f {{ uuid_path }}
+
+[Install]
+WantedBy=multi-user.target

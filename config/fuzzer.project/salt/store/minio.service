@@ -1,0 +1,43 @@
+[Unit]
+Description=MinIO
+Documentation=https://docs.minio.io
+
+AssertPathExists={{ image_id_path }}
+
+Wants=network.target
+
+[Service]
+Slice=machine.slice
+Type=simple
+KillMode=process
+Restart=always
+TimeoutStartSec=infinity
+
+{%- for name in configuration %}
+Environment="MINIO_{{ name | upper }}={{ configuration[name] }}"
+{%- endfor %}
+
+ExecStart=/bin/sh -c "/bin/rkt run \
+            --inherit-env=true \
+            --uuid-file-save={{ uuid_path }} \
+            --net={{ network }} \
+{%- if exposed is defined -%}
+{%- for port in exposed %}
+            --port={{ port.name }}:{{ port.number }} \
+{%- endfor %}
+{%- endif %}
+{%- if volumes is defined -%}
+{%- for volume in volumes %}
+            --volume={{ volume.name }},kind=host,source={{ volume.source }} \
+{%- endfor %}
+{%- endif %}
+            --insecure-options=image \
+            `cat {{ image_id_path }}` {%- if arguments is defined %} -- {%- for arg in arguments %} {{ arg }}{%- endfor %}{%- endif %} \
+            "
+
+ExecStopPost=/bin/rkt stop --uuid-file={{ uuid_path }}
+ExecStopPost=/bin/rkt rm --uuid-file={{ uuid_path }}
+ExecStopPost=/bin/rm -f {{ uuid_path }}
+
+[Install]
+WantedBy=multi-user.target

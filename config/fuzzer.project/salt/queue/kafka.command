@@ -1,0 +1,11 @@
+#!/bin/sh
+uuid_file={{ run_uuid_path }}
+if [ ! -e "$uuid_file" ]; then
+    echo "Unit {{ unit }} is not running: UUID file $uuid_file does not exist!" 1>&2
+    exit 1
+fi
+
+uuid=`cat "$uuid_file"`
+"{{ rkt }}" enter "$uuid" "{{ command }}" "$@"
+
+exit $?

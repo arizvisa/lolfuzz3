@@ -1,0 +1,35 @@
+[Unit]
+Description=zetcd (zookeeper<->etcd3 translator)
+Documentation=https://github.com/etcd-io/zetcd
+
+AssertPathExists={{ image_id_path }}
+
+Requires=etcd.service
+After=etcd.service
+Wants=network.target
+
+[Service]
+Slice=machine.slice
+Type=simple
+KillMode=process
+Restart=always
+LimitNOFILE=16384
+TimeoutStartSec=infinity
+
+ExecStart=/bin/sh -c "/bin/rkt run \
+            --uuid-file-save={{ uuid_path }} \
+            --net={{ network }} \
+{%- if exposed is defined -%}
+{%- for port in exposed %}
+            --port={{ port.name }}:{{ port.number }} \
+{%- endfor %}
+{%- endif %}
+            `cat {{ image_id_path }}` {%- if arguments is defined %} -- {%- for arg in arguments %} {{ arg }}{%- endfor %}{%- endif %} \
+            "
+
+ExecStopPost=/bin/rkt stop --uuid-file={{ uuid_path }}
+ExecStopPost=/bin/rkt rm --uuid-file={{ uuid_path }}
+ExecStopPost=/bin/rm -f {{ uuid_path }}
+
+[Install]
+WantedBy=multi-user.target
