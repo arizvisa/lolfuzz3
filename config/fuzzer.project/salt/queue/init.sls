@@ -58,7 +58,7 @@ Check that the {{ pillar["container"]["kafka"]["name"] }} container exists:
     file.exists:
         - name: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["build"] }}/{{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}.aci.sh'
 
-Build the apace-kafka image:
+Build the {{ pillar["container"]["kafka"]["name"] }} image:
     cmd.run:
         - name: >-
             /usr/bin/ssh
@@ -106,11 +106,11 @@ Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
 
         - require:
             - Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit
-            - Build the apace-kafka image
+            - Build the {{ pillar["container"]["kafka"]["name"] }} image
         - mode: 0664
 
 {% for toolname in pillar["queue"]["kafka"]["tools"] -%}
-Install Tool for Apache Kafka -- {{ toolname }}:
+Install tool for {{ pillar["container"]["kafka"]["name"] }} image -- {{ toolname }}:
     file.managed:
         - template: jinja
         - source: salt://queue/kafka.command
