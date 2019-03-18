@@ -35,6 +35,12 @@ Check that the {{ pillar["container"]["minio"]["name"] }} image has been fetched
         - require:
             - Fetch the {{ pillar["container"]["minio"]["name"] }} image
 
+Make dropin directory for {{ pillar["container"]["minio"]["name"] }}.service:
+    file.directory:
+        - name: {{ Root }}/etc/systemd/system/{{ pilar["container"]["minio"]["name"] }.service.d
+        - mode: 0755
+        - makedirs: true
+
 Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit:
     file.managed:
         - template: jinja
@@ -75,6 +81,7 @@ Dropin an environment configuration to the {{ pillar["container"]["minio"]["name
                 worm: "{{ "on" if pillar["store"]["minio"]["write-only-read-many"] else "off" }}"
                 browser: "{{ "on" if pillar["store"]["minio"]["browser"] else "off" }}"
         - require:
+            - Make dropin directory for {{ pillar["container"]["minio"]["name"] }}.service
             - Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit
         - mode: 0664
 

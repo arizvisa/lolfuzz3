@@ -79,6 +79,12 @@ Build the {{ pillar["container"]["kafka"]["name"] }} image:
         - require:
             - Check that the {{ pillar["container"]["kafka"]["name"] }} container exists
 
+Make dropin directory for {{ pillar["container"]["kafka"]["name"] }}.service:
+    file.directory:
+        - name: {{ Root }}/etc/systemd/system/{{ pilar["container"]["kafka"]["name"] }.service.d
+        - mode: 0755
+        - makedirs: true
+
 Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
     file.managed:
         - template: jinja
@@ -116,6 +122,7 @@ Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name
                 broker_id: 0
                 listeners: PLAINTEXT://{{ mpillar["local"]["ip4"] }}:9092
         - require:
+            - Make dropin directory for {{ pillar["container"]["kafka"]["name"] }}.service
             - Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - mode: 0664
 
