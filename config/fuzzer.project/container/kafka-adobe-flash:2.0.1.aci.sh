@@ -3,7 +3,7 @@
 
 acbuild begin --insecure docker://openjdk:8u191-jre-alpine
 
-acbuild set-name adobe-flash/kafka
+acbuild set-name lol/apache-kafka
 
 export KAFKA_VERSION=2.0.1
 export SCALA_VERSION=2.12
