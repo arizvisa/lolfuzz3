@@ -52,7 +52,6 @@ Enable systemd multi-user.target wants {{ pillar["container"]["zetcd"]["name"] }
         - target: '/etc/systemd/system/{{ pillar["container"]["zetcd"]["name"] }}.service'
         - require:
             - Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit
-            - Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - makedirs: true
 
 Check that the {{ pillar["container"]["kafka"]["name"] }} container exists:
@@ -81,7 +80,7 @@ Build the {{ pillar["container"]["kafka"]["name"] }} image:
 
 Make dropin directory for {{ pillar["container"]["kafka"]["name"] }}.service:
     file.directory:
-        - name: {{ Root }}/etc/systemd/system/{{ pilar["container"]["kafka"]["name"] }.service.d
+        - name: {{ Root }}/etc/systemd/system/{{ pillar["container"]["kafka"]["name"] }}.service.d
         - mode: 0755
         - makedirs: true
 
@@ -115,7 +114,7 @@ Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name
     file.managed:
         - template: jinja
         - source: salt://queue/kafka-configuration.dropin
-        - name: {{ Root }}/etc/systemd/system/{{ pilar["container"]["kafka"]["name"] }.service.d/50-configuration.conf
+        - name: {{ Root }}/etc/systemd/system/{{ pillar["container"]["kafka"]["name"] }}.service.d/50-configuration.conf
         - defaults:
             configuration:
                 zookeeper_connect: 127.0.0.1:2181
@@ -125,6 +124,15 @@ Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name
             - Make dropin directory for {{ pillar["container"]["kafka"]["name"] }}.service
             - Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - mode: 0664
+
+Enable systemd multi-user.target wants {{ pillar["container"]["kafka"]["name"] }}.service:
+    file.symlink:
+        - name: '{{ Root }}/etc/systemd/system/multi-user.target.wants/{{ pillar["container"]["kafka"]["name"] }}.service'
+        - target: '/etc/systemd/system/{{ pillar["container"]["kafka"]["name"] }}.service'
+        - require:
+            - Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
+            - Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
+        - makedirs: true
 
 {% for toolname in pillar["queue"]["kafka"]["tools"] -%}
 Install tool for {{ pillar["container"]["kafka"]["name"] }} image -- {{ toolname }}:
