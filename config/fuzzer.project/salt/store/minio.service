@@ -13,10 +13,6 @@ KillMode=process
 Restart=always
 TimeoutStartSec=infinity
 
-{%- for name in configuration %}
-Environment="MINIO_{{ name | upper }}={{ configuration[name] }}"
-{%- endfor %}
-
 ExecStart=/bin/sh -c "/bin/rkt run \
             --inherit-env=true \
             --uuid-file-save={{ uuid_path }} \

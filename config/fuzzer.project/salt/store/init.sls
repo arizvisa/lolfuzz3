@@ -41,12 +41,6 @@ Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit:
         - source: salt://store/minio.service
         - name: '{{ Root }}/etc/systemd/system/{{ pillar["container"]["minio"]["name"] }}.service'
         - defaults:
-            configuration:
-                access_key: {{ mpillar["project"] }}
-                secret_key: {{ mpillar["local"]["machine_id"] }}
-                worm: "{{ "on" if pillar["store"]["minio"]["write-only-read-many"] else "off" }}"
-                browser: "{{ "on" if pillar["store"]["minio"]["browser"] else "off" }}"
-
             arguments:
                 - server
                 - /data
@@ -69,12 +63,28 @@ Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit:
             - Check that the {{ pillar["container"]["minio"]["name"] }} image has been fetched
         - mode: 0664
 
+Dropin an environment configuration to the {{ pillar["container"]["minio"]["name"] }}.service systemd unit:
+    file.managed:
+        - template: jinja
+        - source: salt://store/minio-configuration.dropin
+        - name: {{ Root }}/etc/systemd/system/{{ pilar["container"]["minio"]["name"] }.service.d/50-configuration.conf
+        - defaults:
+            configuration:
+                access_key: {{ mpillar["project"] }}
+                secret_key: {{ mpillar["local"]["machine_id"] }}
+                worm: "{{ "on" if pillar["store"]["minio"]["write-only-read-many"] else "off" }}"
+                browser: "{{ "on" if pillar["store"]["minio"]["browser"] else "off" }}"
+        - require:
+            - Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit
+        - mode: 0664
+
 Enable systemd multi-user.target wants {{ pillar["container"]["minio"]["name"] }}.service:
     file.symlink:
         - name: '{{ Root }}/etc/systemd/system/multi-user.target.wants/{{ pillar["container"]["minio"]["name"] }}.service'
         - target: '/etc/systemd/system/{{ pillar["container"]["minio"]["name"] }}.service'
         - require:
             - Install the {{ pillar["container"]["minio"]["name"] }}.service systemd unit
+            - Dropin an environment configuration to the {{ pillar["container"]["minio"]["name"] }}.service systemd unit
         - makedirs: true
 
 Fetch the {{ pillar["container"]["minio-client"]["name"] }} image:

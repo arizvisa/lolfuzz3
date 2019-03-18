@@ -1,0 +1,5 @@
+[Service]
+{%- for name in configuration %}
+Environment="MINIO_{{ name | upper }}={{ configuration[name] }}"
+{%- endfor %}
+
