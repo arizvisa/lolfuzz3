@@ -9,7 +9,7 @@ export KAFKA_VERSION=2.1.1
 export SCALA_VERSION=2.12
 export GLIBC_VERSION=2.29-r0
 
-export rootfs=kafka-adobe-flash:${KAFKA_VERSION}
+export rootfs=apache-kafka:${KAFKA_VERSION}
 export tmp=/root
 
 acbuild label add version ${KAFKA_VERSION}
