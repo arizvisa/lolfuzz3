@@ -1,9 +1,3 @@
-# Master environment
-master:
-    'G@role:master':
-        - store
-        - queue
-
 # Base environment
 base:
     # All windows targets

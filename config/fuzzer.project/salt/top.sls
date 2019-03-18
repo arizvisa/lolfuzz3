@@ -1,9 +1,3 @@
-master:
-    # All master targets
-    'G@role:master':
-        - queue
-        - store
-
 base:
     # All windows targets
     'G@os_family:Windows':
