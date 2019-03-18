@@ -54,7 +54,7 @@ Enable systemd multi-user.target wants {{ pillar["container"]["zetcd"]["name"] }
             - Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit
         - makedirs: true
 
-Check that the apache-kafka container exists:
+Check that the {{ pillar["container"]["kafka"]["name"] }} container exists:
     file.exists:
         - name: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["build"] }}/{{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}.aci.sh'
 
@@ -76,13 +76,13 @@ Build the apace-kafka image:
 
         - creates: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}.aci'
         - require:
-            - Check that the apache-kafka container exists
+            - Check that the {{ pillar["container"]["kafka"]["name"] }} container exists
 
-Install the apache-kafka.service systemd unit:
+Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
     file.managed:
         - template: jinja
         - source: salt://queue/kafka.service
-        - name: '{{ Root }}/etc/systemd/system/apache-kafka.service'
+        - name: '{{ Root }}/etc/systemd/system/{{ pillar["container"]["kafka"]["name"] }}.service'
         - defaults:
             dependencies:
                 - {{ pillar["container"]["zetcd"]["name"] }}.service
@@ -117,11 +117,11 @@ Install Tool for Apache Kafka -- {{ toolname }}:
         - name: {{ Root }}/opt/bin/{{ toolname }}
         - defaults:
             rkt: /bin/rkt
-            unit: apache-kafka.service
+            unit: {{ pillar["container"]["kafka"]["name"] }}.service
             run_uuid_path: {{ pillar["container"]["kafka"]["uuid"] }}
 
             command: {{ pillar["queue"]["kafka"]["tools"][toolname] }}
         - require:
-            - Install the apache-kafka.service systemd unit
+            - Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - mode: 0775
 {% endfor %}
