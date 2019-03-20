@@ -145,3 +145,24 @@ Deploy the {{ pillar["container"]["minio-client"]["name"] }} command:
         - require:
             - Check that the {{ pillar["container"]["minio-client"]["name"] }} image has been fetched
         - mode: 0775
+
+Configure the {{ pillar["container"]["minio-client"]["name"] }} client:
+    cmd.run:
+        - name: >-
+            /usr/bin/ssh
+            -i "{{ Root }}{{ mpillar["toolbox"]["self-service"]["key"] }}"
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            --
+            {{ mpillar["toolbox"]["self-service"]["host"] | yaml_squote }}
+            sudo
+            --
+            {{ pillar["store"]["minio"]["client"] }}
+            config host add
+            local
+            http://{{ mpillar["local"]["ip4"] }}:9000
+            {{ mpillar["project"] }}
+            {{ mpillar["local"]["machine_id"] }}
+
+        - require:
+            - Deploy the {{ pillar["container"]["minio-client"]["name"] }} command
