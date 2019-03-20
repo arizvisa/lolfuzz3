@@ -157,7 +157,7 @@ Configure the {{ pillar["container"]["minio-client"]["name"] }} client:
             {{ mpillar["toolbox"]["self-service"]["host"] | yaml_squote }}
             sudo -i
             --
-            {{ pillar["store"]["minio"]["client"] }}
+            {{ pillar["store"]["minio"]["client"] }} --no-color
             config host add
             local
             http://{{ mpillar["local"]["ip4"] }}:9000
