@@ -155,7 +155,7 @@ Configure the {{ pillar["container"]["minio-client"]["name"] }} client:
             -o UserKnownHostsFile=/dev/null
             --
             {{ mpillar["toolbox"]["self-service"]["host"] | yaml_squote }}
-            sudo
+            sudo -i
             --
             {{ pillar["store"]["minio"]["client"] }}
             config host add
