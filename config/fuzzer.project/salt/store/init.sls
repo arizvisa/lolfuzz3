@@ -124,7 +124,7 @@ Deploy the {{ pillar["container"]["minio-client"]["name"] }} command:
     file.managed:
         - template: jinja
         - source: salt://store/minio-client.command
-        - name: {{ Root }}/opt/bin/mc
+        - name: {{ Root }}/{{ pillar["store"]["minio"]["client"] }}
         - defaults:
             rkt: /bin/rkt
             volumes:

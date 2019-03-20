@@ -14,5 +14,7 @@ container:
 store:
     minio:
         root: /srv/store
+        client: /opt/bin/mc
+
         browser: true
         write-only-read-many: false
