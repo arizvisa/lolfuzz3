@@ -1,7 +1,14 @@
+Create the base driver directory:
+    file.directory:
+        - name: {{ pillar["Drivers"]["Path"] }}
+        - makedirs: true
+
 Make PowerShell driver directory:
     file.directory:
         - name: {{ pillar["Drivers"]["PowerShell"]["Path"] }}
         - makedirs: true
+        - require:
+            - Create the base driver directory
 
 Extract PowerShell DeviceManagement module on target:
     archive.extracted:
@@ -16,6 +23,8 @@ Make driver tools directory:
     file.directory:
         - name: {{ pillar["Drivers"]["Tools"] }}
         - makedirs: true
+        - require:
+            - Create the base driver directory
 
 Install device finder tool on target:
     file.managed:

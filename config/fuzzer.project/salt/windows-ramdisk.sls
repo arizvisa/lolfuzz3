@@ -8,6 +8,8 @@ Make RamDisk directory:
     file.directory:
         - name: {{ pillar["Drivers"]["RamDisk"]["Path"] }}
         - makedirs: true
+        - require:
+            - Create the base driver directory
 
 Copy ramdisk_setup.exe to target:
     file.managed:

@@ -5,6 +5,8 @@ Make audio driver path:
     file.directory:
         - name: {{ pillar["Drivers"]["Audio"]["Path"] }}
         - makedirs: true
+        - require:
+            - Create the base driver directory
 
 Extract audio drivers on target:
     archive.extracted:
