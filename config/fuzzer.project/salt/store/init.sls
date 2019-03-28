@@ -127,6 +127,7 @@ Deploy the {{ pillar["container"]["minio-client"]["name"] }} command:
         - name: {{ Root }}/{{ pillar["store"]["minio"]["client"] }}
         - defaults:
             rkt: /bin/rkt
+            cachedir: $HOME/.mc
             volumes:
                 - name: home
                   mount: /root

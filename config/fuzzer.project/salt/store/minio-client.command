@@ -10,7 +10,7 @@ fi
 # Assign some default variables
 id=`cat "$id_file"`
 cwd=`pwd`
-cache="$HOME/.mc"
+cache="{{ cachedir }}"
 image_uuid="$cache/.container-{{ image_name }}.$$"
 
 # If the cache directory doesn't exist, then create it so that we
