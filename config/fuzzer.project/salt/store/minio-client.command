@@ -10,8 +10,14 @@ fi
 # Assign some default variables
 id=`cat "$id_file"`
 cwd=`pwd`
-mc_config="$HOME/.mc"
-image_uuid="$mc_config/.container-{{ image_name }}.$$"
+cache="$HOME/.mc"
+image_uuid="$cache/.container-{{ image_name }}.$$"
+
+# If the cache directory doesn't exist, then create it so that we
+# can write the running container id to into it
+if [ ! -d "$cache" ]; then
+    mkdir -p "$cache"
+fi
 
 # Verify that the image_uuid file doesn't already exist
 if [ -e "$image_uuid" ]; then
@@ -21,8 +27,8 @@ if [ -e "$image_uuid" ]; then
 fi
 
 # Enumerate all running containers and let the user know which are currently running
-if ls "$mc_config/.{{ image_name }}".* 1>/dev/null 2>/dev/null; then
-    for uuid_file in "$mc_config/.{{ image_name }}".*; do
+if ls "$cache/.{{ image_name }}".* 1>/dev/null 2>/dev/null; then
+    for uuid_file in "$cache/.{{ image_name }}".*; do
         uuid=`cat "$uuid_file"`
         echo "Found a container for {{ image_name }} already running at $uuid." 1>&2
     done
