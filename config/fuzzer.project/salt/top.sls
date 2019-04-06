@@ -1,4 +1,10 @@
 base:
+    # All masters
+    'G@role:master':
+        - queue
+        - store
+        - fuzzer
+
     # All windows targets
     'G@os_family:Windows':
         - identity
