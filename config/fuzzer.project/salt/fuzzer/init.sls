@@ -1,0 +1,2 @@
+include:
+    - fuzzer.radamsa
