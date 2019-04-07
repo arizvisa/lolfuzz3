@@ -100,7 +100,7 @@ Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
             volumes:
                 - name: kafka-root
                   mount: /kafka
-                  source: /srv/kafka
+                  source: {{ pillar["queue"]["root"] }}
 
             container_service_path: {{ mpillar["service"]["container"]["paths"]["service-tools"] }}
             container_image_path: {{ mpillar["service"]["container"]["paths"]["image"] }}
@@ -117,7 +117,7 @@ Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name
         - name: {{ Root }}/etc/systemd/system/{{ pillar["container"]["kafka"]["name"] }}.service.d/50-configuration.conf
         - defaults:
             configuration:
-                zookeeper_connect: 127.0.0.1:2181
+                zookeeper_connect: {{ pillar["queue"]["zookeeper"]["host"] }}:{{ pillar["queue"]["zookeeper"]["port"] }}
                 broker_id: 0
                 listeners: PLAINTEXT://{{ mpillar["local"]["ip4"] }}:9092
         - require:
@@ -134,7 +134,7 @@ Enable systemd multi-user.target wants {{ pillar["container"]["kafka"]["name"] }
             - Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - makedirs: true
 
-{% for toolname in pillar["queue"]["kafka"]["tools"] -%}
+{% for toolname in pillar["queue"]["tools"] -%}
 Install tool for {{ pillar["container"]["kafka"]["name"] }} image -- {{ toolname }}:
     file.managed:
         - template: jinja
@@ -145,7 +145,7 @@ Install tool for {{ pillar["container"]["kafka"]["name"] }} image -- {{ toolname
             unit: {{ pillar["container"]["kafka"]["name"] }}.service
             run_uuid_path: {{ pillar["container"]["kafka"]["uuid"] }}
 
-            command: {{ pillar["queue"]["kafka"]["tools"][toolname] }}
+            command: {{ pillar["queue"]["tools"][toolname] }}
         - require:
             - Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
             - Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
