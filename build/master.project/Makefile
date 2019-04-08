@@ -1,3 +1,15 @@
+###############################################################################
+# master.project (Makefile)
+#
+# This file contains the main recipes that are used to build a template for
+# the "master" box for a particular project. Building of the template results
+# in a deployable, cloneable template with an instance of SaltStack provisioned
+# for the target project. After building of the template, the user can then
+# authenticate to the template as the "core" user with the provided SSH
+# keypair. The user is then able to design the states required for the project
+# using the contents of the /srv directory.
+###############################################################################
+
 MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ROOTDIR := $(realpath $(MAKEDIR)../..)
 
@@ -9,7 +21,7 @@ include $(MAKEDIR)Makefile.inc
 BUILDDIR?=$(ROOTDIR)/build.dir
 OUTPUT?=$(ROOTDIR)/deploy
 
-## project variable
+# Project variable used to name the current project
 project := $(call lc,${PROJECT})
 boxname?=$(if $(project),master.$(project),master.null)
 
@@ -19,7 +31,7 @@ else
 $(warning No PROJECT was specified. Using project name "null" until failure.)
 endif
 
-## output directory
+# Output directory to write the template into
 outdir := $(patsubst %/,%,$(OUTPUT))
 ifeq ($(wildcard $(outdir)/$(boxname)),)
     $(info [-] Using the output path for $(boxname): $(abspath $(outdir)/$(boxname)))
@@ -27,12 +39,14 @@ else
     $(warning The output path for $(boxname) already exists (output will fail): $(abspath $(outdir)/$(boxname)))
 endif
 
-## work directory
+# Intermediary work directory to stage required files into
 workdir?=$(BUILDDIR)
 boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
 $(info [-] Using the work directory: $(abspath $(workdir)))
+
+### List of options that the user can provide to influence the build
 
 ## Validation option
 VALIDATE ?= 1
@@ -72,7 +86,7 @@ else
     options := $(options) on-error=cleanup
 endif
 
-## Platform types
+## Available platform types to build the template for
 platform = $(subst $(comma),$(space),$(PLATFORM))
 
 ifneq ($(platform),)
@@ -83,7 +97,7 @@ $(warning User has specified no template types. Assuming all platforms are avail
 $(info [-] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
 endif
 
-## Check for default project configurations
+### Check for any default project configurations included in the repository
 
 # First check the project configuration
 ifneq ($(wildcard $(ROOTDIR)/config/$(project).project/*),)
@@ -97,7 +111,7 @@ ifneq ($(wildcard $(ROOTDIR)/srv/*),)
 	INPUT=$(ROOTDIR)/srv
 endif
 
-## Using the specified custom configuration
+## Use the specified or detected custom configuration
 ifndef INPUT
     custom := $(boxname_workdir)/empty
 else
@@ -109,23 +123,22 @@ else
     endif
 endif
 
-### Include various Makefile variables
+### Include various Makefile components containing configurations and macros
 include $(MAKEDIR)Makefile.coreos
 include $(MAKEDIR)Makefile.github
 include $(MAKEDIR)Makefile.ignition
 include $(MAKEDIR)Makefile.provision
 include $(MAKEDIR)Makefile.salt
 
-### Static configuration
+# List of static files that are required for deployment (does not include template)
 output_names := $(boxname).config $(boxname).id_rsa $(boxname).id_rsa.pub
 
-### General recipes
+### General recipes used during building
 .DEFAULT_GOAL := help
 
-# dependency to use when a target needs to always be rebuilt
 FORCE:
 
-## regular recipes
+## Regular recipes that the user can use
 .PHONY: help
 help:
 	$(info [*] User requested help for the makefile)
@@ -257,7 +270,7 @@ clean-json:
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
 	-rm -f $(foreach f,$(coreos_installer_files),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)
 
-### Directory recipes
+### Directory recipes for building any required directories
 $(outdir) $(workdir):
 	@test -d '$@' || mkdir -p '$@'
 
@@ -267,7 +280,7 @@ $(filesdir) $(toolsdir) $(toolsdir)/bin $(toolsdir)/libexec $(toolsdir)/sbin: $(
 $(eval $(call make_directory,$(boxname_workdir),$(workdir)))
 $(eval $(call make_directory,$(custom),))
 
-### Output recipes
+### Output recipes for performing tasks after building of the template
 $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 	$(call verify_expression_not,$(wildcard $@),Refusing to deploy $< over already existing file: $@)
 	@printf '[*] Moving template %s: %s\n' '$<' '$(dir $@)'
@@ -275,7 +288,7 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 	@printf '[*] Leaving an empty directory as a placeholder: %s\n' '$<'
 	mkdir -p '$<'
 
-### Box recipes
+### Box recipes required to build the template
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(custom)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
@@ -286,17 +299,17 @@ else
 	@false
 endif
 
-# build json file containing all information about the iso
+# Build json file containing all information about the iso
 $(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
 	@printf '[-] Generating iso variables for %s: %s\n' '$@' '$<'
 	@jq -n --arg checksum_type '$(checksum_type)' --arg url '$<' --slurpfile iso_checksum '$(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": $$checksum_type, "iso-url": $$url, "iso-checksum": $$iso_checksum[0] }' >| '$@'
 
-# build json file containing all information for ssh'ing to the box
+# Build json file containing all information for ssh'ing to the box
 $(boxname_workdir)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa	| $(boxname_workdir)
 	@printf '[-] Generating SSH variables %s: %s\n' '$@' '$^'
 	@jq -n --arg key '$<' '{ "provision-key": $$key }' >| '$@'
 
-# build json file containing build-specific variables
+# Build json file containing any build-specific variables
 ifndef TIMEOUT
 $(boxname_workdir)/$(boxname)-vars.json.base: FORCE	| $(boxname_workdir)
 	@printf '[-] Generating build variables: %s\n' '$@'
@@ -307,17 +320,17 @@ $(boxname_workdir)/$(boxname)-vars.json.base: FORCE	| $(boxname_workdir)
 	@jq -n --arg name '$(boxname)' --arg input '$(workdir)' --arg output '$(boxname_template)' --arg timeout '$(TIMEOUT)s' '{ "guest-name": $$name, "install-input": $$input, "install-output": $$output, "timeout-boot": $$timeout }' >| '$@'
 endif
 
-# concatenate entire template configuration into a single .json file
+# Concatenate entire template configuration into a single .json file
 $(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workdir)/$(boxname)-vars.json.iso $(boxname_workdir)/$(boxname)-vars.json.ssh $(boxname_workdir)/$(boxname)-vars.json.salt $(boxname_workdir)/$(boxname)-vars.json.tools $(boxname_workdir)/$(boxname)-vars.json.base
 	@printf '[*] Merging build variables together into %s: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach json,$^,'$(json)') >| '$@'
 
-# grab all the specified tools into the tools directory and build a json for it
+# Grab all the specified tools into the tools directory and build a json for it
 $(boxname_workdir)/$(boxname)-vars.json.tools: $(foreach f,$(setup_network_environment_files),$(toolsdir)/libexec/$(f)) $(foreach f,$(extra_tools_files),$(toolsdir)/bin/$(f))	| $(boxname_workdir)
 	@printf '[-] Generating variables for miscellaneous CoreOS tools\n'
 	@jq -n --arg tools '$(toolsdir)' '{ "coreos-tools-directory": $$tools }' >| '$@'
 
-# generate necessary configuration variables for salt-stack
+# Generate any necessary configuration variables for salt-stack
 $(boxname_workdir)/$(boxname)-vars.json.salt: $(boxname_workdir)/salt $(boxname_workdir)/pillar $(foreach name,$(salt_bootstrap_pillar_files),$(boxname_workdir)/pillar/$(name)) $(boxname_workdir)/salt-minion.conf $(workdir)/$(salt_bootstrap_file) $(salt_patches)
 	@printf '[-] Generating bootstrap variables for salt-bootstrap: %s\n' '$^'
 ifneq ($(debug),0)
@@ -326,20 +339,20 @@ else
 	@jq -n --arg options '-X -d' --arg configuration '$(boxname_workdir)/salt-minion.conf' --arg installer '$(workdir)/$(salt_bootstrap_file)' --arg saltdir '$(boxname_workdir)/salt' --arg pillardir '$(boxname_workdir)/pillar' --arg version '$(salt_bootstrap_version)' --arg patchdir '$(salt_patches)' '{ "salt-bootstrap-config": $$configuration, "salt-bootstrap-installer": $$installer, "salt-bootstrap-files": $$saltdir, "salt-bootstrap-pillar": $$pillardir, "salt-bootstrap-version": $$version, "salt-bootstrap-patches": $$patchdir, "salt-bootstrap-options": $$options }' >| '$@'
 endif
 
-# concatenate json template into a single .json file together with plugins
+# Concatenate json template into a single .json file together with plugins
 $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 	| $(boxname_workdir)
 	@printf '[*] Merging box with enabled plugins into %s: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach json,$^,'$(json)') >| '$@'
 
-# generate ssh public/private key
+# Generate the ssh public/private key
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to to generate public/private keypair!)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
 	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(workdir)/$(boxname).id_rsa' -N ''
 
-### Bootstrap recipes
+### Recipes for bootstrapping the configuration of the OS
 
-## recipes for validating the configuration
+# Validate the ignition configuration that was generated
 $(boxname_workdir)/$(boxname).config.validate: $(boxname_workdir)/$(boxname).config
 ifneq ($(validate),0)
 	@printf '[!] Validating ignition configuration %s: %s\n' '$<' '$(coreos_validate_url)'
@@ -360,17 +373,17 @@ $(workdir)/$(boxname).config: $(boxname_workdir)/$(boxname).config.validate $(bo
 	@printf '[*] Successfully validated ignition configuration: %s\n' '$@'
 	@cp -f '$(boxname_workdir)/$(boxname).config' '$@'
 
-# combine all ignition jsons into the template
+# Combine all ignition jsons into the template
 $(boxname_workdir)/$(boxname).config: $(ignition_template) $(boxname_workdir)/$(boxname).config-files $(boxname_workdir)/$(boxname).config-units $(boxname_workdir)/$(boxname).config-users $(boxname_workdir)/$(boxname).config-network
 	@printf '[*] Making ignition configuration with template %s: %s\n' '$<' '$@'
 	@jq --slurpfile files '$(boxname_workdir)/$(boxname).config-files' --slurpfile units '$(boxname_workdir)/$(boxname).config-units' --slurpfile users '$(boxname_workdir)/$(boxname).config-users' --slurpfile networks '$(boxname_workdir)/$(boxname).config-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
 
-# set the hostname using $(boxname) with the mode 420 (0644 in octal)
+# Set the hostname using $(boxname) with the mode 420 (0644 in octal)
 $(boxname_workdir)/$(boxname).config-hostname:	| $(boxname_workdir)
 	@printf '[-] Building the ignition configuration file for the hostname: %s\n' '$(boxname)'
 	@jq -n --arg content '$(boxname)' '[{ filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ($$content | @uri)) } }]' >| '$@'
 
-# bootstrap for ignition/sysctl directory
+# Bootstrap the ignition/sysctl directory
 ifneq ($(ignition_sysctl_files),)
 $(boxname_workdir)/$(boxname).config-sysctl: $(foreach f,$(ignition_sysctl_files),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)))
 	@printf '[*] Merging all ignition sysctl files into %s: %s\n' '$@' '$^'
@@ -391,12 +404,12 @@ $(boxname_workdir)/$(boxname).config-rootfs:
 	@jq -n '[]' >| '$@'
 endif
 
-# combine all ignition file jsons into a single one
+# Combine all ignition file jsons into a single one
 $(boxname_workdir)/$(boxname).config-files: $(boxname_workdir)/$(boxname).config-hostname $(boxname_workdir)/$(boxname).config-sysctl $(boxname_workdir)/$(boxname).config-rootfs
 	@printf '[*] Merging the ignition file section into %s: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . + $$item)' $(foreach config,$^,'$(config)') >| '$@'
 
-# combining for ignition/units and ignition/dropins
+# Combining the ignition/units and ignition/dropins files
 ifneq ($(ignition_units_names)$(ignition_dropins_names),)
 $(boxname_workdir)/$(boxname).config-units: $(foreach name,$(ignition_units_names),$(boxname_workdir)/ignition-unit.json-$(name)) $(foreach name,$(ignition_dropins_names),$(boxname_workdir)/ignition-unit.json-$(name))
 	@printf '[*] Merging the ignition unit section into %s: %s\n' '$@' '$^'
@@ -407,12 +420,12 @@ $(boxname_workdir)/$(boxname).config-units:
 	@jq -n '[]' >| '$@'
 endif
 
-# generate a json containing the sshAuthorizedKeys field in an object
+# Generate a json containing the sshAuthorizedKeys field in an object
 $(boxname_workdir)/$(boxname).config-pubkey: $(boxname_workdir)/$(boxname).id_rsa.pub.json-raw
 	@printf '[-] Generating a json with the public key in %s: %s\n' '$@' '$^'
 	@jq -n --slurpfile pubkey '$<' '{ sshAuthorizedKeys: [$$pubkey[0] | rtrimstr("\n")] }' >| '$@'
 
-# combine all joined user objects into a single list
+# Combine all joined user objects into a single list
 ifneq ($(ignition_users_files),)
 $(boxname_workdir)/$(boxname).config-users: $(foreach f,$(ignition_users_files),$(boxname_workdir)/ignition-user.json-$(notdir $(f)))
 	@printf '[*] Merging the ignition user section into %s: %s\n' '$@' '$^'
@@ -424,7 +437,7 @@ $(boxname_workdir)/$(boxname).config-users:
 	@jq -n '[]' >| '$@'
 endif
 
-# combine all joined network dropins into a single list
+# Combine all joined network dropins into a single list
 ifneq ($(ignition_network_files),)
 $(boxname_workdir)/$(boxname).config-network: $(foreach f,$(ignition_network_files),$(boxname_workdir)/ignition-network.json-$(notdir $(f)))
 	@printf '[*] Merging all ignition network files into %s: %s\n' '$@' '$^'
@@ -435,7 +448,7 @@ $(boxname_workdir)/$(boxname).config-network:
 	@jq -n '[]' >| '$@'
 endif
 
-### Provisioning recipes
+### Recipes required for provisioning via SaltStack
 $(boxname_workdir)/salt $(boxname_workdir)/pillar: $(salt_config) $(salt_pillar) $(acbuild_files)	| $(boxname_workdir)
 	@printf '[*] Copying states for bootstrapping %s: %s\n' '$(boxname)' '$(boxname_workdir)/salt'
 	@cp -r '$(salt_config)' '$(boxname_workdir)'/
@@ -457,81 +470,81 @@ $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
 	@printf '[-] Writing project name into pillar configuration: %s\n' '$@'
 	@printf -- '%s\n' '$(project)' >| '$@'
 
-### Dynamically generated recipes
+### List of recipes that are dynamically generated using macros
 
-# output results into the output directory
+# Write results into the output directory
 $(foreach f,$(output_names),$(eval $(call output_file,$(workdir)/$(f),$(outdir))))
 
 ## Container Linux installation and configuration
 
-# download the coreos installer
+# Download the CoreOS installer
 $(foreach name,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(workdir)/$(name),$(name))))
 
-# generate hashes for downloaded files
+# Generate hashes for all downloaded files
 $(foreach f,$(coreos_installer_files),$(eval $(call checksum,$(f),$(checksum_type),$(f).$(checksum_type))))
 $(foreach f,$(coreos_installer_files),$(eval $(call json_rawfile,$(f).$(checksum_type),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)))
 
-# fetch the acbuild tool
+# Fetch the acbuild tool
 $(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(filesdir)/$(notdir $(u)),$(u))))
 
-# fetch the setup-network-environment tool into the tools working directory
+# Fetch the setup-network-environment tool into the tools working directory
 $(foreach u,$(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(toolsdir)/libexec/$(notdir $(u)),$(u))))
 
-# transfer any required tools to the tools working directory
+# Transfer any required tools to the tools working directory
 $(foreach f,$(extra_tools_files),$(eval $(call stage_tool,$(tools_config)/$(f),$(toolsdir)/bin/$(f))))
 
-# download the saltstack-bootstrap installer
+# Download the saltstack-bootstrap installer
 $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_file_url)))
 
-## Ignition components
+## Components used to build the Ignition configuration
 
-# making the ignition sysctl list
+# Making the ignition sysctl list
 $(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_sysctl,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),$(notdir $(f)),$(call decimal_mode,$(f)))))
 
-# making the ignition network list
+# Making the ignition network list
 $(foreach f,$(ignition_network_files),$(eval $(call ignition_dropin_file,$(notdir $(f)),$(boxname_workdir)/ignition-network.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-network.json-$(notdir $(f)))))
 
-# making the ignition units list
+# Making the ignition units list
 $(foreach name,$(ignition_units_names),$(eval $(call ignition_unit_file,$(name),$(boxname_workdir)/ignition-units.json-$(name).json-raw,$(boxname_workdir)/ignition-units.json-$(name))))
 
-# making the ignition unit dropins files
+# Making the ignition unit dropins files
 $(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)/dropins/$(name)/*.conf),$(eval $(call ignition_dropin_file,$(notdir $(f)),$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f))))))
 
-# making the ignition unit dropins list
+# Making the ignition unit dropins list
 $(foreach name,$(ignition_dropins_names),$(eval $(call ignition_unit_dropins,$(boxname_workdir)/ignition-dropins.json-$(name),$(foreach f,$(wildcard $(ignition_config)/dropins/$(name)/*.conf),$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f))))))
 
-# recipes that compose the unit with all of its dropins
+# Recipes that compose the unit with all of its dropins
 $(foreach name,$(filter $(ignition_dropins_names),$(ignition_units_names)),$(eval $(call ignition_unit,$(boxname_workdir)/ignition-unit.json-$(name),$(boxname_workdir)/ignition-units.json-$(name),$(boxname_workdir)/ignition-dropins.json-$(name))))
 
-# recipes that compose the unit without any dropins
+# Recipes that compose the unit without any dropins
 $(foreach name,$(filter-out $(ignition_dropins_names),$(ignition_units_names)),$(eval $(call ignition_unit,$(boxname_workdir)/ignition-unit.json-$(name),$(boxname_workdir)/ignition-units.json-$(name))))
 
-# recipes that compose a missing unit with all dropins
+# Recipes that compose a missing unit with all dropins
 $(foreach name,$(filter-out $(ignition_units_names),$(ignition_dropins_names)),$(eval $(call ignition_unit_missing,$(name),$(boxname_workdir)/ignition-unit.json-$(name),$(boxname_workdir)/ignition-dropins.json-$(name))))
 
-# combining each user with the sshAuthorizedKeys (FIXME: allow unique ssh keys per-user)
+# Combining each user with the sshAuthorizedKeys (FIXME: allow unique ssh keys per-user)
 $(foreach f,$(ignition_users_files),$(eval $(call ignition_user,$(boxname_workdir)/ignition-user.json-$(notdir $(f)),$(f),$(boxname_workdir)/$(boxname).config-pubkey)))
 
-# raw ignition_sysctl_files contents
+# Raw ignition_sysctl_files contents
 $(foreach f,$(ignition_sysctl_files),$(eval $(call json_rawfile,$(f),$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw)))
 
-# raw ignition_network_files contents
+# Raw ignition_network_files contents
 $(foreach f,$(ignition_network_files),$(eval $(call json_rawfile,$(f),$(boxname_workdir)/ignition-network.json-$(notdir $(f)).json-raw)))
 
-# raw ignition_unit_files contents
+# Raw ignition_unit_files contents
 $(foreach name,$(ignition_units_names),$(eval $(call json_rawfile,$(ignition_config)/units/$(name),$(boxname_workdir)/ignition-units.json-$(name).json-raw)))
 
-# raw ignition_dropins_names contents
+# Raw ignition_dropins_names contents
 $(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)/dropins/$(name)/*.conf),$(eval $(call json_rawfile,$(f),$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f)).json-raw))))
 
-# raw ssh pubkey contents
+# Raw ssh pubkey contents
 $(eval $(call json_rawfile,$(workdir)/$(boxname).id_rsa.pub,$(boxname_workdir)/$(boxname).id_rsa.pub.json-raw))
 
-# directory structure for the ignition root files
+# Directory structure for the ignition root files
 $(foreach name,$(ignition_root_directories),$(eval $(call make_directory,$(boxname_workdir)/rootfs/$(name))))
 
-# raw ignition root files
+# Raw ignition root files
 $(foreach name,$(ignition_root_files),$(eval $(call json_rawfile,$(ignition_config)/files/$(name),$(boxname_workdir)/rootfs/$(name).json-raw)))
 
-# making the file entries for the ignition root files
+# Making the file entries for the ignition root files
 $(foreach name,$(ignition_root_files),$(eval $(call ignition_root_file,$(boxname_workdir)/rootfs/$(name).json-raw,$(boxname_workdir)/rootfs/$(name),$(name),$(call decimal_mode,$(ignition_config)/files/$(name)))))
