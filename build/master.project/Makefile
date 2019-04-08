@@ -102,14 +102,14 @@ endif
 
 # First check the project configuration
 ifneq ($(wildcard $(project_serve)/*),)
-	SERVE=$(project_serve)
-	$(info [*] Found default serve configuration for $(project): $(SERVE))
+    SERVE=$(project_serve)
+    $(info [*] Found default serve configuration for $(project): $(SERVE))
 endif
 
 # Next check for the repository configuration
 ifneq ($(wildcard $(branch_serve)/*),)
-	SERVE=$(branch_serve)
-	$(info [*] Found default serve configuration for branch: $(SERVE))
+    SERVE=$(branch_serve)
+    $(info [*] Found default serve configuration for branch: $(SERVE))
 endif
 
 ## Use the specified or detected serve configuration
@@ -118,8 +118,8 @@ endif
 # target is special in that it will clone the commit from repository_serve into
 # that specific directory
 ifneq ($(repository_serve),)
-	$(info [-] Using serve configuration from commit: $(repository_serve))
-	serve := $(boxname_workdir)/serve
+    $(info [-] Using serve configuration from commit: $(repository_serve))
+    serve := $(boxname_workdir)/serve
 else
     # If SERVE was not defined anywhere, then use an empty directory. Due to the
     # make_directory dependency on $(serve), this will get automatically created.
