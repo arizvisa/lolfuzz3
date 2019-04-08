@@ -47,6 +47,7 @@ boxname_template=$(boxname_workdir)/template
 $(info [-] Using the work directory: $(abspath $(workdir)))
 
 ### List of options that the user can provide to influence the build
+include $(MAKEDIR)Makefile.config
 
 ## Validation option
 VALIDATE ?= 1
@@ -100,15 +101,15 @@ endif
 ### Check for any default project configurations included in the repository
 
 # First check the project configuration
-ifneq ($(wildcard $(ROOTDIR)/config/$(project).project/*),)
+ifneq ($(wildcard $(project_configuration)/*),)
+	INPUT=$(project_configuration)
 	$(info [*] Found default serve configuration for $(project): $(INPUT))
-	INPUT=$(ROOTDIR)/config/$(project).project
 endif
 
 # Next check for the repository configuration
-ifneq ($(wildcard $(ROOTDIR)/srv/*),)
+ifneq ($(wildcard $(branch_configuration)/*),)
+	INPUT=$(branch_configuration)
 	$(info [*] Found default serve configuration for branch: $(INPUT))
-	INPUT=$(ROOTDIR)/srv
 endif
 
 ## Use the specified or detected serve configuration
@@ -129,9 +130,6 @@ include $(MAKEDIR)Makefile.github
 include $(MAKEDIR)Makefile.ignition
 include $(MAKEDIR)Makefile.provision
 include $(MAKEDIR)Makefile.salt
-
-# List of static files that are required for deployment (does not include template)
-output_names := $(boxname).config $(boxname).id_rsa $(boxname).id_rsa.pub
 
 ### General recipes used during building
 .DEFAULT_GOAL := help
