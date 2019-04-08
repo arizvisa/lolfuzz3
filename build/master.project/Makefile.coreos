@@ -28,7 +28,7 @@ $(foreach var,$(file <$(in_coreos_version)),$(eval export $(var)))
 # configuration.
 coreos_url=$(file <$(in_coreos))
 coreos_validate_url=$(file <$(in_coreos_validate))
-)
+
 # Generate the list of files that are used to actually install CoreOS
 coreos_installer_files := $(foreach f,$(file <$(in_coreos_files)),$(workdir)/$(f))
 
