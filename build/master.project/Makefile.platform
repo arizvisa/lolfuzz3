@@ -1,17 +1,32 @@
+###############################################################################
+# Makefile.platform
+#
+# This file contains various variables and macros for performing platform-
+# specific commands such as getting the file mode, or downloading a file
+# via the HTTP protocol.
+###############################################################################
+
 ifeq ($(ROOTDIR),)
     $(error Please do not use this file directly as it is intended to be included)
 endif
 
+### Standard variables one can use to configure the specifics of their platform
+
+# The default message digest type to use for verifying files and provisioning
 checksum_type := md5
 
-### Commands (macros)
+# Commands to use in order to interact with HTTP and various ways. Each of these
+# must write their output to stdout.
 DOWNLOAD := curl -L -C- --progress-bar
 FETCH := curl -L -s -S
 PUT := curl -L -s -S -X PUT --data-binary
 
-# Figure out which version of stat we have available
+# The path to GNU stat. This is used specifically to assign MODE which returns
+# the mode for a file in octal form
 GSTAT?=stat
 
+# Figure out the correct format for GSTAT to get it to emit the mode for a
+# file. The MODE command must emit the file mode in octal form.
 ifndef MODE
     ifeq ($(findstring GNU,$(shell $(GSTAT) --version 2>/dev/null)),GNU)
         $(info [-] Found a gnu-compatible version of stat. Using standard format for determining the file mode.)
