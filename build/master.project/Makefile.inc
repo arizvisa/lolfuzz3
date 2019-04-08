@@ -62,7 +62,7 @@ endef
 
 ### Multi-line macros for generating recipes that perform common build tasks
 
-# Generate a rule that makes the target directory after evaluating any of the
+# Generate a recipe that makes the target directory after evaluating any of the
 # specified dependencies. The dependencies are space separated.
 #
 # Usage: make_directory($target, $dependencis)
@@ -71,9 +71,9 @@ $(1): $(2)
 	@test -d '$$@' || mkdir -p '$$@'
 endef
 
-# Generate a rule that copies the provided file into the target direcotry. The
-# rule that is generated depends on the existence of the directory and so is
-# likely to be combined with the make_directory macro defined above.
+# Generate a recipe that copies the provided file into the target directory.
+# The recipe that is generated depends on the existence of the directory and so
+# is likely to be combined with the make_directory macro defined above.
 # 
 # Usage: output_file($file, $directory)
 define output_file
@@ -83,8 +83,8 @@ $(2)/$(notdir $(1)): $(1)	| $(2)
 	@cp '$$<' '$$@'
 endef
 
-# Generate a rule that converts the source file (raw) into a json form that is
-# properly escaped. This is necessary if trying to use the contents of a raw
+# Generate a recipe that converts the source file (raw) into a json form that
+# is properly escaped. This is necessary if trying to use the contents of a raw
 # file as a field in json.
 #
 # Usage: json_rawfile($source.raw, $target.json)
@@ -94,7 +94,7 @@ $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@jq -Rs . '$(1)' >| '$(2)'
 endef
 
-# Generate a rule that calculates the checksum or digest of the specified
+# Generate a recipe that calculates the checksum or digest of the specified
 # filename using the specified type and write it as a string to the target.
 # The digest is calculated using the OpenSSL binary in the current PATH, and
 # as-such the type can be chosen based on the Message Digest commands that
