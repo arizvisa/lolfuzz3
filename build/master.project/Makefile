@@ -101,25 +101,25 @@ endif
 
 # First check the project configuration
 ifneq ($(wildcard $(ROOTDIR)/config/$(project).project/*),)
-	$(info [*] Found default configuration for $(project): $(INPUT))
+	$(info [*] Found default serve configuration for $(project): $(INPUT))
 	INPUT=$(ROOTDIR)/config/$(project).project
 endif
 
 # Next check for the repository configuration
 ifneq ($(wildcard $(ROOTDIR)/srv/*),)
-	$(info [*] Found default configuration for repository: $(INPUT))
+	$(info [*] Found default serve configuration for branch: $(INPUT))
 	INPUT=$(ROOTDIR)/srv
 endif
 
-## Use the specified or detected custom configuration
+## Use the specified or detected serve configuration
 ifndef INPUT
-    custom := $(boxname_workdir)/empty
+    serve := $(boxname_workdir)/empty
 else
     ifneq ($(wildcard $(INPUT)/*),)
-        $(info [-] Using custom configuration: $(abspath $(patsubst %/,%,$(INPUT))))
-        custom := $(patsubst %/,%,$(INPUT))
+        $(info [-] Using serve configuration: $(abspath $(patsubst %/,%,$(INPUT))))
+        serve := $(patsubst %/,%,$(INPUT))
     else
-        $(error No custom configuration found in path: $(abspath (patsubst %/,%,$(INPUT))))
+        $(error No serve configuration found in path: $(abspath (patsubst %/,%,$(INPUT))))
     endif
 endif
 
@@ -225,7 +225,7 @@ clean-provisioning:
 	-rm -rf '$(boxname_workdir)/pillar'
 	-rm -f '$(boxname_workdir)/salt-minion.conf'
 ifndef INPUT
-	-rmdir '$(custom)'
+	-rmdir '$(serve)'
 endif
 
 .PHONY: clean-tools
@@ -278,7 +278,7 @@ $(filesdir) $(toolsdir) $(toolsdir)/bin $(toolsdir)/libexec $(toolsdir)/sbin: $(
 	@test -d '$@' || mkdir -p '$@'
 
 $(eval $(call make_directory,$(boxname_workdir),$(workdir)))
-$(eval $(call make_directory,$(custom),))
+$(eval $(call make_directory,$(serve),))
 
 ### Output recipes for performing tasks after building of the template
 $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
@@ -289,13 +289,13 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 	mkdir -p '$<'
 
 ### Box recipes required to build the template
-$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(custom)
+$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(serve)
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname).config' -var 'serve-directory=$(custom)' '$(boxname_workdir)/$(boxname).json'
+	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname).config' -var 'serve-directory=$(serve)' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build %s -var-file %c%s%c -var %cguest-config=%s%c -var %cserve-directory=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname).config' "'" "'" '$(custom)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build %s -var-file %c%s%c -var %cguest-config=%s%c -var %cserve-directory=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname).config' "'" "'" '$(serve)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
