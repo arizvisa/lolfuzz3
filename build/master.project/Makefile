@@ -101,32 +101,32 @@ endif
 ### Check for any default project configurations included in the repository
 
 # First check the project configuration
-ifneq ($(wildcard $(project_configuration)/*),)
-	SERVE=$(project_configuration)
+ifneq ($(wildcard $(project_serve)/*),)
+	SERVE=$(project_serve)
 	$(info [*] Found default serve configuration for $(project): $(SERVE))
 endif
 
 # Next check for the repository configuration
-ifneq ($(wildcard $(branch_configuration)/*),)
-	SERVE=$(branch_configuration)
+ifneq ($(wildcard $(branch_serve)/*),)
+	SERVE=$(branch_serve)
 	$(info [*] Found default serve configuration for branch: $(SERVE))
 endif
 
 ## Use the specified or detected serve configuration
 
-# If SERVE was not defined anywhere, then use an empty directory. Due to the
-# make_directory dependency on $(serve), this will get automatically created.
-ifndef SERVE
-    serve := $(boxname_workdir)/empty
+# If a commit was found in the repository, then use that. The $(boxname_workdir)/serve
+# target is special in that it will clone the commit from repository_serve into
+# that specific directory
+ifneq ($(repository_serve),)
+	$(info [-] Using serve configuration from commit: $(repository_serve))
+	serve := $(boxname_workdir)/serve
 else
-    # If a commit was found in the repository, then use that. The $(boxname_workdir)/serve
-    # target is special in that it will clone the commit from repository_configuration into
-    # that specific directory
-    ifneq ($(repository_configuration),)
-        $(info [-] Using serve configuration from commit: $(repository_configuration))
-        serve := $(boxname_workdir)/serve
+    # If SERVE was not defined anywhere, then use an empty directory. Due to the
+    # make_directory dependency on $(serve), this will get automatically created.
+    ifndef SERVE
+        serve := $(boxname_workdir)/empty
 
-    # Otherwise, this might just be a hardcoded path so we'll just check it
+    # Otherwise, this might just be a hardcoded path so we'll just check it out
     else
         ifneq ($(wildcard $(SERVE)/*),)
             $(info [-] Using serve configuration: $(abspath $(patsubst %/,%,$(SERVE))))
@@ -301,8 +301,8 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 
 ### Recipe for using the "serve" branch
 $(boxname_workdir)/serve:	| $(boxname_workdir)
-	@printf '[!] Cloning branch %s into target: %s\n' '$(repository_configuration)' '$@'
-	git clone -b '$(repository_configuration)' '$(ROOTDIR)' '$@'
+	@printf '[!] Cloning branch %s into target: %s\n' '$(repository_serve)' '$@'
+	git clone -b '$(repository_serve)' '$(ROOTDIR)' '$@'
 
 ### Box recipes required to build the template
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(serve)
