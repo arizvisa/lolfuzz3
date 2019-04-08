@@ -102,25 +102,25 @@ endif
 
 # First check the project configuration
 ifneq ($(wildcard $(project_configuration)/*),)
-	INPUT=$(project_configuration)
-	$(info [*] Found default serve configuration for $(project): $(INPUT))
+	SERVE=$(project_configuration)
+	$(info [*] Found default serve configuration for $(project): $(SERVE))
 endif
 
 # Next check for the repository configuration
 ifneq ($(wildcard $(branch_configuration)/*),)
-	INPUT=$(branch_configuration)
-	$(info [*] Found default serve configuration for branch: $(INPUT))
+	SERVE=$(branch_configuration)
+	$(info [*] Found default serve configuration for branch: $(SERVE))
 endif
 
 ## Use the specified or detected serve configuration
-ifndef INPUT
+ifndef SERVE
     serve := $(boxname_workdir)/empty
 else
-    ifneq ($(wildcard $(INPUT)/*),)
-        $(info [-] Using serve configuration: $(abspath $(patsubst %/,%,$(INPUT))))
-        serve := $(patsubst %/,%,$(INPUT))
+    ifneq ($(wildcard $(SERVE)/*),)
+        $(info [-] Using serve configuration: $(abspath $(patsubst %/,%,$(SERVE))))
+        serve := $(patsubst %/,%,$(SERVE))
     else
-        $(error No serve configuration found in path: $(abspath (patsubst %/,%,$(INPUT))))
+        $(error No serve configuration found in path: $(abspath (patsubst %/,%,$(SERVE))))
     endif
 endif
 
@@ -151,7 +151,7 @@ help:
 	@printf '\tPROJECT: (mandatory) Name of the project (also used as the cluster%cs domain)\n' "'"
 	@printf '\tPLATFORM: Virtualization platform(s) to build the template with (vmware, virtualbox, qemu, parallels, hyperv).\n'
 	@printf '\tOUTPUT: (default /deploy) Path to move the template, its config, and auth keypair to\n'
-	@printf '\tINPUT: Path of /srv configuration that is deployed to the template after installation of salt\n'
+	@printf '\tSERVE: Path of /srv configuration that is deployed to the template after installation of salt\n'
 	@printf '\tBUILDDIR: (default /build.dir) Path containing intermediary files for building template\n'
 	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
 	@printf '\tBUILD: (default true) Whether to actually build the template, or to just generate the config\n'
@@ -222,7 +222,7 @@ clean-provisioning:
 	-rm -rf '$(boxname_workdir)/salt'
 	-rm -rf '$(boxname_workdir)/pillar'
 	-rm -f '$(boxname_workdir)/salt-minion.conf'
-ifndef INPUT
+ifndef SERVE
 	-rmdir '$(serve)'
 endif
 
