@@ -289,7 +289,7 @@ $(filesdir) $(toolsdir) $(toolsdir)/bin $(toolsdir)/libexec $(toolsdir)/sbin: $(
 	@test -d '$@' || mkdir -p '$@'
 
 $(eval $(call make_directory,$(boxname_workdir),$(workdir)))
-$(eval $(call make_directory,$(serve),))
+$(eval $(call make_directory,$(boxname_workdir)/empty,$(boxname_workdir)))
 
 ### Output recipes for performing tasks after building of the template
 $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
