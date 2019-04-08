@@ -301,8 +301,10 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 
 ### Recipe for using the "serve" branch
 $(boxname_workdir)/serve:	| $(boxname_workdir)
-	@printf '[!] Cloning branch %s into target: %s\n' '$(repository_serve)' '$@'
-	git clone -b '$(repository_serve)' '$(ROOTDIR)' '$@'
+	@printf '[!] Cloning repository into target: %s\n' '$@'
+	git -C '$(ROOTDIR)' clone --dissociate -n '$@'
+	@printf '[!] Checking out commit %s in target: %s\n' '$(repository_serve)' '$@'
+	git -C '$@' checkout --no-track -B serve '$(repository_serve)'
 
 ### Box recipes required to build the template
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(serve)
