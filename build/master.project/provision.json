@@ -313,8 +313,8 @@
             "command" : "echo \"[-] Staging the custom configuration\""
         },
         { "type" : "file",
-            "source" : "{{user `custom-config-directory`}}",
-            "destination" : "{{user `custom-config-stage`}}"
+            "source" : "{{user `serve-directory`}}",
+            "destination" : "{{user `serve-stage-directory`}}"
         },
 
         { "type" : "shell-local",
@@ -325,7 +325,7 @@
             "environment_vars" : [
                 "ROOT=/",
                 "DEPLOY=/srv",
-                "STAGE={{user `custom-config-stage`}}",
+                "STAGE={{user `serve-stage-directory`}}",
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
