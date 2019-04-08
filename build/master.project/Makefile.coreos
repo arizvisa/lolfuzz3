@@ -1,27 +1,43 @@
+###############################################################################
+# Makefile.coreos
+#
+# This file specifies the default variables for handling the building of the
+# CoreOS component of the master template.
+###############################################################################
+
 ifeq ($(ROOTDIR),)
     $(error Please do not use this file directly as it is intended to be included)
 endif
 
-### Container Linux
+### Files containing information to download Container Linux and validate
+### its configuration.
+
 in_coreos=$(MAKEDIR)coreos.url
 in_coreos_version=$(MAKEDIR)coreos.version
 in_coreos_validate=$(MAKEDIR)coreos.validate.url
 in_coreos_files=$(MAKEDIR)coreos.files
 
+# Filename in coreos.files that represents the iso used to install CoreOS.
 coreos_iso=coreos_production_iso_image.iso
 
-# generate the install url from the environment vars
+# Export the variables assigned in in_coreos_version so that they
+# can be composed into the URL for the latest stable version.
 $(foreach var,$(file <$(in_coreos_version)),$(eval export $(var)))
 
+# Build the actual URLs to download CoreOS, and the URL for validating the
+# configuration.
 coreos_url=$(file <$(in_coreos))
 coreos_validate_url=$(file <$(in_coreos_validate))
-
-# all files that are needed to install coreos
+)
+# Generate the list of files that are used to actually install CoreOS
 coreos_installer_files := $(foreach f,$(file <$(in_coreos_files)),$(workdir)/$(f))
 
-### Macros for CoreOS components
+### Multi-line macros for generating recipes related to installing CoreOS
 
-# coreos_download '$target' '$filename'
+# Generate a recipe that downloads the specified filename from the URL
+# specified in the coreos_url variable into the target file.
+#
+# Usage: coreos_download($target, $filename)
 define coreos_download
 $(1):	| $(dir $(1))
 	@printf '[!] Downloading CoreOS Installer file: %s\n' '$(coreos_url)/$(2)'

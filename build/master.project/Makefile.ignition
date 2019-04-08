@@ -1,76 +1,135 @@
+###############################################################################
+# Makefile.ignition
+#
+# This include file provides a number of macros that are used to help generate
+# the ignition configuration used to build the template. The ignition file is
+# built based on the directory structure under the ignition sub-directory, and
+# is combined into a single configuration during building.
+###############################################################################
+
 ifeq ($(ROOTDIR),)
     $(error Please do not use this file directly as it is intended to be included)
 endif
 
+# Path to the ignition sub-directory which contains the files that are
+# composed into the final ignition configuration for the template.
 ignition_config := $(MAKEDIR)ignition
 
-### Ignition configuration and its components
+# Path to the default json file that is used as a template when building the
+# final ignition configuration. This contains various default values and fields
+# that need to be populated.
 ignition_template := $(MAKEDIR)default.json
+
+# Variables containing lists of all the files that are used to compose the
+# ignition configuration. These files are combined into the ignition_template
+# to generate the final configuration.
 ignition_sysctl_files := $(wildcard $(ignition_config)/sysctl/*.conf)
 ignition_users_files := $(wildcard $(ignition_config)/users/*)
 ignition_network_files := $(wildcard $(ignition_config)/network/*.network)
 ignition_units_names := $(foreach f,$(wildcard $(ignition_config)/units/*),$(notdir $(f)))
 ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$(notdir $(f)))
 
+# These variables contain the list of files and directories that are created
+# by the ignition configuration in the root of the filesystem.
 ignition_root_files := $(if $(wildcard $(ignition_config)/files),$(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type f -print))))
 ignition_root_directories := $(if $(wildcard $(ignition_config)/files),$(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type d -print))))
 
-### Macros for handling the ignition subsystem
+### Multi-lined macros containing recipes for composing the different parts
+### of the ignition configuration.
 
 # XXX: because fuck CoreOS for breaking cloud-init right before deprecating it
 
-# ignition_sysctl '$contents.json' '$target.json' '$filename' '$decimal-mode'
+# The following macro is used to generate a recipe that writes a sysctl.conf
+# file to the /etc directory of the template. It essentially generates a json
+# file that is used to drop the specified contents with the provided filename
+# and file mode (in decimal) under the /etc/sysctl.d directory of the template.
+# The resulting json output can then be merged with the ignition_template.
+#
+# Usage: ignition_sysctl($contents.json, $target.json, $filename, $decimal.filemode)
 define ignition_sysctl
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
 	@jq -n --arg name '$(3)' --argjson mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/etc/sysctl.d/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
 
-# ignition_unit_file '$unit.service' '$source.service.json-raw' '$output.json'
+# This macro will generate a recipe which uses the raw contents of the
+# specified source to generate a systemd unit with the name specified as unit.
+# This generates a json file that can be merged with ignition_template to
+# deploy a unit using the ignition configuration.
+#
+# Usage: ignition_unit_file($unit, $source.json-raw, $output.json)
 define ignition_unit_file
 $(3): $(2)
 	@printf '[-] Creating ignition unit file %s: %s\n' '$(3)' '$(2)'
 	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, enable: false, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
 endef
 
-# ignition_unit_dropins '$target.json' '$space-separated-dropins'
+# The following macro will produce a recipe that combines a space-separated
+# list of dropins into a single json file that is written to the specified
+# target. This json file # can be merged into the ignition template in order to
+# build the final configuration that is used.
+#
+# ignition_unit_dropins($target, $list_of_dropins)
 define ignition_unit_dropins
 $(1): $(2)
 	@printf '[-] Creating ignition unit dropins %s: %s\n' '$(1)' '$(2)'
 	@jq '[., inputs]' $(2) >| '$(1)'
 endef
 
-# ignition_dropin_file '$filename' '$contents' '$target.json'
+# This macro is used to generate a recipe which writes the provided json
+# contents into the specified filename as a dropin for a unit. Its output
+# is a json file that can be merged with the ignition template to produce
+# the final configuration.
+#
+# Usage: ignition_dropin_file($filename, $contents, $target.json)
 define ignition_dropin_file
 $(3): $(2)	| $(patsubst %/,%,$(dir $(3)))
 	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, contents: $$$$contents[0] }' >| '$(3)'
 endef
 
-# ignition_unit '$target.json' '$unit.json' '$dropins.json'
+# This macro will generate a recipe that combines the specified json unit with
+# the contents of the json that is specified as the dropins. This will result
+# in emitting a json file containing the systemd unit and its dropins that are
+# deployed in the template via the final configuration.
+#
+# Usage: ignition_unit($target.json, $unit.json, $dropins.json)
 define ignition_unit
 $(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
 	@printf '[*] Combining ignition unit %s: %s %s\n' '$(1)' '$(2)' '$(3)'
 	@jq '.dropins = (inputs // .dropins)' $$(foreach dropin,$$^,'$$(dropin)') >| '$(1)'
 endef
 
-# ignition_unit_missing '$unit.service' '$target.json' '$dropins.json'
+# The following macro is used to generate a recipe that builds a systemd unit
+# using only the provided dropins. This will emit a json file as the target
+# which contains only dropins for the specified unit.
+#
+# Usage: ignition_unit_missing($unit, $target.json, $dropins.json)
 define ignition_unit_missing
 $(2): $(3)	| $(patsubst %/,%,$(dir $(2)))
 	@printf '[*] Combining (missing) ignition unit %s: %s\n' '$(2)' '$(3)'
 	@jq -n --arg name '$(1)' --slurpfile dropins '$(3)' '{ name: $$$$name, dropins: $$$$dropins[0] }' >| '$(2)'
 endef
 
-# ignition_user '$target.json' '$source.json' '$list-of-json-files'
+# This next macro will generate a recipe that takes a list of json files
+# which contains the list of users that are to be added to the template. This
+# will merge the space-separated list of json files with the provided source
+# and then emit a json which can be merged with the ignition template.
+#
+# Usage: ignition_user($target.json, $source.json, $list-of-json-files)
 define ignition_user
 $(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
 	@printf '[*] Combining files for user into %s: %s\n' '$(1)' '$$^'
 	@jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
 endef
 
-# ignition_root_file '$contents.json' '$target.json' '$filename' '$decimal-mode'
+# The following macro is used to generate a recipe that emits a json file
+# that writes the specified contents into the root of the filesystem. The
+# resulting file will have the specified filename and the provided mode
+# in decimal form.
+#
+# Usage: ignition_root_file($contents.json, $target.json, $filename, $decimal-mode)
 define ignition_root_file
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
 	@jq -n --arg name '$(3)' --argjson mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
 endef
-

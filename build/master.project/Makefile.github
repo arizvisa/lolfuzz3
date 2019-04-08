@@ -1,29 +1,47 @@
+###############################################################################
+# Makefile.github
+#
+# This file contains a number of variables that allow the main Makefile to
+# interact with the GitHub website.
+###############################################################################
+
 ifeq ($(ROOTDIR),)
     $(error Please do not use this file directly as it is intended to be included)
 endif
 
-### Assign the github specific commands for fetching
+# Set the minimum number of requests required before warning the user that
+# they're about to overshoot their limit.
+rate_limit.minimum=5
+
+# Check if there's a github.token file in the root if the repository and use it
+# as the authorization token when fetching from github. If one isn't found,
+# then just fetch files from github normally.
 ifneq ($(wildcard $(ROOTDIR)/github.token),)
 GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
 else
 GH_FETCH := ${FETCH}
 endif
 
-### Setup the github api url and check the rate limit
+# Use the formatstring in github.url to generate URLs for interacting with the
+# github API.
 in_github_api_format=$(MAKEDIR)/github.url
 github_api_format=$(file <$(in_github_api_format))
 github_repo_format=$(shell printf -- '$(github_api_format)' 'repos/%s/releases/latest')
 
-# Check the rate limit
+# Generate some URLs for fetching information about the github rate limit in
+# order to warn the user when they're not allowed to communicate to github
+# anymore.
 rate_limit.url=$(shell printf -- '$(github_api_format)' 'rate_limit')
 rate_limit.json=$(shell ${GH_FETCH} '$(rate_limit.url)' | jq -cr '.rate')
 
-rate_limit.minimum=5
+# Assign some variables to keep track of the number of API requests that the
+# user is allowed to make to github.
 rate_limit=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .limit')
 rate_limit.remaining=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .remaining')
 rate_limit.reset=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .reset')
 
-# Warn the user if we're approaching GitHub's limit
+# Check if the user's rate limit is below the minimum required. If it is, then
+# warn the user about what they need to do in order to proceed.
 ifneq ($(shell [ '$(rate_limit.remaining)' -le '$(rate_limit.minimum)' ] && echo 1 || echo 0),0)
     $(warning --------------------------------------------------------------------------)
     $(warning You are approaching or have reached the GitHub rate limit and thus are    )
@@ -39,9 +57,11 @@ else
     $(info [-] Current GitHub rate limit: $(rate_limit.remaining)/$(rate_limit))
 endif
 
-### GitHub macros
-
-# gh_download '$target' '$url'
+# Generate a recipe that downloads a file from the provided github url, and
+# then write it into the specified target. Use the directory of the target
+# file as a dependency of the recipe.
+#
+# Usage: gh_download($target, $url)
 define gh_download
 $(1):	| $(patsubst %/,%,$(dir $(1)))
 	@printf '[!] Downloading %s: %s\n' '$(2)' '$$(notdir $(1))'

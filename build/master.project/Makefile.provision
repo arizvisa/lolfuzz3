@@ -1,37 +1,56 @@
+###############################################################################
+# Makefile.provision
+#
+# This file contains the specifics that are used to provision the template
+# after installing the operating system. This deploys any custom tools that are
+# used for building containers, getting network information, or any other tools
+# that are required by the user.
+###############################################################################
+
 ifeq ($(ROOTDIR),)
     $(error Please do not use this file directly as it is intended to be included)
 endif
 
-### Provisioning
+# This variable contains the path to the directory containing any number of
+# tools that need to be deployed as part of the provisioning stage of the
+# template. These are deployed under the /opt/bin directory.
 tools_config := $(MAKEDIR)tools
+extra_tools_files := $(foreach f,$(wildcard $(tools_config)/*),$(notdir $(f)))
 
-## Tools configuration
+# The following variables specify the directories that are used to stage
+# the required tools during building of the template.
 toolsdir=$(workdir)/tools
 filesdir=$(workdir)/files
 
-## acbuild
+### The following variables specify information on where to get the acbuild
+### tool which is provisioned into the template.
+
 in_acbuild_repo=$(MAKEDIR)acbuild.repo
 acbuild_metaurl != printf -- '$(github_repo_format)' '$(file <$(in_acbuild_repo))'
 
-# required files for acbuild
+# List of file names inside the acbuild archive to deploy
 acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].name'),$(filesdir)/$(f))
 
-## kelseyhightower's setup-network-environment (/opt/libexec)
+### The following variables are for the kelseyhightower/setup-network-environment
+### tool. This tool is used to dynamically determine the IP address and routing
+### information to get to the internet. By default this tool is deployed under
+### the /opt/libexec directory.
+
 in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
 setup_network_environment_metaurl != printf -- '$(github_repo_format)' '$(file <$(in_setup_network_environment_repo))'
 
+# List of file names inside the setup-network-environment archive to deploy
 setup_network_environment_files := $(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name')
 
-## extra tools to deploy (/opt/bin)
-extra_tools_files := $(foreach f,$(wildcard $(tools_config)/*),$(notdir $(f)))
+### Multi-line macros for generating recipes necessary for provisioning
 
-### Macros for provisioning the box after creation
-
-# stage_tool '$target' '$source'
+# This macro generates a recipe that stages the specified source file
+# prior to deployment of the file into the template.
+#
+# Usage: stage_tool($target, $source)
 define stage_tool
 $(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
 	@printf '[-] Staging file %s in %s\n' '$(1)' '$(2)'
 	@cp -f '$(1)' '$(2)'
 endef
-
