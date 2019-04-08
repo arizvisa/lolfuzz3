@@ -85,21 +85,29 @@ $(warning User has specified no template types. Assuming all platforms are avail
 $(info [-] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
 endif
 
-## Check for default project configuration
+## Check for default project configurations
+
+# First check the project configuration
 ifneq ($(wildcard $(ROOTDIR)/config/$(project).project/*),)
-	INPUT?=$(ROOTDIR)/config/$(project).project
-	$(info [-] Using default configuration for $(project): $(INPUT))
+	$(info [*] Found default configuration for $(project): $(INPUT))
+	INPUT=$(ROOTDIR)/config/$(project).project
 endif
 
-## Custom configuration
+# Next check for the repository configuration
+ifneq ($(wildcard $(ROOTDIR)/srv/*),)
+	$(info [*] Found default configuration for repository: $(INPUT))
+	INPUT=$(ROOTDIR)/srv
+endif
+
+## Using the specified custom configuration
 ifndef INPUT
     custom := $(boxname_workdir)/empty
 else
     ifneq ($(wildcard $(INPUT)/*),)
-        $(info [-] Using custom configuration specified by user: $(abspath $(patsubst %/,%,$(INPUT))))
+        $(info [-] Using custom configuration: $(abspath $(patsubst %/,%,$(INPUT))))
         custom := $(patsubst %/,%,$(INPUT))
     else
-        $(error No custom configuration found in path specified by user: $(abspath (patsubst %/,%,$(INPUT))))
+        $(error No custom configuration found in path: $(abspath (patsubst %/,%,$(INPUT))))
     endif
 endif
 
