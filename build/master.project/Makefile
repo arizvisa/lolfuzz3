@@ -113,14 +113,29 @@ ifneq ($(wildcard $(branch_configuration)/*),)
 endif
 
 ## Use the specified or detected serve configuration
+
+# If SERVE was not defined anywhere, then use an empty directory. Due to the
+# make_directory dependency on $(serve), this will get automatically created.
 ifndef SERVE
     serve := $(boxname_workdir)/empty
 else
-    ifneq ($(wildcard $(SERVE)/*),)
-        $(info [-] Using serve configuration: $(abspath $(patsubst %/,%,$(SERVE))))
-        serve := $(patsubst %/,%,$(SERVE))
+    # If a commit was found in the repository, then use that. The $(boxname_workdir)/serve
+    # target is special in that it will clone the commit from repository_configuration into
+    # that specific directory
+    ifneq ($(repository_configuration),)
+        $(info [-] Using serve configuration from commit: $(repository_configuration))
+        serve := $(boxname_workdir)/serve
+
+    # Otherwise, this might just be a hardcoded path so we'll just check it
     else
-        $(error No serve configuration found in path: $(abspath (patsubst %/,%,$(SERVE))))
+        ifneq ($(wildcard $(SERVE)/*),)
+            $(info [-] Using serve configuration: $(abspath $(patsubst %/,%,$(SERVE))))
+            serve := $(patsubst %/,%,$(SERVE))
+
+        # Nothing was found, so we'll just error out here
+        else
+            $(error No serve configuration found in path: $(abspath (patsubst %/,%,$(SERVE))))
+        endif
     endif
 endif
 
@@ -222,9 +237,7 @@ clean-provisioning:
 	-rm -rf '$(boxname_workdir)/salt'
 	-rm -rf '$(boxname_workdir)/pillar'
 	-rm -f '$(boxname_workdir)/salt-minion.conf'
-ifndef SERVE
-	-rmdir '$(serve)'
-endif
+	-rm -rf '$(boxname_workdir)/serve' '$(boxname_workdir)/empty'
 
 .PHONY: clean-tools
 clean-tools:
@@ -285,6 +298,11 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 	mv '$<' '$@'
 	@printf '[*] Leaving an empty directory as a placeholder: %s\n' '$<'
 	mkdir -p '$<'
+
+### Recipe for using the "serve" branch
+$(boxname_workdir)/serve:	| $(boxname_workdir)
+	@printf '[!] Cloning branch %s into target: %s\n' '$(repository_configuration)' '$@'
+	git clone -b '$(repository_configuration)' '$(ROOTDIR)' '$@'
 
 ### Box recipes required to build the template
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(serve)
