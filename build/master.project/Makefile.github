@@ -1,0 +1,49 @@
+ifeq ($(ROOTDIR),)
+    $(error Please do not use this file directly as it is intended to be included)
+endif
+
+### Assign the github specific commands for fetching
+ifneq ($(wildcard $(ROOTDIR)/github.token),)
+GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
+else
+GH_FETCH := ${FETCH}
+endif
+
+### Setup the github api url and check the rate limit
+in_github_api_format=$(MAKEDIR)/github.url
+github_api_format=$(file <$(in_github_api_format))
+github_repo_format=$(shell printf -- '$(github_api_format)' 'repos/%s/releases/latest')
+
+# Check the rate limit
+rate_limit.url=$(shell printf -- '$(github_api_format)' 'rate_limit')
+rate_limit.json=$(shell ${GH_FETCH} '$(rate_limit.url)' | jq -cr '.rate')
+
+rate_limit.minimum=5
+rate_limit=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .limit')
+rate_limit.remaining=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .remaining')
+rate_limit.reset=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .reset')
+
+# Warn the user if we're approaching GitHub's limit
+ifneq ($(shell [ '$(rate_limit.remaining)' -le '$(rate_limit.minimum)' ] && echo 1 || echo 0),0)
+    $(warning --------------------------------------------------------------------------)
+    $(warning You are approaching or have reached the GitHub rate limit and thus are    )
+    $(warning unable to download some of the required prequisites. These are the        )
+    $(warning kelseyhightower/setup-network-environment, and the container/build        )
+    $(warning applications which are necessary to provision "master.$(project)". Please )
+    $(warning consider generating an authorization token via your GitHub user profile   )
+    $(warning to bypass the GitHub rate limit. After generating the token, you can then )
+    $(warning write it to $(ROOTDIR)/github.token to proceed.)
+    $(warning --------------------------------------------------------------------------)
+    $(error Current GitHub rate limit is less than $(rate_limit.minimum) ($(rate_limit.remaining)/$(rate_limit)).)
+else
+    $(info [-] Current GitHub rate limit: $(rate_limit.remaining)/$(rate_limit))
+endif
+
+### GitHub macros
+
+# gh_download '$target' '$url'
+define gh_download
+$(1):	| $(patsubst %/,%,$(dir $(1)))
+	@printf '[!] Downloading %s: %s\n' '$(2)' '$$(notdir $(1))'
+	$${GH_FETCH} -o '$$@' '$(2)'
+endef

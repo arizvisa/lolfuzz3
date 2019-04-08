@@ -1,0 +1,25 @@
+ifeq ($(ROOTDIR),)
+    $(error Please do not use this file directly as it is intended to be included)
+endif
+
+checksum_type := md5
+
+### Commands (macros)
+DOWNLOAD := curl -L -C- --progress-bar
+FETCH := curl -L -s -S
+PUT := curl -L -s -S -X PUT --data-binary
+
+# Figure out which version of stat we have available
+GSTAT?=stat
+
+ifndef MODE
+    ifeq ($(findstring GNU,$(shell $(GSTAT) --version 2>/dev/null)),GNU)
+        $(info [-] Found a gnu-compatible version of stat. Using standard format for determining the file mode.)
+        MODE := '$(GSTAT)' -c%a
+    else
+        $(info [-] Found a gnu-incompatible version of stat. Using alternative format for determining the file mode.)
+        MODE := '$(GSTAT)' -f%A
+    endif
+endif
+
+

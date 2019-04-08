@@ -1,15 +1,13 @@
 MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ROOTDIR := $(realpath $(MAKEDIR)../..)
 
+# Include necessary utility macros
+include $(MAKEDIR)Makefile.platform
+include $(MAKEDIR)Makefile.inc
+
 ### Parameters that the user can supply
 BUILDDIR?=$(ROOTDIR)/build.dir
 OUTPUT?=$(ROOTDIR)/deploy
-
-### Validation of configurable parameters
-noop=
-space=$(noop) $(noop)
-comma=,
-lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(subst G,g,$(subst H,h,$(subst I,i,$(subst J,j,$(subst K,k,$(subst L,l,$(subst M,m,$(subst N,n,$(subst O,o,$(subst P,p,$(subst Q,q,$(subst R,r,$(subst S,s,$(subst T,t,$(subst U,u,$(subst V,v,$(subst W,w,$(subst X,x,$(subst Y,y,$(subst Z,z,$1))))))))))))))))))))))))))
 
 ## project variable
 project := $(call lc,${PROJECT})
@@ -111,272 +109,15 @@ else
     endif
 endif
 
-### Commands (macros)
-DOWNLOAD := curl -L -C- --progress-bar
-FETCH := curl -L -s -S
-PUT := curl -L -s -S -X PUT --data-binary
-
-# Figure out which version of stat we have available
-GSTAT?=stat
-
-ifndef MODE
-    ifeq ($(findstring GNU,$(shell $(GSTAT) --version 2>/dev/null)),GNU)
-        $(info [-] Found a gnu-compatible version of stat. Using standard format for determining the file mode.)
-        MODE := '$(GSTAT)' -c%a
-    else
-        $(info [-] Found a gnu-incompatible version of stat. Using alternative format for determining the file mode.)
-        MODE := '$(GSTAT)' -f%A
-    endif
-endif
-
-ifneq ($(wildcard $(ROOTDIR)/github.token),)
-GH_FETCH := ${FETCH} -H 'Authorization: token $(file <$(ROOTDIR)/github.token)'
-else
-GH_FETCH := ${FETCH}
-endif
-
-### Setup the github api url and check the rate limit
-in_github_api_format=$(MAKEDIR)/github.url
-github_api_format=$(file <$(in_github_api_format))
-
-# Check the rate limit
-rate_limit.url=$(shell printf -- '$(github_api_format)' 'rate_limit')
-rate_limit.json=$(shell ${GH_FETCH} '$(rate_limit.url)' | jq -cr '.rate')
-
-rate_limit.minimum=5
-rate_limit=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .limit')
-rate_limit.remaining=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .remaining')
-rate_limit.reset=$(shell jq -n --argjson input '$(rate_limit.json)' '$$input | .reset')
-
-# Warn the user if we're approaching GitHub's limit
-ifneq ($(shell [ '$(rate_limit.remaining)' -le '$(rate_limit.minimum)' ] && echo 1 || echo 0),0)
-    $(warning --------------------------------------------------------------------------)
-    $(warning You are approaching or have reached the GitHub rate limit and thus are    )
-    $(warning unable to download some of the required prequisites. These are the        )
-    $(warning kelseyhightower/setup-network-environment, and the container/build        )
-    $(warning applications which are necessary to provision "master.$(project)". Please )
-    $(warning consider generating an authorization token via your GitHub user profile   )
-    $(warning to bypass the GitHub rate limit. After generating the token, you can then )
-    $(warning write it to $(ROOTDIR)/github.token to proceed.)
-    $(warning --------------------------------------------------------------------------)
-    $(error Current GitHub rate limit is less than $(rate_limit.minimum) ($(rate_limit.remaining)/$(rate_limit)).)
-else
-    $(info [-] Current GitHub rate limit: $(rate_limit.remaining)/$(rate_limit))
-endif
+### Include various Makefile variables
+include $(MAKEDIR)Makefile.coreos
+include $(MAKEDIR)Makefile.github
+include $(MAKEDIR)Makefile.ignition
+include $(MAKEDIR)Makefile.provision
+include $(MAKEDIR)Makefile.salt
 
 ### Static configuration
 output_names := $(boxname).config $(boxname).id_rsa $(boxname).id_rsa.pub
-
-## Salt and provisioning
-checksum_type := md5
-ignition_config := $(MAKEDIR)ignition
-salt_config := $(MAKEDIR)salt
-salt_pillar := $(MAKEDIR)pillar
-salt_patches := $(MAKEDIR)patches
-tools_config := $(MAKEDIR)tools
-
-github_repo_format=$(shell printf -- '$(github_api_format)' 'repos/%s/releases/latest')
-
-## Container Linux
-in_coreos=$(MAKEDIR)coreos.url
-in_coreos_version=$(MAKEDIR)coreos.version
-in_coreos_validate=$(MAKEDIR)coreos.validate.url
-in_coreos_files=$(MAKEDIR)coreos.files
-
-coreos_iso=coreos_production_iso_image.iso
-
-# generate the install url from the environment vars
-$(foreach var,$(file <$(in_coreos_version)),$(eval export $(var)))
-
-coreos_url=$(file <$(in_coreos))
-coreos_validate_url=$(file <$(in_coreos_validate))
-
-# all files that are needed to install coreos
-coreos_installer_files := $(foreach f,$(file <$(in_coreos_files)),$(workdir)/$(f))
-
-## Tools configuration
-toolsdir=$(workdir)/tools
-filesdir=$(workdir)/files
-
-## acbuild
-in_acbuild_repo=$(MAKEDIR)acbuild.repo
-acbuild_metaurl != printf -- '$(github_repo_format)' '$(file <$(in_acbuild_repo))'
-
-# required files for acbuild
-acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].name'),$(filesdir)/$(f))
-
-## kelseyhightower's setup-network-environment (/opt/libexec)
-in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
-setup_network_environment_metaurl != printf -- '$(github_repo_format)' '$(file <$(in_setup_network_environment_repo))'
-
-setup_network_environment_files := $(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name')
-
-## extra tools to deploy (/opt/bin)
-extra_tools_files := $(foreach f,$(wildcard $(tools_config)/*),$(notdir $(f)))
-
-## salt-bootstrap.sh installer
-in_salt_bootstrap_metaurl=$(MAKEDIR)salt-bootstrap.url
-in_salt_bootstrap_version=$(MAKEDIR)salt-bootstrap.version
-
-salt_bootstrap_metaurl := '$(file <$(in_salt_bootstrap_metaurl))'
-salt_bootstrap_file != ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.name | @sh'
-salt_bootstrap_file_url != ${GH_FETCH} '$(salt_bootstrap_metaurl)' | jq -r '.download_url | @sh'
-salt_bootstrap_version := '$(file <$(in_salt_bootstrap_version))'
-salt_bootstrap_pillar_files := acbuild.sls project-name.sls
-
-### Ignition configuration and its components
-ignition_template := $(MAKEDIR)default.json
-ignition_sysctl_files := $(wildcard $(ignition_config)/sysctl/*.conf)
-ignition_users_files := $(wildcard $(ignition_config)/users/*)
-ignition_network_files := $(wildcard $(ignition_config)/network/*.network)
-ignition_units_names := $(foreach f,$(wildcard $(ignition_config)/units/*),$(notdir $(f)))
-ignition_dropins_names := $(foreach f,$(wildcard $(ignition_config)/dropins/*),$(notdir $(f)))
-
-ignition_root_files := $(if $(wildcard $(ignition_config)/files),$(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type f -print))))
-ignition_root_directories := $(if $(wildcard $(ignition_config)/files),$(patsubst ./%,%,$(shell (cd '$(ignition_config)/files' && find . -type d -print))))
-
-### Commands (macros)
-
-# assert_expression '$expr' '$message'
-define assert_expression
-	$(if $(1),@true,$(warning $(2)))
-endef
-
-# assert_expression_not '$expr' '$message'
-define assert_expression_not
-	$(if $(1),$(warning $(2)),@true)
-endef
-
-# verify_expression '$expr' '$message'
-define verify_expression
-	$(if $(1),@true,$(error $(2)))
-endef
-
-# verify_expression_not '$expr' '$message'
-define verify_expression_not
-	$(if $(1),$(error $(2)),@true)
-endef
-
-### Expressions (macros)
-
-# decimal_mode '$file'
-define decimal_mode
-$(shell printf '%d' $$(( 8#$(shell ${MODE} '$(1)') )) )
-endef
-
-### Recipe definitions (macros)
-
-# make_directory '$target' '$deps'
-define make_directory
-$(1): $(2)
-	@test -d '$$@' || mkdir -p '$$@'
-endef
-
-# output_file '$file' '$directory'
-define output_file
-$(2)/$(notdir $(1)): $(1)	| $(2)
-	$$(call verify_expression_not,$$(wildcard $$@),Refusing to deploy $$< over already existing file: $$@)
-	@printf '[*] Copying output file to %s: %s\n' '$(2)' '$$<'
-	@cp '$$<' '$$@'
-endef
-
-# json_rawfile '$source.raw' '$target.json'
-define json_rawfile
-$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
-	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
-	@jq -Rs . '$(1)' >| '$(2)'
-endef
-
-## github
-
-# gh_download '$target' '$url'
-define gh_download
-$(1):	| $(patsubst %/,%,$(dir $(1)))
-	@printf '[!] Downloading %s: %s\n' '$(2)' '$$(notdir $(1))'
-	$${GH_FETCH} -o '$$@' '$(2)'
-endef
-
-## CoreOS components
-
-# coreos_download '$target' '$filename'
-define coreos_download
-$(1):	| $(dir $(1))
-	@printf '[!] Downloading CoreOS Installer file: %s\n' '$(coreos_url)/$(2)'
-	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(2)'
-endef
-
-# checksum '$filename' '$checksum' '$checksum_filename'
-define checksum
-$(3): $(1)
-	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
-	@printf '[-] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
-	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\r\n' >| '$$@'
-endef
-
-# stage_tool '$target' '$source'
-define stage_tool
-$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
-	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
-	@printf '[-] Staging file %s in %s\n' '$(1)' '$(2)'
-	@cp -f '$(1)' '$(2)'
-endef
-
-# XXX: because fuck CoreOS for breaking cloud-init right before deprecating it
-
-# ignition_sysctl '$contents.json' '$target.json' '$filename' '$decimal-mode'
-define ignition_sysctl
-$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
-	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
-	@jq -n --arg name '$(3)' --argjson mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/etc/sysctl.d/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
-endef
-
-# ignition_unit_file '$unit.service' '$source.service.json-raw' '$output.json'
-define ignition_unit_file
-$(3): $(2)
-	@printf '[-] Creating ignition unit file %s: %s\n' '$(3)' '$(2)'
-	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, enable: false, contents: $$$$contents[0], dropins: [] }' >| '$(3)'
-endef
-
-# ignition_unit_dropins '$target.json' '$space-separated-dropins'
-define ignition_unit_dropins
-$(1): $(2)
-	@printf '[-] Creating ignition unit dropins %s: %s\n' '$(1)' '$(2)'
-	@jq '[., inputs]' $(2) >| '$(1)'
-endef
-
-# ignition_dropin_file '$filename' '$contents' '$target.json'
-define ignition_dropin_file
-$(3): $(2)	| $(patsubst %/,%,$(dir $(3)))
-	@jq -n --arg name '$(1)' --slurpfile contents '$(2)' '{ name: $$$$name, contents: $$$$contents[0] }' >| '$(3)'
-endef
-
-# ignition_unit '$target.json' '$unit.json' '$dropins.json'
-define ignition_unit
-$(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
-	@printf '[*] Combining ignition unit %s: %s %s\n' '$(1)' '$(2)' '$(3)'
-	@jq '.dropins = (inputs // .dropins)' $$(foreach dropin,$$^,'$$(dropin)') >| '$(1)'
-endef
-
-# ignition_unit_missing '$unit.service' '$target.json' '$dropins.json'
-define ignition_unit_missing
-$(2): $(3)	| $(patsubst %/,%,$(dir $(2)))
-	@printf '[*] Combining (missing) ignition unit %s: %s\n' '$(2)' '$(3)'
-	@jq -n --arg name '$(1)' --slurpfile dropins '$(3)' '{ name: $$$$name, dropins: $$$$dropins[0] }' >| '$(2)'
-endef
-
-# ignition_user '$target.json' '$source.json' '$list-of-json-files'
-define ignition_user
-$(1): $(2) $(3)	| $(patsubst %/,%,$(dir $(1)))
-	@printf '[*] Combining files for user into %s: %s\n' '$(1)' '$$^'
-	@jq 'reduce inputs as $$$$item (.; . * $$$$item)' '$(2)' $(3) >| '$(1)'
-endef
-
-# ignition_root_file '$contents.json' '$target.json' '$filename' '$decimal-mode'
-define ignition_root_file
-$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
-	@printf '[-] Building ignition file from contents %s: %s\n' '$(1)' '$(2)'
-	@jq -n --arg name '$(3)' --argjson mode '$(4)' --slurpfile contents '$(1)' '{ filesystem: "root", path: ("/" + $$$$name), mode: $$$$mode, contents: { source: ("data:," + ($$$$contents[0] | @uri)) } }' >| '$(2)'
-endef
 
 ### General recipes
 .DEFAULT_GOAL := help

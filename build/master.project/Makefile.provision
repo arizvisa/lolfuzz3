@@ -1,0 +1,37 @@
+ifeq ($(ROOTDIR),)
+    $(error Please do not use this file directly as it is intended to be included)
+endif
+
+### Provisioning
+tools_config := $(MAKEDIR)tools
+
+## Tools configuration
+toolsdir=$(workdir)/tools
+filesdir=$(workdir)/files
+
+## acbuild
+in_acbuild_repo=$(MAKEDIR)acbuild.repo
+acbuild_metaurl != printf -- '$(github_repo_format)' '$(file <$(in_acbuild_repo))'
+
+# required files for acbuild
+acbuild_files := $(foreach f,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].name'),$(filesdir)/$(f))
+
+## kelseyhightower's setup-network-environment (/opt/libexec)
+in_setup_network_environment_repo=$(MAKEDIR)/setup-network-environment.repo
+setup_network_environment_metaurl != printf -- '$(github_repo_format)' '$(file <$(in_setup_network_environment_repo))'
+
+setup_network_environment_files := $(shell ${GH_FETCH} '$(setup_network_environment_metaurl)' | jq -r '.assets[].name')
+
+## extra tools to deploy (/opt/bin)
+extra_tools_files := $(foreach f,$(wildcard $(tools_config)/*),$(notdir $(f)))
+
+### Macros for provisioning the box after creation
+
+# stage_tool '$target' '$source'
+define stage_tool
+$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
+	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
+	@printf '[-] Staging file %s in %s\n' '$(1)' '$(2)'
+	@cp -f '$(1)' '$(2)'
+endef
+
