@@ -94,6 +94,22 @@ Enable systemd multi-user.target wants {{ pillar["container"]["minio"]["name"] }
             - Dropin an environment configuration to the {{ pillar["container"]["minio"]["name"] }}.service systemd unit
         - makedirs: true
 
+Start the {{ pillar["container"]["minio"]["name"] }}.service unit:
+    cmd.run:
+        - name: >-
+            /usr/bin/ssh
+            -i "{{ Root }}{{ mpillar["toolbox"]["self-service"]["key"] }}"
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            --
+            {{ mpillar["toolbox"]["self-service"]["host"] | yaml_squote }}
+            sudo
+            --
+            systemctl start {{ pillar["container"]["minio"]["name"] }}.service
+
+        - require:
+            - Enable systemd multi-user.target wants {{ pillar["container"]["minio"]["name"] }}.service
+
 Fetch the {{ pillar["container"]["minio-client"]["name"] }} image:
     cmd.run:
         - name: >-
@@ -166,4 +182,5 @@ Configure the {{ pillar["container"]["minio-client"]["name"] }} client:
             {{ mpillar["local"]["machine_id"] }}
 
         - require:
+            - Start the {{ pillar["container"]["minio"]["name"] }}.service unit
             - Deploy the {{ pillar["container"]["minio-client"]["name"] }} command

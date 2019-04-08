@@ -134,6 +134,22 @@ Enable systemd multi-user.target wants {{ pillar["container"]["kafka"]["name"] }
             - Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - makedirs: true
 
+Start the {{ pillar["container"]["kafka"]["name"] }}.service unit:
+    cmd.run:
+        - name: >-
+            /usr/bin/ssh
+            -i "{{ Root }}{{ mpillar["toolbox"]["self-service"]["key"] }}"
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            --
+            {{ mpillar["toolbox"]["self-service"]["host"] | yaml_squote }}
+            sudo
+            --
+            systemctl start {{ pillar["container"]["kafka"]["name"] }}.service
+
+        - require:
+            - Enable systemd multi-user.target wants {{ pillar["container"]["kafka"]["name"] }}.service
+
 {% for toolname in pillar["queue"]["tools"] -%}
 Install tool for {{ pillar["container"]["kafka"]["name"] }} image -- {{ toolname }}:
     file.managed:
