@@ -85,6 +85,12 @@ $(warning User has specified no template types. Assuming all platforms are avail
 $(info [-] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
 endif
 
+## Check for default project configuration
+ifneq ($(wildcard $(ROOTDIR)/config/$(project).project/*),)
+	INPUT?=$(ROOTDIR)/config/$(project).project
+	$(info [-] Using default configuration for $(project): $(INPUT))
+endif
+
 ## Custom configuration
 ifndef INPUT
     custom := $(boxname_workdir)/empty
