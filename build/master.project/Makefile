@@ -301,10 +301,10 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 
 ### Recipe for using the "serve" branch
 $(boxname_workdir)/serve:	| $(boxname_workdir)
-	@printf '[!] Cloning repository into target: %s\n' '$@'
-	git -C '$(ROOTDIR)' clone --dissociate -n . '$@'
+	@printf '[!] Cloning branch %s from repository into target: %s\n' '$(serve_branch_name)' '$@'
+	git -C '$(ROOTDIR)' clone --dissociate -n --single-branch --branch '$(serve_branch_name)' . '$@'
 	@printf '[!] Checking out commit %s in target: %s\n' '$(repository_serve)' '$@'
-	git -C '$@' checkout --no-track -B serve '$(repository_serve)'
+	git -C '$@' checkout -B master '$(repository_serve)'
 
 $(boxname_workdir)/serve.tar: $(serve)	| $(boxname_workdir)
 	@printf '[-] Archiving the srv directory: %s\n' '$<'
