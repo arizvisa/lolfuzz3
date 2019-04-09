@@ -18,7 +18,7 @@ Fetch the {{ pillar["container"]["zetcd"]["name"] }} image:
             --trust-keys-from-https
             fetch
             {{ pillar["container"]["zetcd"]["image"] }}:{{ pillar["container"]["zetcd"]["version"] }}
-            2>/dev/null
+            | tail -n 1
             >|
             "{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["zetcd"]["name"] }}:{{ pillar["container"]["zetcd"]["version"] }}.id"
 
