@@ -371,7 +371,7 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 
 # If there's an encrypted key that needs to be decrypted, then decrypt it
 # by asking the user for their password.
 ifneq ($(wildcard $(outdir)/$(boxname).id_rsa.enc),)
-$(workdir)/$(boxname).id_rsa: $(outdir)/$(boxname).id_rsa.enc	| $(workdir)
+$(workdir)/$(boxname).id_rsa: $(outdir)/$(boxname).id_rsa.enc $(workdir)/$(boxname).id_rsa.pub	| $(workdir)
 	@printf '[!] Found encrypted key: %s\n' '$<'
 	openssl enc -d -$(cipher) -in '$<' -out '$@'
 endif
@@ -379,7 +379,7 @@ endif
 # If the private key for the box has already been deployed, then re-use the
 # keypair that was previously generated and deployed.
 ifneq ($(wildcard $(outdir)/$(boxname).id_rsa),)
-$(workdir)/$(boxname).id_rsa: $(outdir)/$(boxname).id_rsa	| $(workdir)
+$(workdir)/$(boxname).id_rsa: $(outdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub	| $(workdir)
 	@printf '[-] Using already existing private key: %s\n' '$<'
 	cp '$<' '$@'
 endif
