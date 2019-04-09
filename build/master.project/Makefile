@@ -366,11 +366,24 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 
 	@printf '[*] Merging box with enabled plugins into %s: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach json,$^,'$(json)') >| '$@'
 
-# Generate the ssh public/private key
+# If the public key for the box has already been deployed, then re-use the
+# keypair that was previously generated and deployed.
+ifneq ($(wildcard $(outdir)/$(boxname).id_rsa.pub),)
+$(workdir)/$(boxname).id_rsa: $(outdir)/$(boxname).id_rsa	| $(workdir)
+	@printf '[-] Using already existing private key: %s\n' '$<'
+	cp '$<' '$@'
+
+$(workdir)/$(boxname).id_rsa.pub: $(outdir)/$(boxname).id_rsa.pub	| $(workdir)
+	@printf '[-] Using already existing public key: %s\n' '$<'
+	cp '$<' '$@'
+
+# Otherwise, use ssh-keygen to generate the ssh keypair
+else
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to to generate public/private keypair!)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
 	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(workdir)/$(boxname).id_rsa' -N ''
+endif
 
 ### Recipes for bootstrapping the configuration of the OS
 
