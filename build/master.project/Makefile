@@ -237,7 +237,7 @@ clean-provisioning:
 	-rm -rf '$(boxname_workdir)/salt'
 	-rm -rf '$(boxname_workdir)/pillar'
 	-rm -f '$(boxname_workdir)/salt-minion.conf'
-	-rm -rf '$(boxname_workdir)/serve' '$(boxname_workdir)/empty'
+	-rm -rf '$(boxname_workdir)/serve' '$(boxname_workdir)/serve.tar' '$(boxname_workdir)/empty'
 
 .PHONY: clean-tools
 clean-tools:
