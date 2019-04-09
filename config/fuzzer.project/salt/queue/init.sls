@@ -15,7 +15,7 @@ Fetch the {{ pillar["container"]["zetcd"]["name"] }} image:
             sudo
             --
             /bin/rkt
-            --trust-keys-from-https
+            --insecure-options=image
             fetch
             {{ pillar["container"]["zetcd"]["image"] }}:{{ pillar["container"]["zetcd"]["version"] }}
             >|
