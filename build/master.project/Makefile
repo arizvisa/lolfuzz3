@@ -397,6 +397,7 @@ else
 	@jq -n . >| '$@'
 endif
 
+# Validate the results from our box configuration
 $(workdir)/$(boxname).config: $(boxname_workdir)/$(boxname).config.validate $(boxname_workdir)/$(boxname).config	| $(workdir)
 	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$<' | while read y x message; do \
 		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
@@ -408,10 +409,17 @@ $(workdir)/$(boxname).config: $(boxname_workdir)/$(boxname).config.validate $(bo
 	@printf '[*] Successfully validated ignition configuration: %s\n' '$@'
 	@cp -f '$(boxname_workdir)/$(boxname).config' '$@'
 
-# Combine all ignition jsons into the template
+# Check if the box configuration has already been deployed, if not then combine
+# all ignition jsons into the template to generate it.
+ifeq ($(wildcard $(outdir)/$(output_config)),)
 $(boxname_workdir)/$(boxname).config: $(ignition_template) $(boxname_workdir)/$(boxname).config-files $(boxname_workdir)/$(boxname).config-units $(boxname_workdir)/$(boxname).config-users $(boxname_workdir)/$(boxname).config-network
 	@printf '[*] Making ignition configuration with template %s: %s\n' '$<' '$@'
 	@jq --slurpfile files '$(boxname_workdir)/$(boxname).config-files' --slurpfile units '$(boxname_workdir)/$(boxname).config-units' --slurpfile users '$(boxname_workdir)/$(boxname).config-users' --slurpfile networks '$(boxname_workdir)/$(boxname).config-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
+else
+$(boxname_workdir)/$(boxname).config: $(outdir)/$(output_config)
+	@printf '[*] Using already deployed configuration: %s\n' '$<'
+	cp '$<' '$@'
+endif
 
 # Set the hostname using $(boxname) with the mode 420 (0644 in octal)
 $(boxname_workdir)/$(boxname).config-hostname:	| $(boxname_workdir)
@@ -507,8 +515,17 @@ $(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
 
 ### List of recipes that are dynamically generated using macros
 
-# Write results into the output directory
-$(foreach f,$(output_config) $(output_keypair),$(eval $(call output_file,$(workdir)/$(f),$(outdir))))
+# If the configuration has not already been created/deployed, then create a
+# recipe which copies it from the working into the output directory
+ifeq ($(wildcard $(outdir)/$(output_config)),)
+$(eval $(call output_file,$(workdir)/$(output_config),$(outdir)))
+endif
+
+# If the keypairs have not already been created/deployed, then create a
+# recipe which copies them from the working into the output directory
+ifeq ($(wildcard $(outdir)/$(boxname).id_rsa.pub),)
+$(foreach f,$(output_keypair),$(eval $(call output_file,$(workdir)/$(f),$(outdir))))
+endif
 
 ## Container Linux installation and configuration
 
