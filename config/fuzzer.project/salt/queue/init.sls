@@ -78,6 +78,12 @@ Build the {{ pillar["container"]["kafka"]["name"] }} image:
         - require:
             - Check that the {{ pillar["container"]["kafka"]["name"] }} container exists
 
+Make the kafka-root directory:
+    file.directory:
+        - name: '{{ Root }}{{ pillar["queue"]["root"] }}'
+        - mode: 0755
+        - makedirs: true
+
 Make dropin directory for {{ pillar["container"]["kafka"]["name"] }}.service:
     file.directory:
         - name: {{ Root }}/etc/systemd/system/{{ pillar["container"]["kafka"]["name"] }}.service.d
@@ -108,6 +114,7 @@ Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
         - require:
             - Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit
             - Build the {{ pillar["container"]["kafka"]["name"] }} image
+            - Make the kafka-root directory
         - mode: 0664
 
 Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
