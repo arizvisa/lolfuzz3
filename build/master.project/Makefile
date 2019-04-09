@@ -339,7 +339,7 @@ $(boxname_workdir)/$(boxname)-vars.json.base: FORCE	| $(boxname_workdir)
 else
 $(boxname_workdir)/$(boxname)-vars.json.base: FORCE	| $(boxname_workdir)
 	@printf '[-] Generating build variables: %s\n' '$@'
-	@jq -n --arg name '$(boxname)' --arg input '$(workdir)' --arg output '$(boxname_template)' --arg timeout '$(TIMEOUT)s' '{ "guest-name": $$name, "install-input": $$input, "install-output": $$output, "timeout-boot": $$timeout }' >| '$@'
+	@jq -n --arg name '$(boxname)' --arg input '$(workdir)' --arg output '$(boxname_template)' --arg timeout '$(TIMEOUT)' '{ "guest-name": $$name, "install-input": $$input, "install-output": $$output, "timeout-boot": $$timeout }' >| '$@'
 endif
 
 # Concatenate entire template configuration into a single .json file
