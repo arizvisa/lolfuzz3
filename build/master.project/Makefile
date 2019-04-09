@@ -366,23 +366,37 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 
 	@printf '[*] Merging box with enabled plugins into %s: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach json,$^,'$(json)') >| '$@'
 
-# If the public key for the box has already been deployed, then re-use the
+### Recipes for dealing with the public/private keypair
+
+# If there's an encrypted key that needs to be decrypted, then decrypt it
+# by asking the user for their password.
+ifneq ($(wildcard $(outdir)/$(boxname).id_rsa.enc),)
+$(workdir)/$(boxname).id_rsa: $(outdir)/$(boxname).id_rsa.enc	| $(workdir)
+	@printf '[!] Found encrypted key: %s\n' '$<'
+	openssl enc -d -$(cipher) -in '$<' -out '$@'
+endif
+
+# If the private key for the box has already been deployed, then re-use the
 # keypair that was previously generated and deployed.
-ifneq ($(wildcard $(outdir)/$(boxname).id_rsa.pub),)
+ifneq ($(wildcard $(outdir)/$(boxname).id_rsa),)
 $(workdir)/$(boxname).id_rsa: $(outdir)/$(boxname).id_rsa	| $(workdir)
 	@printf '[-] Using already existing private key: %s\n' '$<'
 	cp '$<' '$@'
+endif
 
-$(workdir)/$(boxname).id_rsa.pub: $(outdir)/$(boxname).id_rsa.pub	| $(workdir)
-	@printf '[-] Using already existing public key: %s\n' '$<'
-	cp '$<' '$@'
-
-# Otherwise, use ssh-keygen to generate the ssh keypair
-else
+# If there's no keypair components, then use ssh-keygen to generate it
+ifeq ($(wildcard $(outdir)/$(boxname).id_rsa) $(wildcard $(outdir)/$(boxname).id_rsa.enc) $(wildcard $(outdir)/$(boxname).id_rsa.pub),)
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to to generate public/private keypair!)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
 	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(workdir)/$(boxname).id_rsa' -N ''
+
+# Otherwise just assume there's a public key since things won't work without
+# actually having the whole pair
+else
+$(workdir)/$(boxname).id_rsa.pub: $(outdir)/$(boxname).id_rsa.pub	| $(workdir)
+	@printf '[-] Using already existing public key: %s\n' '$<'
+	cp '$<' '$@'
 endif
 
 ### Recipes for bootstrapping the configuration of the OS
@@ -524,7 +538,11 @@ endif
 # If the keypairs have not already been created/deployed, then create a
 # recipe which copies them from the working into the output directory
 ifeq ($(wildcard $(outdir)/$(boxname).id_rsa.pub),)
-$(foreach f,$(output_keypair),$(eval $(call output_file,$(workdir)/$(f),$(outdir))))
+$(eval $(call output_file,$(workdir)/$(boxname).id_rsa.pub,$(outdir)))
+endif
+
+ifeq ($(wildcard $(outdir)/$(boxname).id_rsa),)
+$(eval $(call output_file,$(workdir)/$(boxname).id_rsa,$(outdir)))
 endif
 
 ## Container Linux installation and configuration

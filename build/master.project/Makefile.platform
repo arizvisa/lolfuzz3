@@ -12,9 +12,6 @@ endif
 
 ### Standard variables one can use to configure the specifics of their platform
 
-# The default message digest type to use for verifying files and provisioning
-checksum_type := md5
-
 # Commands to use in order to interact with HTTP and various ways. Each of these
 # must write their output to stdout.
 DOWNLOAD := curl -L -C- --progress-bar
