@@ -15,6 +15,7 @@ Fetch the {{ pillar["container"]["zetcd"]["name"] }} image:
             sudo
             --
             /bin/rkt
+            --trust-keys-from-https
             fetch
             {{ pillar["container"]["zetcd"]["image"] }}:{{ pillar["container"]["zetcd"]["version"] }}
             >|
@@ -78,7 +79,7 @@ Build the {{ pillar["container"]["kafka"]["name"] }} image:
         - require:
             - Check that the {{ pillar["container"]["kafka"]["name"] }} container exists
 
-Make the kafka-root directory:
+Make the kafka-root directory for the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
     file.directory:
         - name: '{{ Root }}{{ pillar["queue"]["root"] }}'
         - mode: 0755
@@ -114,7 +115,7 @@ Install the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
         - require:
             - Install the {{ pillar["container"]["zetcd"]["name"] }}.service systemd unit
             - Build the {{ pillar["container"]["kafka"]["name"] }} image
-            - Make the kafka-root directory
+            - Make the kafka-root directory for the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit
         - mode: 0664
 
 Dropin an environment configuration to the {{ pillar["container"]["kafka"]["name"] }}.service systemd unit:
