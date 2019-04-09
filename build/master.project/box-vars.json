@@ -16,6 +16,8 @@
     "salt-bootstrap-version" : "git-version-tag-to-install",
     "salt-bootstrap-patches" : "path-to-python-patches",
 
-    "serve-stage-directory" : "/home/core/serve",
-    "serve-directory" : "path-to-serve-configuration"
+    "serve-directory-archive" : "path-to-serve-configuration-archive",
+
+    "serve-stage-archive" : "/home/core/serve.tar",
+    "serve-stage-directory" : "/home/core/serve"
 }

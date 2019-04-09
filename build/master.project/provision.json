@@ -313,8 +313,8 @@
             "command" : "echo \"[-] Staging the custom configuration\""
         },
         { "type" : "file",
-            "source" : "{{user `serve-directory`}}",
-            "destination" : "{{user `serve-stage-directory`}}"
+            "source" : "{{user `serve-directory-archive`}}",
+            "destination" : "{{user `serve-stage-archive`}}"
         },
 
         { "type" : "shell-local",
@@ -325,11 +325,17 @@
             "environment_vars" : [
                 "ROOT=/",
                 "DEPLOY=/srv",
+                "ARCHIVE={{user `serve-stage-archive`}}",
                 "STAGE={{user `serve-stage-directory`}}",
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
                 "umask 022",
+
+                "mkdir -vp \"$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "tar -C \"$STAGE\" -xpvf \"$ARCHIVE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "rm -vf \"$ARCHIVE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+
                 "chown -vR root:root \"$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$STAGE\" -type f -exec chmod -v 0644 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$STAGE\" -type d -exec chmod -v 0755 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",

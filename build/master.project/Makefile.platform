@@ -21,6 +21,10 @@ DOWNLOAD := curl -L -C- --progress-bar
 FETCH := curl -L -s -S
 PUT := curl -L -s -S -X PUT --data-binary
 
+# The path to GNU tar. This is used for staging the serve directory as Packer
+# (golang?) doesn't seem to handle files with ':' properly
+GTAR?=tar
+
 # The path to GNU stat. This is used specifically to assign MODE which returns
 # the mode for a file in octal form
 GSTAT?=stat

@@ -306,14 +306,18 @@ $(boxname_workdir)/serve:	| $(boxname_workdir)
 	@printf '[!] Checking out commit %s in target: %s\n' '$(repository_serve)' '$@'
 	git -C '$@' checkout --no-track -B serve '$(repository_serve)'
 
+$(boxname_workdir)/serve.tar: $(serve)	| $(boxname_workdir)
+	@printf '[-] Archiving the srv directory: %s\n' '$<'
+	$(GTAR) -C '$<' -cpf '$@' .
+
 ### Box recipes required to build the template
-$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(serve)
+$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(boxname_workdir)/serve.tar
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname).config' -var 'serve-directory=$(serve)' '$(boxname_workdir)/$(boxname).json'
+	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname).config' -var 'serve-directory-archive=$(boxname_workdir)/serve.tar' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build %s -var-file %c%s%c -var %cguest-config=%s%c -var %cserve-directory=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname).config' "'" "'" '$(serve)' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build %s -var-file %c%s%c -var %cguest-config=%s%c -var %cserve-directory-archive=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname).config' "'" "'" '$(boxname_workdir)/serve.tar' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
