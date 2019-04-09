@@ -385,7 +385,7 @@ $(workdir)/$(boxname).id_rsa: $(outdir)/$(boxname).id_rsa $(workdir)/$(boxname).
 endif
 
 # If there's no keypair components, then use ssh-keygen to generate it
-ifeq ($(wildcard $(outdir)/$(boxname).id_rsa) $(wildcard $(outdir)/$(boxname).id_rsa.enc) $(wildcard $(outdir)/$(boxname).id_rsa.pub),)
+ifeq ($(wildcard $(outdir)/$(boxname).id_rsa) $(wildcard $(outdir)/$(boxname).id_rsa.enc),)
 $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to to generate public/private keypair!)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
