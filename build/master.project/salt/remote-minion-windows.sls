@@ -55,7 +55,7 @@ Restart minion with new configuration:
         - require:
             - sls: remote-minion-common
             - Re-install minion configuration
-            - Update the Windows Serivce (salt-minion) to be able to interact with the desktop
+            - Update the Windows Service (salt-minion) to be able to interact with the desktop
 
 Restart minion on failure:
     module.run:
