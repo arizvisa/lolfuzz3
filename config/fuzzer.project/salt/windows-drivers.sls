@@ -1,3 +1,7 @@
+Set Powershell Execution Policy:
+    cmd.run:
+        - name: 'powershell.exe -command Set-ExecutionPolicy Unrestricted'
+
 Create the base driver directory:
     file.directory:
         - name: {{ pillar["Drivers"]["Path"] }}
@@ -41,6 +45,7 @@ Install device finder tool on target:
         - require:
             - Make driver tools directory
             - Extract PowerShell DeviceManagement module on target
+            - Set Powershell Execution Policy
 
 Install certificate extraction tool on target:
     file.managed:
@@ -56,6 +61,7 @@ Install certificate extraction tool on target:
             [System.IO.File]::WriteAllBytes($Output, $data)
         - require:
             - Make driver tools directory
+            - Set Powershell Execution Policy
 
 Install certificate import tool on target:
     file.managed:
@@ -83,3 +89,4 @@ Install certificate import tool on target:
             Exit 1
         - require:
             - Make driver tools directory
+            - Set Powershell Execution Policy
