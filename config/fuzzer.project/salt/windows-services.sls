@@ -8,5 +8,3 @@ Stop Microsoft's Windows Defender:
         - name: WinDefend
         - onchanges:
             - Disable Microsoft's Windows Defender
-
-
