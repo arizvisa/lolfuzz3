@@ -1,18 +1,23 @@
 ## Services
 Stop Microsoft's Windows Defender:
+    {% if grains["osrelease"] in ("7", "8", "8.1") -%}
     service.dead:
         - name: WinDefend
+    {% else -%}
+    test.succeed_without_changes:
+        []
+    {% endif %}
 
 Disable Microsoft's Windows Defender:
+    {% if grains["osrelease"] in ("7", "8", "8.1") -%}
     service.disabled:
         - name: WinDefend
+    {% else -%}
+    cmd.run:
+        - name: Set-MpPreference -DisableRealtimeMonitoring $true
+        - shell: powershell
+    {% endif %}
         - require:
-            - Stop Microsoft's Windows Defender
-
-Fallback to Windows Defender exclusions:
-    test.succeed_with_changes:
-        - onfail:
-            - Disable Microsoft's Windows Defender
             - Stop Microsoft's Windows Defender
 
 Add the salt path to the exclusions for Windows Defender:
@@ -27,8 +32,6 @@ Add the salt path to the exclusions for Windows Defender:
         - name: Add-MpPreference -ExclusionPath "{{ grains["saltpath"].rsplit("\\", 4)[0] }}"
         - shell: powershell
     {% endif %}
-        - onchanges:
-            - Fallback to Windows Defender exclusions
 
 Add the drivers path to the exclusions for Windows Defender:
     {% if grains["osrelease"] in ("7", "8", "8.1") %}
@@ -42,8 +45,6 @@ Add the drivers path to the exclusions for Windows Defender:
         - name: Add-MpPreference -ExclusionPath "{{ pillar["Drivers"]["Path"] | replace("/", "\\") }}"
         - shell: powershell
     {% endif %}
-        - onchanges:
-            - Fallback to Windows Defender exclusions
 
 {% for disk in pillar["Drivers"]["RamDisk"]["Disks"] %}
 Add the ramdisk path ({{ disk.drive }}:\) to the exclusions for Windows Defender:
@@ -58,7 +59,5 @@ Add the ramdisk path ({{ disk.drive }}:\) to the exclusions for Windows Defender
         - name: Add-MpPreference -ExclusionPath "{{ disk.drive + ":\\" }}"
         - shell: powershell
     {% endif %}
-        - onchanges:
-            - Fallback to Windows Defender exclusions
 
 {% endfor %}
