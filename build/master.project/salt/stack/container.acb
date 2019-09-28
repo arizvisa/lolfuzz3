@@ -29,7 +29,7 @@ run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-
 
 # Python dependencies containing binaries which are used by some of the available modules in Salt
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-gitdb {{python}}-psutil {{python}}-cffi {{python}}-pycryptodomex {{python}}-cryptography {{python}}-pygit2 {{python}}-pyyaml {{python}}-setproctitle
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-ldap {{python}}-kerberos {{python}}-backports-lzma {{python}}-lxml {{python}}-impacket {{python}}-augeas {{python}}-celery
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-ldap {{python}}-kerberos {{python}}-lxml {{python}}-impacket {{python}}-augeas {{python}}-celery
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-cheetah
 
 ## Python packages used by the stack
