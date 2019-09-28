@@ -1,7 +1,6 @@
 {
     "builders" : [
         { "type" : "qemu",
-            "format" : "ovf",
             "headless" : false,
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
@@ -101,7 +100,6 @@
             "guest_additions_mode" : "disable"
         },
         { "type" : "vmware-iso",
-            "format" : "ovf",
             "headless" : false,
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
