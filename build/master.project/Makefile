@@ -391,12 +391,15 @@ $(workdir)/$(boxname).id_rsa $(workdir)/$(boxname).id_rsa.pub:	| $(workdir)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
 	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(workdir)/$(boxname).id_rsa' -N ''
 
-# Otherwise just assume there's a public key since things won't work without
-# actually having the whole pair
 else
+# Otherwise use the existing deployed public key and copy it into the working
+# directory. This is required since things won't work without actually
+# having the whole pair.
+ifeq ($(wildcard $(workdir)/$(boxname).id_rsa.pub),)
 $(workdir)/$(boxname).id_rsa.pub: $(outdir)/$(boxname).id_rsa.pub	| $(workdir)
 	@printf '[-] Using already existing public key: %s\n' '$<'
 	cp '$<' '$@'
+endif
 endif
 
 ### Recipes for bootstrapping the configuration of the OS
