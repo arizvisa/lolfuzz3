@@ -1,13 +1,13 @@
 {
     "provisioners": [
         { "type" : "shell-local",
-            "command" : "echo \"[*] System was successfully built\""
+            "command" : "echo \"[*] System was successfully built and is ready to provision\""
         },
         { "type" : "shell",
             "inline" : [
                 "uname -a",
-                "echo machine-id:;cat /etc/machine-id",
-                "cat /etc/lsb-release"
+                "echo -n MACHINE_ID=; cat /etc/machine-id",
+                "cat /etc/*-release"
             ]
         },
 
@@ -22,7 +22,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "( echo -n \"System installation began at \"; date -Iseconds ) >| \"$ROOT/$LOGFILE\"",
+                "( echo -n - \"System installation began at \"; date -Iseconds ) >| \"$ROOT/$LOGFILE\"",
                 "systemctl stop update-engine 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "mkdir -vp \"$ROOT/var/cache/salt/master\" \"$ROOT/var/cache/salt/minion\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "mkdir -vp \"$ROOT/var/cache/salt/master/proc\" \"$ROOT/var/cache/salt/minion/proc\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
@@ -33,9 +33,14 @@
             "command" : "echo \"[*] Uploading private key for self-service on localhost\""
         },
         { "type" : "shell",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
             "inline" : [
-                "mkdir -vp /home/core/.ssh",
-                "chmod -vc 0700 /home/core/.ssh"
+                "echo - \"Uploading private key for self-service on localhost\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "mkdir -vp /home/core/.ssh 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "chmod -vc 0700 /home/core/.ssh 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
         { "type" : "file",
@@ -43,8 +48,12 @@
             "destination" : "/home/core/.ssh/id_rsa"
         },
         { "type" : "shell",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
             "inline" : [
-                "chmod -vc 0400 /home/core/.ssh/id_rsa"
+                "chmod -vc 0400 /home/core/.ssh/id_rsa 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -64,6 +73,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Staging general CoreOS tools at {{user `coreos-tools-stage`}} and deploying in /opt\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "mkdir -vp \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$STAGE\" -exec chmod -v 0755 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "tar -C \"$STAGE\" -cvpf- . | tar -xpf- -C \"$DEPLOY\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -75,8 +85,13 @@
             "command" : "echo \"[*] Downloading toolbox container environment\""
         },
         { "type" : "shell",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
             "inline" : [
-                "sudo -H -E -- toolbox -- /bin/true"
+                "echo - \"Downloading toolbox container environment\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "sudo -H -E -- toolbox -- /bin/true 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -90,6 +105,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Performing an upgrade of the toolbox container environment\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} upgrade; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
@@ -104,6 +120,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Installing miscellaneous tools into the toolbox container environment\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install redhat-lsb-core casync jq findutils; do :; done  2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
@@ -126,6 +143,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Installing salt-minion dependencies into toolbox\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install ca-certificates procps-ng net-tools iproute openssh-clients git; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install systemd-container m2crypto PyYAML; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install dnf-utils libyaml procps-ng python2-crypto python2-jinja2 ; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -146,6 +164,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Installing salt-minion into toolbox\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "sh \"$ROOT/$STAGE\"/install-salt.sh {{user `salt-bootstrap-options`}} -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}} 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -vf \"$ROOT/$STAGE\"/install-salt.sh 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
@@ -161,6 +180,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Cleaning temporary files leftover from installing packages\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "dnf -y --enablerepo='*' clean all 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
@@ -184,6 +204,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Applying patches from {{user `site-packages-stage`}} to site-packages in toolbox instance\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "shopt -s nullglob",
                 "shopt -s dotglob",
                 "until dnf -y {{user `dnf-options`}} install patch; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -204,6 +225,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Creating directory structure in {{user `salt-bootstrap-stage`}} for staging salt-stack configuration\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "umask 022",
                 "mkdir -vp '{{user `salt-bootstrap-stage`}}/etc/salt'",
                 "mkdir -vp '{{user `salt-bootstrap-stage`}}/srv/bootstrap/'{salt,pillar}"
@@ -227,7 +249,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo \"[*] Deploying salt-stack stage ({{user `salt-bootstrap-stage`}} into toolbox filesystem\""
+            "command" : "echo \"[*] Deploying salt-stack stage from {{user `salt-bootstrap-stage`}} into toolbox filesystem\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E -- toolbox --bind=/var/run/dbus --bind=/etc/systemd --bind=/opt --bind=/var/cache/salt --bind=/var/run/salt --bind=/var/log/salt --bind=/srv -- /usr/bin/env -- {{.Vars}} /usr/bin/bash '/media/root/{{.Path}}'",
@@ -238,6 +260,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Deploying salt-stack stage from {{user `salt-bootstrap-stage`}} into toolbox filesystem\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "umask 022",
                 "chown -vR root:root \"$ROOT$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "find \"$ROOT$STAGE\" -type f -exec chmod -v 0644 {} + 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -257,6 +280,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Starting setup-network-environment.service\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until systemctl start setup-network-environment.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "systemctl status setup-network-environment.service 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until [ -e /etc/network-environment ]; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -274,6 +298,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Starting etcd-schema.service\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until systemctl start etcd-schema.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "systemctl status etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until etcdctl cluster-health; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -291,7 +316,7 @@
                 "LOGFILE=/root/bootstrap.state.log"
             ],
             "inline" : [
-                "( echo -n \"Applying states at \"; date -Iseconds ) >| \"$ROOT/$LOGFILE\"",
+                "( echo -n - \"Applying bootstrap state to {{user `guest-name`}} at \"; date -Iseconds ) >| \"$ROOT/$LOGFILE\"",
                 "until salt-call --retcode-passthrough --local state.apply; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
@@ -306,6 +331,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Cleaning up etcd-schema.service\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "systemctl stop etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
@@ -331,8 +357,8 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
+                "echo - \"Deploying the custom configuration into /srv\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "umask 022",
-
                 "mkdir -vp \"$STAGE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "tar -C \"$STAGE\" -xpvf \"$ARCHIVE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -vf \"$ARCHIVE\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
