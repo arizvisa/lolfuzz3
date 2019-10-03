@@ -6,19 +6,50 @@
 include:
     - remote-minion-common
 
-Try installing package -- python-pip:
+Install required package -- python-pip:
     pkg.installed:
         - name: python-pip
-        - require_in:
-            - sls: remote-minion-common
 
-Try installing package -- pythonX-pip:
+Install required package -- pythonX-pip:
     pkg.installed:
         {% if PythonVersion.startswith("2") -%}
         - name: python2-pip
         {% else -%}
         - name: python3-pip
-        {% endif -%}
+        {%- endif %}
+
+Try installation of package -- pip:
+    test.succeed_with_changes:
+        - name: Try and install pip using package manager
+        - require_any:
+            - Install required package -- python-pip
+            - Install required package -- pythonX-pip
+        - require_in:
+            - sls: remote-minion-common
+
+Install required package -- pycurl:
+    pkg.installed:
+        - name: pycurl
+
+Install required package -- python-pycurl:
+    pkg.installed:
+        - name: python-pycurl
+
+Install required package -- pythonX-pycurl:
+    pkg.installed:
+        {% if PythonVersion.startswith("2") -%}
+        - name: python2-pycurl
+        {% else -%}
+        - name: python3-pycurl
+        {%- endif %}
+
+Try installation of package -- pycurl:
+    test.succeed_with_changes:
+        - name: Try and install pycurl using package manager
+        - require_any:
+            - Install required package -- pycurl
+            - Install required package -- python-pycurl
+            - Install required package -- pythonX-pycurl
         - require_in:
             - sls: remote-minion-common
 
@@ -43,8 +74,8 @@ Re-install minion configuration:
             - sls: remote-minion-common
 
         - require_any:
-            - Try installing package -- python-pip
-            - Try installing package -- pythonX-pip
+            - Try installation of package -- pip
+            - Try installation of package -- pycurl
         - mode: 0664
 
 Restart minion with new configuration:
