@@ -5,6 +5,10 @@
 include:
     - remote-minion-common
 
+Install required Python module -- pythonnet:
+    pip.installed:
+        - name: pythonnet >= 2.3.0
+
 Re-install minion configuration:
     file.managed:
         - template: jinja
@@ -24,6 +28,7 @@ Re-install minion configuration:
 
         - require:
             - sls: remote-minion-common
+            - Install required Python module -- pythonnet
 
 # There's no binary arithmetic or negation in Jinja, so we hack/cheat by
 # checking if the ServiceType is larger than the flag we want, if it
