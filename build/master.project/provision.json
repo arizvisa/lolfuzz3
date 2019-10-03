@@ -104,7 +104,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "until dnf -y {{user `dnf-options`}} install casync jq findutils; do :; done  2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "until dnf -y {{user `dnf-options`}} install redhat-lsb-core casync jq findutils; do :; done  2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
