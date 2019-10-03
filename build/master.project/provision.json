@@ -24,7 +24,8 @@
             "inline" : [
                 "( echo -n \"System installation began at \"; date -Iseconds ) >| \"$ROOT/$LOGFILE\"",
                 "systemctl stop update-engine 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "mkdir -vp \"$ROOT/var/cache/salt\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "mkdir -vp \"$ROOT/var/cache/salt/master\" \"$ROOT/var/cache/salt/minion\" \"$ROOT/var/run/salt\" \"$ROOT/var/log/salt\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "mkdir -vp \"$ROOT/var/cache/salt/master/proc\" \"$ROOT/var/cache/salt/minion/proc\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
