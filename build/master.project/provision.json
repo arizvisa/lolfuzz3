@@ -206,12 +206,7 @@
             "command" : "echo \"[-] Creating directory structure in {{user `salt-bootstrap-stage`}} for staging salt-stack configuration\""
         },
         { "type" : "shell",
-            "environment_vars" : [
-                "ROOT=/",
-                "LOGFILE=/root/bootstrap.install.log"
-            ],
             "inline" : [
-                "echo - \"Creating directory structure in {{user `salt-bootstrap-stage`}} for staging salt-stack configuration\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "umask 022",
                 "mkdir -vp '{{user `salt-bootstrap-stage`}}/etc/salt'",
                 "mkdir -vp '{{user `salt-bootstrap-stage`}}/srv/bootstrap/'{salt,pillar}"
