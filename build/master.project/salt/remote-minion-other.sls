@@ -1,9 +1,26 @@
 {% set Root = pillar["local"]["root"] %}
 {% set Config = salt["config.get"]("conf_file") %}
 {% set ConfigDir = Config.rsplit("/" if Config.startswith("/") else "\\", 1)[0] %}
+{% set PythonVersion = salt["grains.get"]("pythonversion") | join('.') %}
 
 include:
     - remote-minion-common
+
+Try installing package -- python-pip:
+    pkg.installed:
+        - name: python-pip
+        - require_in:
+            - sls: remote-minion-common
+
+Try installing package -- pythonX-pip:
+    pkg.installed:
+        {% if PythonVersion.startswith("2") -%}
+        - name: python2-pip
+        {% else -%}
+        - name: python3-pip
+        {% endif -%}
+        - require_in:
+            - sls: remote-minion-common
 
 Re-install minion configuration:
     file.managed:
@@ -24,6 +41,10 @@ Re-install minion configuration:
 
         - require:
             - sls: remote-minion-common
+
+        - require_any:
+            - Try installing package -- python-pip
+            - Try installing package -- pythonX-pip
         - mode: 0664
 
 Restart minion with new configuration:
