@@ -121,9 +121,9 @@ Install salt-minion etcd configuration:
         - mode: 0664
 
 {% set id = salt["file.grep"](Root + "/etc/os-release", "^ID=")["stdout"].split("=")[-1] %}
-{% set fullname = salt["cmd.run"](Root + "/usr/bin/lsb_release -s -i") %}
-{% set release = salt["cmd.run"](Root + "/usr/bin/lsb_release -s -r") %}
-{% set codename = salt["cmd.run"](Root + "/usr/bin/lsb_release -s -c") %}
+{% set fullname = salt["file.grep"](Root + "/etc/lsb-release", "^DISTRIB_ID=")["stdout"].split("=")[-1] if salt["file.file_exists"](Root + "/etc/lsb-release") else salt["cmd.run"](Root + "/usr/bin/lsb_release -s -i") %}
+{% set release = salt["file.grep"](Root + "/etc/lsb-release", "^DISTRIB_RELEASE=")["stdout"].split("=")[-1] if salt["file.file_exists"](Root + "/etc/lsb-release") else salt["cmd.run"](Root + "/usr/bin/lsb_release -s -r") %}
+{% set codename = salt["file.grep"](Root + "/etc/lsb-release", "^DISTRIB_CODENAME=")["stdout"].split("=")[-1] if salt["file.file_exists"](Root + "/etc/lsb-release") else salt["cmd.run"](Root + "/usr/bin/lsb_release -s -c") %}
 {% set version = salt["file.grep"](Root + "/etc/os-release", "^VERSION=")["stdout"].split("=")[-1] %}
 {% set build = salt["file.grep"](Root + "/etc/os-release", "^BUILD_ID=")["stdout"].split("=")[-1] %}
 
