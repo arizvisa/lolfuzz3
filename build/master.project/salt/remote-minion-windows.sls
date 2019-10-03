@@ -5,6 +5,10 @@
 include:
     - remote-minion-common
 
+Install required Python module -- pycurl:
+    pip.installed:
+        - name: pycurl >= 7.43.0.2
+
 Install required Python module -- pythonnet:
     pip.installed:
         - name: pythonnet >= 2.3.0
@@ -29,6 +33,7 @@ Re-install minion configuration:
         - require:
             - sls: remote-minion-common
             - Install required Python module -- pythonnet
+            - Install required Python module -- pycurl
 
 # There's no binary arithmetic or negation in Jinja, so we hack/cheat by
 # checking if the ServiceType is larger than the flag we want, if it
