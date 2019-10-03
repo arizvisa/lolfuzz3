@@ -11,7 +11,7 @@ label add distro fedora
 ## Binary packages used by the stack
 # Commands needed by the container
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 update
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install dnf-utils systemd chkconfig procps-ng git
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install systemd chkconfig procps-ng redhat-lsb-core dnf-utils git
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install net-tools iproute bind-utils ldns-utils
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install sysstat hdparm virt-what
 
