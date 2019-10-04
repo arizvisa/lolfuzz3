@@ -25,7 +25,7 @@ libnacl==1.6.1
 Mako==1.0.7
 Markdown==3.0.1
 more-itertools==5.0.0
-msgpack-python==0.5.6
+msgpack==0.6.2
 portend==2.3
 pyasn1==0.4.5
 pycparser==2.19
