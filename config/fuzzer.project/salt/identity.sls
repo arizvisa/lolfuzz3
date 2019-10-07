@@ -38,7 +38,7 @@ Reboot after name change:
 Set the hostname:
     network.system:
         - enabled: true
-        - hostname: {{ grains["id"].rsplit(".", 1)[0] }}
+        - hostname: {{ grains["id"].rsplit(".", 1)[0] }}.{{ pillar["project"] }}
         - apply_hostname: true
         - domainname: {{ pillar["project"] }}
         - searchdomain: {{ pillar["project"] }}
