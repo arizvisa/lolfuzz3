@@ -39,8 +39,10 @@ Set the hostname:
     network.system:
         - enabled: true
         - hostname: {{ grains["id"].rsplit(".", 1)[0] }}
+        - apply_hostname: true
         - domainname: {{ pillar["project"] }}
         - searchdomain: {{ pillar["project"] }}
         - nozeroconf: true
+        - retain_settings: true
 
 {%- endif %}
