@@ -212,7 +212,7 @@ clean-output:
 	@printf '[*] Erasing template: %s\n' '$(outdir)/$(boxname)'
 	-rm -rf '$(outdir)/$(boxname)'
 	@printf '[*] Erasing output files from %s\n' '$(outdir)'
-	-rm -f $(foreach f,$(output_config) $(output_keypair),'$(outdir)/$(f)')
+	-rm -f $(foreach f,$(output_config),'$(outdir)/$(f)')
 
 .PHONY: clean-installer
 clean-installer:
@@ -229,7 +229,7 @@ clean-template:
 .PHONY: clean-build
 clean-build:
 	@printf '[*] Erasing temporary output files from %s\n' '$(workdir)'
-	-rm -f $(foreach f,$(output_config) $(output_keypair),'$(workdir)/$(f)')
+	-rm -f $(foreach f,$(output_config),'$(workdir)/$(f)')
 
 .PHONY: clean-provisioning
 clean-provisioning:
