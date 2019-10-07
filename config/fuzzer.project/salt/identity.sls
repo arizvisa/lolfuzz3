@@ -26,7 +26,6 @@ Reboot after name change:
         - message: Rebooting due to hostame
         - timeout: 0
         - only_on_pending_reboot: false
-        - wait_for_reboot: true
         - require:
             - Set the workgroup
         - onchanges_any:
