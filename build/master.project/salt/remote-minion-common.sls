@@ -2,9 +2,23 @@
 {% set Config = salt["config.get"]("conf_file") %}
 {% set ConfigDir = Config.rsplit("/" if Config.startswith("/") else "\\", 1)[0] %}
 
+Upgrade required package -- pip:
+    pip.installed:
+        - name: pip
+        - upgrade: true
+
+Install all required Python modules:
+    pip.installed:
+        - requirements: salt://config/requirements.txt
+        - reload_modules: true
+        - require:
+            - Upgrade required package -- pip
+
 Create minion configuration directory:
     file.directory:
         - name: '{{ ConfigDir }}/minion.d'
+        - require:
+            - Install all required Python modules
 
 Install minion common configuration:
     file.managed:
@@ -45,14 +59,6 @@ Install minion etcd configuration:
 
         - require:
             - Create minion configuration directory
-
-Install all required Python modules:
-    pip.installed:
-        - requirements: salt://config/requirements.txt
-        - reload_modules: true
-        - require:
-            - Install minion common configuration
-            - Install minion etcd configuration
 
 Synchronize all modules for the minion:
     module.run:

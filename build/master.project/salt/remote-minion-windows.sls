@@ -8,10 +8,14 @@ include:
 Install required Python module -- pycurl:
     pip.installed:
         - name: pycurl >= 7.43.0.2
+        - require:
+            - sls: remote-minion-common
 
 Install required Python module -- pythonnet:
     pip.installed:
         - name: pythonnet >= 2.3.0
+        - require:
+            - sls: remote-minion-common
 
 Re-install minion configuration:
     file.managed:
