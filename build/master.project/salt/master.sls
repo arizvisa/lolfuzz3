@@ -115,6 +115,10 @@ Install salt-master configuration:
             log_level: warning
         - require:
             - Make salt configuration directory
+            - Install salt-master identification configuration
+            - Install salt-master common configuration
+            - Install salt-master base configuration
+            - Install salt-master etcd configuration
         - mode: 0664
 
 Install salt-master base configuration:
