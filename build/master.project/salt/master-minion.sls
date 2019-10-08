@@ -119,9 +119,9 @@ Install salt-minion static grains:
 
             os: {{ id | yaml_dquote }}
             os_family: core
-            oscodename: {{ codename | yaml_dquote }}
+            oscodename: {{ codename }}
             osfinger: '{{ id }}-{{ version }}'
-            osfullname: {{ fullname | yaml_dquote }}
+            osfullname: {{ fullname }}
             osmajorrelease: {{ release }}
             osrelease: {{ release }}
         - mode: 0644
