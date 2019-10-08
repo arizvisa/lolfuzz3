@@ -48,6 +48,10 @@ Install salt-minion configuration:
             log_level: warning
         - require:
             - Make salt configuration directory
+            - Install salt-minion identification configuration
+            - Install salt-minion common configuration
+            - Install salt-minion etcd configuration
+            - Install salt-minion static grains
         - mode: 0664
 
 Install salt-minion masterless configuration:
@@ -90,36 +94,6 @@ Install salt-minion masterless configuration:
             - Install salt-minion configuration
         - mode: 0664
 
-Install salt-minion etcd configuration:
-    file.managed:
-        - template: jinja
-        - source: salt://config/etcd.conf
-        - name: '{{ Root }}/etc/salt/minion.d/etcd.conf'
-        - defaults:
-            etcd_cache:
-                  host: 127.0.0.1
-                  port: 2379
-                  path_prefix: '{{ pillar["configuration"]["salt"] }}/cache'
-                  allow_reconnect: true
-                  allow_redirect: true
-
-            etcd_hosts:
-                - name: root_etcd
-                  host: 127.0.0.1
-                  port: 2379
-
-                - name: minion_etcd
-                  host: 127.0.0.1
-                  port: 2379
-
-            etcd_returner:
-                returner: root_etcd
-                returner_root: '{{ pillar["configuration"]["salt"] }}/return'
-
-        - require:
-            - Make salt-minion configuration directory
-        - mode: 0664
-
 {% set id = salt["file.grep"](Root + "/etc/os-release", "^ID=")["stdout"].split("=")[-1] %}
 {% set version = salt["file.grep"](Root + "/etc/os-release", "^VERSION_ID=")["stdout"].split("=")[-1] %}
 
@@ -133,7 +107,7 @@ Install salt-minion etcd configuration:
     {%- set codename = salt["cmd.run"](Root + "/usr/bin/lsb_release -s -c") %}
 {% endif %}
 
-Install static grains for the salt-minion:
+Install salt-minion static grains:
     file.managed:
         - name: '{{ Root }}/etc/salt/grains'
         - replace: true
@@ -179,6 +153,36 @@ Install salt-minion common configuration:
             - Make salt-minion configuration directory
         - mode: 0664
 
+Install salt-minion etcd configuration:
+    file.managed:
+        - template: jinja
+        - source: salt://config/etcd.conf
+        - name: '{{ Root }}/etc/salt/minion.d/etcd.conf'
+        - defaults:
+            etcd_cache:
+                  host: 127.0.0.1
+                  port: 2379
+                  path_prefix: '{{ pillar["configuration"]["salt"] }}/cache'
+                  allow_reconnect: true
+                  allow_redirect: true
+
+            etcd_hosts:
+                - name: root_etcd
+                  host: 127.0.0.1
+                  port: 2379
+
+                - name: minion_etcd
+                  host: 127.0.0.1
+                  port: 2379
+
+            etcd_returner:
+                returner: root_etcd
+                returner_root: '{{ pillar["configuration"]["salt"] }}/return'
+
+        - require:
+            - Make salt-minion configuration directory
+        - mode: 0664
+
 ## services
 Install salt-minion.service:
     file.managed:
@@ -210,7 +214,6 @@ Install salt-minion.service:
             - Generate salt-stack container build rules
         - require:
             - Install salt-minion configuration
-            - Install salt-minion common configuration
             - Finished building the salt-stack image
         - mode: 0644
 
