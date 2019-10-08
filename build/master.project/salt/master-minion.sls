@@ -133,6 +133,23 @@ Install salt-minion etcd configuration:
     {%- set codename = salt["cmd.run"](Root + "/usr/bin/lsb_release -s -c") %}
 {% endif %}
 
+Install static grains for the salt-minion:
+    file.managed:
+        - name: '{{ Root }}/etc/salt/grains'
+        - replace: true
+        - contents: |
+            role: master
+            machine-id: {{ pillar["local"]["machine_id"] | yaml_dquote }}
+
+            os: {{ id | yaml_dquote }}
+            os_family: core
+            oscodename: {{ codename | yaml_dquote }}
+            osfinger: '{{ id }}-{{ version }}'
+            osfullname: {{ fullname | yaml_dquote }}
+            osmajorrelease: {{ release }}
+            osrelease: {{ release }}
+        - mode: 0644
+
 Install salt-minion identification configuration:
     file.managed:
         - template: jinja
@@ -145,18 +162,6 @@ Install salt-minion identification configuration:
 
                 saltenv: master
                 pillarenv: master
-
-                grains:
-                    role: master
-                    machine-id: {{ pillar["local"]["machine_id"] | yaml_dquote }}
-
-                    os: {{ id | yaml_dquote }}
-                    os_family: core
-                    oscodename: {{ codename | yaml_dquote }}
-                    osfinger: '{{ id }}-{{ version }}'
-                    osfullname: {{ fullname | yaml_dquote }}
-                    osmajorrelease: {{ release }}
-                    osrelease: {{ release }}
 
         - require:
             - Make salt-minion configuration directory
