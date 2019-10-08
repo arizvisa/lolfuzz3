@@ -108,10 +108,12 @@ Install salt-minion masterless configuration:
 {% endif %}
 
 Install salt-minion static grains:
-    file.managed:
+    file.serialize:
         - name: '{{ Root }}/etc/salt/grains'
-        - replace: true
-        - contents: |
+        - create: true
+        - merge_if_exists: true
+        - formatter: yaml
+        - dataset:
             role: master
             machine-id: {{ pillar["local"]["machine_id"] | yaml_dquote }}
 
