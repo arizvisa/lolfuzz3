@@ -373,7 +373,7 @@ Initialize the returner namespace:
 
 Initialize the minion returner namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/return/minions'
+        - name: '{{ pillar["configuration"]["salt"] }}/return/minion.job'
         - use:
             - Initialize the returner namespace
         - requires:
@@ -381,7 +381,7 @@ Initialize the minion returner namespace:
 
 Initialize the jobs returner namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/return/jobs'
+        - name: '{{ pillar["configuration"]["salt"] }}/return/job'
         - use:
             - Initialize the returner namespace
         - requires:
@@ -390,7 +390,7 @@ Initialize the jobs returner namespace:
 # events
 Initialize the events returner namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/return/events'
+        - name: '{{ pillar["configuration"]["salt"] }}/return/event'
         - use:
             - Initialize the returner namespace
         - requires:
