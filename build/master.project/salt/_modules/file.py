@@ -3285,6 +3285,24 @@ def link(src, path):
     return False
 
 
+def is_hardlink(path):
+    '''
+    Check if the path is a hard link by verifying that the number of links
+    is larger than 1
+
+    CLI Example:
+
+    .. code-block:: bash
+
+       salt '*' file.is_hardlink /path/to/link
+    '''
+
+    # Simply use lstat and count the st_nlink field to determine if this path
+    # is hardlinked to something.
+    res = lstat(os.path.expanduser(path))
+    return res and res['st_nlink'] > 1
+
+
 def is_link(path):
     '''
     Check if the path is a symbolic link
@@ -3331,6 +3349,26 @@ def symlink(src, path):
     except (OSError, IOError):
         raise CommandExecutionError('Could not create \'{0}\''.format(path))
     return False
+
+
+def hardlink(src, path):
+    '''
+    Create a hard link to a file
+    CLI Example:
+    .. code-block:: bash
+        salt '*' file.hardlink /path/to/file /path/to/link
+    '''
+    path = os.path.expanduser(path)
+
+    if not os.path.isabs(path):
+        raise SaltInvocationError('File path must be absolute.')
+
+    try:
+        os.link(src, path)
+
+    except (OSError, IOError):
+        raise CommandExecutionError('Could not create \'{0}\''.format(path))
+    return True
 
 
 def rename(src, dst):
