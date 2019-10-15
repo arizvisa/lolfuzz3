@@ -1517,7 +1517,7 @@ def hardlink(
             __salt__['file.hardlink'](target, name)
 
         # Or not...
-        except OSError as E:
+        except CommandExecutionError as E:
             ret['result'] = False
             ret['comment'] = ('Unable to set target of hard link {0} -> '
                               '{1}: {2}'.format(name, target, E))
@@ -1534,7 +1534,7 @@ def hardlink(
             __salt__['file.hardlink'](target, name)
 
         # Or not...
-        except OSError as E:
+        except CommandExecutionError as E:
             ret['result'] = False
             ret['comment'] = ('Unable to create new hard link {0} -> '
                               '{1}: {2}'.format(name, target, E))
