@@ -1,5 +1,5 @@
 {% set Root = pillar["local"]["root"] %}
-{% set ConfigurationPillar = pillar["configuration"] %}
+{% set ProjectPath = pillar["project"] %}
 
 include:
     - stack
@@ -30,7 +30,7 @@ Install minion-pillar reaction:
         - source: salt://reactor/minion-pillar.state
         - name: /srv/bootstrap/reactor/minion-pillar.sls
         - context:
-            pillar_namespace: '{{ ConfigurationPillar["minion"] }}'
+            pillar_namespace: '{{ ProjectPath["minion"] }}'
         - require:
             - Make bootstrap reactor directory
         - mode: 0664
