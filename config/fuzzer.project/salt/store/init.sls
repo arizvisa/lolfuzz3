@@ -76,7 +76,7 @@ Dropin an environment configuration to the {{ pillar["container"]["minio"]["name
         - name: {{ Root }}/etc/systemd/system/{{ pillar["container"]["minio"]["name"] }}.service.d/50-configuration.conf
         - defaults:
             configuration:
-                access_key: {{ mpillar["project"] }}
+                access_key: {{ mpillar["project"]["name"] }}
                 secret_key: {{ mpillar["local"]["machine_id"] }}
                 worm: "{{ "on" if pillar["store"]["minio"]["write-only-read-many"] else "off" }}"
                 browser: "{{ "on" if pillar["store"]["minio"]["browser"] else "off" }}"
@@ -178,7 +178,7 @@ Configure the {{ pillar["container"]["minio-client"]["name"] }} client:
             config host add
             local
             http://{{ mpillar["local"]["ip4"] }}:9000
-            {{ mpillar["project"] }}
+            {{ mpillar["project"]["name"] }}
             {{ mpillar["local"]["machine_id"] }}
 
         - require:

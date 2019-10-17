@@ -83,7 +83,7 @@ Install salt-minion masterless configuration:
             ext_pillars:
                 - type: etcd
                   name: root_etcd
-                  path: /config
+                  path: '{{ pillar["configuration"]["pillar"] }}'
 
                 - type: etcd
                   name: minion_etcd

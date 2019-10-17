@@ -46,7 +46,7 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
             - Check firewall rules
 
 ### Project configuration
-{% set ProjectRoot = ["", "config"] -%}
+{% set ProjectRoot = pillar["configuration"]["pillar"].split("/") + ["project"] -%}
 
 Project key {{ ProjectRoot | join(".") }}:
     etcd.directory:
@@ -56,10 +56,10 @@ Project key {{ ProjectRoot | join(".") }}:
             - Check firewall rules
 
 # Project name
-{{ project_set_value(ProjectRoot, "project", pillar["configuration"]["project"]) }}
+{{ project_set_value(ProjectRoot, "name", pillar["configuration"]["name"]) }}
 
 # Project repository
-{{ project_set_value(ProjectRoot, "repository", pillar["configuration"]["repository"]) }}
+{{ project_set_value(ProjectRoot, "path", pillar["configuration"]["path"]) }}
 
 # Salt namespace
 {{ project_set_value(ProjectRoot, "salt", pillar["configuration"]["salt"]) }}
