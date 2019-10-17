@@ -1,5 +1,5 @@
 {% set ProgramData = salt["environ.get"]("ProgramData") %}
-{% set ProgramFiles = salt["environ.get"]("PROGRAMW6432") %}
+{% set ProgramFiles = salt["environ.get"]("PROGRAMW6432", default=salt["environ.get"]("PROGRAMFILES")) %}
 
 include:
     - windows-drivers
