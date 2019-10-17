@@ -8,6 +8,7 @@ master:
 
         # project configuration
         - project
+        - project-path
 
         # bootstrap configuration
         - flannel

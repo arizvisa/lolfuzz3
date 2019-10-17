@@ -75,7 +75,7 @@ Project key {{ ProjectPillar | join(".") }}:
 {{ project_set_value(ProjectPillar, "salt", ConfigurationPillar["salt"]) }}
 
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
-{% set Defaults = ConfigurationPillar["etcd"]["defaults"] %}
+{% set Defaults = ConfigurationPillar["defaults"] %}
 {% for item in Defaults %}
     {%- if Defaults[item] is mapping -%}
 {{ project_set_mapping(ProjectRoot, item, Defaults[item]) }}
