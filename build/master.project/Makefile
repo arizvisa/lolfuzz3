@@ -7,7 +7,7 @@
 # for the target project. After building of the template, the user can then
 # authenticate to the template as the "core" user with the provided SSH
 # keypair. The user is then able to design the states required for the project
-# using the contents of the /srv directory.
+# using the contents of the service directory.
 ###############################################################################
 
 MAKEDIR := $(dir $(firstword $(MAKEFILE_LIST)))
@@ -21,16 +21,19 @@ include $(MAKEDIR)Makefile.inc
 BUILDDIR?=$(ROOTDIR)/build.dir
 OUTPUT?=$(ROOTDIR)/deploy
 
-# Project variable used to name the current project
+### List of options that the user can provide to influence the build
+include $(MAKEDIR)Makefile.config
+
+### Project variable used to name the current project
 project := $(call lc,${PROJECT})
 ifeq ($(project),)
-    ifeq ($(wildcard $(ROOTDIR)/project.name),)
+    ifeq ($(wildcard $(ROOTDIR)/$(project_file_name)),)
         # If the file doesn't exist, then use a default
         project := null
         $(warning No PROJECT was specified. Using project name "$(project)" until failure.)
     else
         # Extract the name straight out of the file in the root of the repo
-        project := $(file <$(ROOTDIR)/project.name)
+        project := $(file <$(ROOTDIR)/$(project_file_name))
         $(info [-] Found already existing project name: $(project))
     endif
 
@@ -38,25 +41,30 @@ else
     # If the user already assigned it, then just use it
     $(info [-] Using project name: $(project))
 endif
+
+### Internal variables that are used for building
+
+# Figure out the name of the box using the project name
 boxname?=master.$(project)
 
 # Output directory to write the template into
 outdir := $(patsubst %/,%,$(OUTPUT))
-ifeq ($(wildcard $(outdir)/$(boxname)),)
-    $(info [-] Using the output path for $(boxname): $(abspath $(outdir)/$(boxname)))
-else
-    $(warning The output path for $(boxname) already exists (output will fail): $(abspath $(outdir)/$(boxname)))
-endif
 
 # Intermediary work directory to stage required files into
 workdir?=$(BUILDDIR)
 boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
-$(info [-] Using the work directory: $(abspath $(workdir)))
+# List of static files that are required for deployment (does not include template)
+output_config := $(boxname).config
+output_keypair := $(boxname).id_rsa $(boxname).id_rsa.pub
 
-### List of options that the user can provide to influence the build
-include $(MAKEDIR)Makefile.config
+# Paths containing the service directory to use for deployment
+repository_serve := $(shell git rev-parse -q --verify $(project_serve_branch))
+project_serve := $(ROOTDIR)/$(project_serve_root)/$(project).project
+branch_serve := $(ROOTDIR)/$(project_serve_path)
+
+### Check parameters specified by the user
 
 ## Validation option
 VALIDATE ?= 1
@@ -107,27 +115,31 @@ $(warning User has specified no template types. Assuming all platforms are avail
 $(info [-] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
 endif
 
-### Check for any default project configurations included in the repository
+### Check for any default service configurations included in the repository
 
-# First check the project configuration
-ifneq ($(wildcard $(project_serve)/*),)
-    SERVE=$(project_serve)
-    $(info [*] Found default serve configuration for $(project): $(SERVE))
+## If SERVE was not specified, then we'll do some searching for it
+ifeq ($(SERVE),)
+
+    # First check the project configuration
+    ifneq ($(wildcard $(project_serve)/*),)
+        SERVE=$(project_serve)
+        $(info [*] Found default service configuration for $(project): $(SERVE))
+    endif
+
+    # Next check for the repository configuration
+    ifneq ($(wildcard $(branch_serve)/*),)
+        SERVE=$(branch_serve)
+        $(info [*] Found default service configuration for branch: $(SERVE))
+    endif
 endif
 
-# Next check for the repository configuration
-ifneq ($(wildcard $(branch_serve)/*),)
-    SERVE=$(branch_serve)
-    $(info [*] Found default serve configuration for branch: $(SERVE))
-endif
+## Use the specified or detected service configuration
 
-## Use the specified or detected serve configuration
-
-# If a commit was found in the repository, then use that. The $(boxname_workdir)/serve
+# Prioritze a branch if one was found in the repository. The $(boxname_workdir)/serve
 # target is special in that it will clone the commit from repository_serve into
 # that specific directory
 ifneq ($(repository_serve),)
-    $(info [-] Using serve configuration from commit: $(repository_serve))
+    $(info [-] Using service configuration from commit: $(repository_serve))
     serve := $(boxname_workdir)/serve
 else
     # If SERVE was not defined anywhere, then use an empty directory. Due to the
@@ -135,17 +147,26 @@ else
     ifndef SERVE
         serve := $(boxname_workdir)/empty
 
-    # Otherwise, this might just be a hardcoded path so we'll just check it out
+    # Otherwise, this might just be a hardcoded path so we'll just verify it
     else
         ifneq ($(wildcard $(SERVE)/*),)
-            $(info [-] Using serve configuration: $(abspath $(patsubst %/,%,$(SERVE))))
+            $(info [-] Using service configuration: $(abspath $(patsubst %/,%,$(SERVE))))
             serve := $(patsubst %/,%,$(SERVE))
 
         # Nothing was found, so we'll just error out here
         else
-            $(error No serve configuration found in path: $(abspath (patsubst %/,%,$(SERVE))))
+            $(error No service configuration found in path: $(abspath (patsubst %/,%,$(SERVE))))
         endif
     endif
+endif
+
+### Notify the user what directories we're going to write files to
+$(info [-] Using the work directory: $(abspath $(workdir)))
+
+ifeq ($(wildcard $(outdir)/$(boxname)),)
+    $(info [-] Using the output path for $(boxname): $(abspath $(outdir)/$(boxname)))
+else
+    $(warning The output path for $(boxname) already exists (output will likely fail): $(abspath $(outdir)/$(boxname)))
 endif
 
 ### Include various Makefile components containing configurations and macros
@@ -175,7 +196,7 @@ help:
 	@printf '\tPROJECT: (mandatory) Name of the project (also used as the cluster%cs domain)\n' "'"
 	@printf '\tPLATFORM: Virtualization platform(s) to build the template with (vmware, virtualbox, qemu, parallels, hyperv).\n'
 	@printf '\tOUTPUT: (default /deploy) Path to move the template, its config, and auth keypair to\n'
-	@printf '\tSERVE: Path of /srv configuration that is deployed to the template after installation of salt\n'
+	@printf '\tSERVE: Path of service directory that is deployed to the template after installation of salt\n'
 	@printf '\tBUILDDIR: (default /build.dir) Path containing intermediary files for building template\n'
 	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
 	@printf '\tBUILD: (default true) Whether to actually build the template, or to just generate the config\n'
@@ -310,13 +331,13 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 
 ### Recipe for using the "serve" branch
 $(boxname_workdir)/serve:	| $(boxname_workdir)
-	@printf '[!] Cloning branch %s from repository into target: %s\n' '$(serve_branch_name)' '$@'
-	git -C '$(ROOTDIR)' clone --dissociate -n --single-branch --branch '$(serve_branch_name)' . '$@'
+	@printf '[!] Cloning branch %s from repository into target: %s\n' '$(project_serve_branch)' '$@'
+	git -C '$(ROOTDIR)' clone --dissociate -n --single-branch --branch '$(project_serve_branch)' . '$@'
 	@printf '[!] Checking out commit %s in target: %s\n' '$(repository_serve)' '$@'
 	git -C '$@' checkout -B master '$(repository_serve)'
 
 $(boxname_workdir)/serve.tar: $(serve)	| $(boxname_workdir)
-	@printf '[-] Archiving the srv directory: %s\n' '$<'
+	@printf '[-] Archiving the service directory: %s\n' '$<'
 	$(GTAR) -C '$<' -cpf '$@' .
 
 ### Box recipes required to build the template
