@@ -70,7 +70,7 @@ Install an example state topfile:
                     '*': All minions
         - require:
             - Make salt-master files directory
-        - mode: 0755
+        - mode: 0644
         - makedirs: true
 
 Install an example pillar topfile:
@@ -92,7 +92,7 @@ Install an example pillar topfile:
                     '*': All minions
         - require:
             - Make salt-master pillar directory
-        - mode: 0755
+        - mode: 0644
         - makedirs: true
 
 Make salt-master configuration directory:
