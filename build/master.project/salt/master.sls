@@ -151,11 +151,11 @@ Install salt-master base configuration:
             ext_pillars:
                 - type: etcd
                   name: root_etcd
-                  path: '{{ pillar["configuration"]["pillar"] }}'
+                  path: '{{ pillar["project"]["pillar"] }}'
 
                 - type: etcd
                   name: minion_etcd
-                  path: '{{ pillar["configuration"]["minion"] }}/%(minion_id)s'
+                  path: '{{ pillar["project"]["minion"] }}/%(minion_id)s'
 
         - require:
             - Make salt-master configuration directory
@@ -172,7 +172,7 @@ Install salt-master etcd configuration:
             etcd_cache:
                   host: 127.0.0.1
                   port: 2379
-                  path_prefix: '{{ pillar["configuration"]["salt"] }}/cache'
+                  path_prefix: '{{ pillar["project"]["salt"] }}/cache'
                   allow_reconnect: true
                   allow_redirect: true
 
@@ -187,7 +187,7 @@ Install salt-master etcd configuration:
 
             etcd_returner:
                 returner: root_etcd
-                returner_root: '{{ pillar["configuration"]["salt"] }}/return'
+                returner_root: '{{ pillar["project"]["salt"] }}/return'
 
         - require:
             - Make salt-master configuration directory
@@ -340,7 +340,7 @@ Link the script for calling salt-unity:
 ## States for initializing the etcd namespaces
 Initialize the salt namespace:
     etcd.directory:
-        - name: {{ pillar["configuration"]["salt"] | yaml_dquote }}
+        - name: {{ pillar["project"]["salt"] | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check connection to etcd
@@ -348,7 +348,7 @@ Initialize the salt namespace:
 # cache
 Initialize the cache namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/cache'
+        - name: '{{ pillar["project"]["salt"] }}/cache'
         - use:
             - Initialize the salt namespace
         - requires:
@@ -356,7 +356,7 @@ Initialize the cache namespace:
 
 Initialize the minion cache namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/cache/minions'
+        - name: '{{ pillar["project"]["salt"] }}/cache/minions'
         - use:
             - Initialize the cache namespace
         - requires:
@@ -365,7 +365,7 @@ Initialize the minion cache namespace:
 # returner
 Initialize the returner namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/return'
+        - name: '{{ pillar["project"]["salt"] }}/return'
         - use:
             - Initialize the salt namespace
         - requires:
@@ -373,7 +373,7 @@ Initialize the returner namespace:
 
 Initialize the minion returner namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/return/minion.job'
+        - name: '{{ pillar["project"]["salt"] }}/return/minion.job'
         - use:
             - Initialize the returner namespace
         - requires:
@@ -381,7 +381,7 @@ Initialize the minion returner namespace:
 
 Initialize the jobs returner namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/return/job'
+        - name: '{{ pillar["project"]["salt"] }}/return/job'
         - use:
             - Initialize the returner namespace
         - requires:
@@ -390,7 +390,7 @@ Initialize the jobs returner namespace:
 # events
 Initialize the events returner namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/return/event'
+        - name: '{{ pillar["project"]["salt"] }}/return/event'
         - use:
             - Initialize the returner namespace
         - requires:
@@ -399,7 +399,7 @@ Initialize the events returner namespace:
 # pillar
 Initialize the nodes pillar namespace:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/pillar'
+        - name: '{{ pillar["project"]["salt"] }}/pillar'
         - use:
             - Initialize the salt namespace
         - requires:

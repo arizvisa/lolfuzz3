@@ -1,4 +1,5 @@
 {% set Root = pillar["local"]["root"] %}
+{% set ConfigurationPillar = pillar["configuration"] %}
 
 ### Macros to recursively serialize arbitrary data structures into etcd
 {% macro project_set_value(root, name, value) %}
@@ -39,15 +40,15 @@ Check firewall rules:
 
 Register the etcd cluster-size for the machine-id with the v2 discovery protocol:
     etcd.set:
-        - name: '{{ pillar["configuration"]["etcd"]["discovery"] }}/{{ pillar["local"]["machine_id"] }}/_config/size'
-        - value: {{ pillar["configuration"]["etcd"]["cluster-size"] | yaml_dquote }}
+        - name: '{{ ConfigurationPillar["etcd"]["discovery"] }}/{{ pillar["local"]["machine_id"] }}/_config/size'
+        - value: {{ ConfigurationPillar["etcd"]["cluster-size"] | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check firewall rules
 
 ### Project configuration
-{% set ProjectRoot = pillar["configuration"]["base"].split("/") -%}
-{% set ProjectPillar = pillar["configuration"]["pillar"].split("/") + ["project"] -%}
+{% set ProjectRoot = ConfigurationPillar["base"].split("/") -%}
+{% set ProjectPillar = ConfigurationPillar["pillar"].split("/") + ["project"] -%}
 
 Project key {{ ProjectRoot | join(".") }}:
     etcd.directory:
@@ -64,18 +65,17 @@ Project key {{ ProjectPillar | join(".") }}:
             - Project key {{ ProjectRoot | join(".") }}
 
 # Project name
-{{ project_set_value(ProjectRoot, "name", pillar["configuration"]["name"]) }}
-{{ project_set_value(ProjectPillar, "name", pillar["configuration"]["name"]) }}
+{{ project_set_value(ProjectRoot, "name", ConfigurationPillar["name"]) }}
+{{ project_set_value(ProjectPillar, "name", ConfigurationPillar["name"]) }}
 
 # Project repository
-{{ project_set_value(ProjectRoot, "repository", pillar["configuration"]["path"]) }}
-{{ project_set_value(ProjectPillar, "repository", pillar["configuration"]["path"]) }}
+{{ project_set_value(ProjectRoot, "repository", ConfigurationPillar["path"]) }}
 
 # Salt namespace path
-{{ project_set_value(ProjectPillar, "salt", pillar["configuration"]["salt"]) }}
+{{ project_set_value(ProjectPillar, "salt", ConfigurationPillar["salt"]) }}
 
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
-{% set Defaults = pillar["configuration"]["etcd"]["defaults"] %}
+{% set Defaults = ConfigurationPillar["etcd"]["defaults"] %}
 {% for item in Defaults %}
     {%- if Defaults[item] is mapping -%}
 {{ project_set_mapping(ProjectRoot, item, Defaults[item]) }}

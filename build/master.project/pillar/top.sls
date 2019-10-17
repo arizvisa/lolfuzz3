@@ -5,6 +5,8 @@ master:
         - system
         - master
         - master-network
+
+        # project configuration
         - project
 
         # bootstrap configuration
@@ -22,7 +24,6 @@ master:
         - system
         - master
         - master-network
-        - project
 
         # bootstrap configuration
         - cloud

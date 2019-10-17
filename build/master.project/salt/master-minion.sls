@@ -83,11 +83,11 @@ Install salt-minion masterless configuration:
             ext_pillars:
                 - type: etcd
                   name: root_etcd
-                  path: '{{ pillar["configuration"]["pillar"] }}'
+                  path: '{{ pillar["project"]["pillar"] }}'
 
                 - type: etcd
                   name: minion_etcd
-                  path: '{{ pillar["configuration"]["minion"] }}/%(minion_id)s'
+                  path: '{{ pillar["project"]["minion"] }}/%(minion_id)s'
 
         - require:
             - Make salt-minion configuration directory
@@ -164,7 +164,7 @@ Install salt-minion etcd configuration:
             etcd_cache:
                   host: 127.0.0.1
                   port: 2379
-                  path_prefix: '{{ pillar["configuration"]["salt"] }}/cache'
+                  path_prefix: '{{ pillar["project"]["salt"] }}/cache'
                   allow_reconnect: true
                   allow_redirect: true
 
@@ -179,7 +179,7 @@ Install salt-minion etcd configuration:
 
             etcd_returner:
                 returner: root_etcd
-                returner_root: '{{ pillar["configuration"]["salt"] }}/return'
+                returner_root: '{{ pillar["project"]["salt"] }}/return'
 
         - require:
             - Make salt-minion configuration directory
@@ -269,7 +269,7 @@ Check etcd is reachable by the minion:
 
 Register the pillar for the salt-minion:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["minion"] }}/{{ pillar["local"]["machine_id"] }}'
+        - name: '{{ pillar["project"]["minion"] }}/{{ pillar["local"]["machine_id"] }}'
         - profile: root_etcd
         - requires:
             - Check etcd is reachable by the minion
