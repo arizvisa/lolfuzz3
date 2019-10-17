@@ -1,6 +1,6 @@
 # configuration for bootstrapping etcd and installation of salt
 
-configuration:
+project:
 
     # lol namespace
     base: /lol

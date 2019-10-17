@@ -1,5 +1,6 @@
 {% set Root = pillar["local"]["root"] %}
 {% set ConfigurationPillar = pillar["configuration"] %}
+{% set ProjectPath = pillar["project"] %}
 
 ### Macros to recursively serialize arbitrary data structures into etcd
 {% macro project_set_value(root, name, value) %}
@@ -47,8 +48,10 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
             - Check firewall rules
 
 ### Project configuration
-{% set ProjectRoot = ConfigurationPillar["base"].split("/") -%}
-{% set ProjectPillar = ConfigurationPillar["pillar"].split("/") + ["project"] -%}
+
+{% set ProjectRoot = ProjectPath["base"].split("/") -%}
+{% set ProjectPillar = ProjectPath["pillar"].split("/") + ["project"] -%}
+{% set MinionPillar = ProjectPath["minion"].split("/") -%}
 
 Project key {{ ProjectRoot | join(".") }}:
     etcd.directory:
@@ -64,15 +67,24 @@ Project key {{ ProjectPillar | join(".") }}:
         - requires:
             - Project key {{ ProjectRoot | join(".") }}
 
+Project key {{ MinionPillar | join(".") }}:
+    etcd.directory:
+        - name: {{ MinionPillar | join("/") | yaml_dquote }}
+        - profile: root_etcd
+        - requires:
+            - Project key {{ ProjectRoot | join(".") }}
+
 # Project name
 {{ project_set_value(ProjectRoot, "name", ConfigurationPillar["name"]) }}
 {{ project_set_value(ProjectPillar, "name", ConfigurationPillar["name"]) }}
 
-# Project repository
+# Project repository uri
 {{ project_set_value(ProjectRoot, "repository", ConfigurationPillar["path"]) }}
 
-# Salt namespace path
-{{ project_set_value(ProjectPillar, "salt", ConfigurationPillar["salt"]) }}
+# Salt/Project/Minion namespace paths
+{{ project_set_value(ProjectPillar, "salt", ProjectPath["salt"]) }}
+{{ project_set_value(ProjectPillar, "pillar", ProjectPath["pillar"]) }}
+{{ project_set_value(ProjectPillar, "minion", ProjectPath["minion"]) }}
 
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
 {% set Defaults = ConfigurationPillar["defaults"] %}
