@@ -7,8 +7,14 @@ configuration:
     name: {{ project_name | yaml_dquote }}
     path: 'git://path/to/{{ project_name }}/repository'
 
-    # salt namespace
+    # lol namespace
+    base: /lol
+
+    # salt namespace for returner + cache
     salt: /coreos.com/salt
 
-    # pillar namespace
-    pillar: /lol/configuration
+    # salt pillar base for entire project
+    pillar: /lol/base
+
+    # salt pillar base for individual minionss
+    minion: /lol/minion

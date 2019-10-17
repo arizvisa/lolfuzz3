@@ -56,10 +56,12 @@ Project key {{ ProjectRoot | join(".") }}:
             - Check firewall rules
 
 # Project name
+{{ project_set_value(pillar["configuration"]["base"], "name", pillar["configuration"]["name"]) }}
 {{ project_set_value(ProjectRoot, "name", pillar["configuration"]["name"]) }}
 
 # Project repository
-{{ project_set_value(ProjectRoot, "path", pillar["configuration"]["path"]) }}
+{{ project_set_value(pillar["configuration"]["base"], "repository", pillar["configuration"]["path"]) }}
+{{ project_set_value(ProjectRoot, "repository", pillar["configuration"]["path"]) }}
 
 # Salt namespace
 {{ project_set_value(ProjectRoot, "salt", pillar["configuration"]["salt"]) }}

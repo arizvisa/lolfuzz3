@@ -87,7 +87,7 @@ Install salt-minion masterless configuration:
 
                 - type: etcd
                   name: minion_etcd
-                  path: '{{ pillar["configuration"]["salt"] }}/pillar/%(minion_id)s'
+                  path: '{{ pillar["configuration"]["minion"] }}/%(minion_id)s'
 
         - require:
             - Make salt-minion configuration directory
@@ -269,7 +269,7 @@ Check etcd is reachable by the minion:
 
 Register the pillar for the salt-minion:
     etcd.directory:
-        - name: '{{ pillar["configuration"]["salt"] }}/pillar/{{ pillar["local"]["machine_id"] }}'
+        - name: '{{ pillar["configuration"]["minion"] }}/{{ pillar["local"]["machine_id"] }}'
         - profile: root_etcd
         - requires:
             - Check etcd is reachable by the minion

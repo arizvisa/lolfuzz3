@@ -155,7 +155,7 @@ Install salt-master base configuration:
 
                 - type: etcd
                   name: minion_etcd
-                  path: '{{ pillar["configuration"]["salt"] }}/pillar/%(minion_id)s'
+                  path: '{{ pillar["configuration"]["minion"] }}/%(minion_id)s'
 
         - require:
             - Make salt-master configuration directory
