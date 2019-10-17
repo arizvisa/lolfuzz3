@@ -23,13 +23,22 @@ OUTPUT?=$(ROOTDIR)/deploy
 
 # Project variable used to name the current project
 project := $(call lc,${PROJECT})
-boxname?=$(if $(project),master.$(project),master.null)
+ifeq ($(project),)
+    ifeq ($(wildcard $(ROOTDIR)/project.name),)
+        # If the file doesn't exist, then use a default
+        project := null
+        $(warning No PROJECT was specified. Using project name "$(project)" until failure.)
+    else
+        # Extract the name straight out of the file in the root of the repo
+        project := $(file <$(ROOTDIR)/project.name)
+        $(info [-] Found already existing project name: $(project))
+    endif
 
-ifneq ($(project),)
-$(info [-] Using project name: $(project))
 else
-$(warning No PROJECT was specified. Using project name "null" until failure.)
+    # If the user already assigned it, then just use it
+    $(info [-] Using project name: $(project))
 endif
+boxname?=master.$(project)
 
 # Output directory to write the template into
 outdir := $(patsubst %/,%,$(OUTPUT))
