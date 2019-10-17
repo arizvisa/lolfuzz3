@@ -27,13 +27,13 @@ include $(MAKEDIR)Makefile.config
 ### Project variable used to name the current project
 project := $(call lc,${PROJECT})
 ifeq ($(project),)
-    ifeq ($(wildcard $(ROOTDIR)/$(project_file_name)),)
+    ifeq ($(wildcard $(project_filename)),)
         # If the file doesn't exist, then use a default
         project := null
         $(warning No PROJECT was specified. Using project name "$(project)" until failure.)
     else
         # Extract the name straight out of the file in the root of the repo
-        project := $(file <$(ROOTDIR)/$(project_file_name))
+        project := $(file <$(project_filename))
         $(info [-] Found already existing project name: $(project))
     endif
 
@@ -233,7 +233,7 @@ download: download-installer download-tools
 	@printf '[*] Successfully downloaded all required files\n'
 
 .PHONY: output
-output: $(outdir)/$(boxname) $(ROOTDIR)/$(project_file_name) $(foreach f,$(output_config) $(output_keypair),$(outdir)/$(f))
+output: $(outdir)/$(boxname) $(project_filename) $(foreach f,$(output_config) $(output_keypair),$(outdir)/$(f))
 	@printf '[*] Sucessfully wrote output files to %s: %s\n' '$(outdir)' '$^'
 
 ## cleaning up files
@@ -329,7 +329,7 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 	@printf '[*] Leaving an empty directory as a placeholder: %s\n' '$<'
 	mkdir -p '$<'
 
-$(ROOTDIR)/$(project_file_name):
+$(project_filename):
 	@printf '[*] Writing project name to file: %s\n' '$@'
 	@echo '$(project)' >| '$@'
 
