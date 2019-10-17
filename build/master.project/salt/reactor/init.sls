@@ -29,7 +29,7 @@ Install minion-pillar reaction:
         - source: salt://reactor/minion-pillar.state
         - name: /srv/bootstrap/reactor/minion-pillar.sls
         - context:
-            pillar_namespace: '{{ pillar["configuration"]["salt"] }}/pillar'
+            pillar_namespace: '{{ pillar["configuration"]["minion"] }}'
         - require:
             - Make bootstrap reactor directory
         - mode: 0664
