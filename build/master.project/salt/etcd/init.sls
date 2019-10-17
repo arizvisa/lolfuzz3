@@ -46,7 +46,8 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
             - Check firewall rules
 
 ### Project configuration
-{% set ProjectRoot = pillar["configuration"]["pillar"].split("/") + ["project"] -%}
+{% set ProjectRoot = pillar["configuration"]["base"].split("/") -%}
+{% set ProjectPillar = pillar["configuration"]["pillar"].split("/") + ["project"] -%}
 
 Project key {{ ProjectRoot | join(".") }}:
     etcd.directory:
@@ -55,16 +56,23 @@ Project key {{ ProjectRoot | join(".") }}:
         - requires:
             - Check firewall rules
 
+Project key {{ ProjectPillar | join(".") }}:
+    etcd.directory:
+        - name: {{ ProjectPillar | join("/") | yaml_dquote }}
+        - profile: root_etcd
+        - requires:
+            - Project key {{ ProjectRoot | join(".") }}
+
 # Project name
-{{ project_set_value(pillar["configuration"]["base"].split("/"), "name", pillar["configuration"]["name"]) }}
 {{ project_set_value(ProjectRoot, "name", pillar["configuration"]["name"]) }}
+{{ project_set_value(ProjectPillar, "name", pillar["configuration"]["name"]) }}
 
 # Project repository
-{{ project_set_value(pillar["configuration"]["base"].split("/"), "repository", pillar["configuration"]["path"]) }}
 {{ project_set_value(ProjectRoot, "repository", pillar["configuration"]["path"]) }}
+{{ project_set_value(ProjectPillar, "repository", pillar["configuration"]["path"]) }}
 
-# Salt namespace
-{{ project_set_value(ProjectRoot, "salt", pillar["configuration"]["salt"]) }}
+# Salt namespace path
+{{ project_set_value(ProjectPillar, "salt", pillar["configuration"]["salt"]) }}
 
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
 {% set Defaults = pillar["configuration"]["etcd"]["defaults"] %}
