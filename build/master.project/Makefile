@@ -233,7 +233,7 @@ download: download-installer download-tools
 	@printf '[*] Successfully downloaded all required files\n'
 
 .PHONY: output
-output: $(outdir)/$(boxname) $(foreach f,$(output_config) $(output_keypair),$(outdir)/$(f))
+output: $(outdir)/$(boxname) $(ROOTDIR)/$(project_file_name) $(foreach f,$(output_config) $(output_keypair),$(outdir)/$(f))
 	@printf '[*] Sucessfully wrote output files to %s: %s\n' '$(outdir)' '$^'
 
 ## cleaning up files
@@ -328,6 +328,10 @@ $(outdir)/$(boxname): $(boxname_template)	| $(outdir)
 	mv '$<' '$@'
 	@printf '[*] Leaving an empty directory as a placeholder: %s\n' '$<'
 	mkdir -p '$<'
+
+$(ROOTDIR)/$(project_file_name):
+	@printf '[*] Writing project name to file: %s\n' '$@'
+	@echo '$(project)' >| '$@'
 
 ### Recipe for using the "serve" branch
 $(boxname_workdir)/serve:	| $(boxname_workdir)
