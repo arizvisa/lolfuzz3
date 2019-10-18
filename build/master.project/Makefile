@@ -19,7 +19,7 @@ include $(MAKEDIR)Makefile.inc
 
 ### Parameters that the user can supply
 BUILDDIR?=$(ROOTDIR)/build.dir
-OUTPUT?=$(ROOTDIR)/deploy
+OUTPUT?=$(ROOTDIR)/template
 
 ### List of options that the user can provide to influence the build
 include $(MAKEDIR)Makefile.config
@@ -194,9 +194,9 @@ help:
 
 	@printf '\nParameters that are available:\n'
 	@printf '\tPROJECT: (mandatory) Name of the project (also used as the cluster%cs domain)\n' "'"
-	@printf '\tPLATFORM: Virtualization platform(s) to build the template with (vmware, virtualbox, qemu, parallels, hyperv).\n'
-	@printf '\tOUTPUT: (default /deploy) Path to move the template, its config, and auth keypair to\n'
-	@printf '\tSERVE: Path of service directory that is deployed to the template after installation of salt\n'
+	@printf '\tPLATFORM: Virtualization platform(s) to target the template towards (vmware, virtualbox, qemu, parallels, hyperv).\n'
+	@printf '\tOUTPUT: (default /template) Path to deploy the template, its config, and auth keypair to\n'
+	@printf '\tSERVE: Path of initial service directory that is deployed to the template after installation of salt\n'
 	@printf '\tBUILDDIR: (default /build.dir) Path containing intermediary files for building template\n'
 	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
 	@printf '\tBUILD: (default true) Whether to actually build the template, or to just generate the config\n'
