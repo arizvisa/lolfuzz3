@@ -166,7 +166,7 @@ $(info [-] Using the work directory: $(abspath $(workdir)))
 ifeq ($(wildcard $(outdir)/$(boxname)),)
     $(info [-] Using the output path for $(boxname): $(abspath $(outdir)/$(boxname)))
 else
-    $(warning The output path for $(boxname) already exists (output will likely fail): $(abspath $(outdir)/$(boxname)))
+    $(warning The output path for $(boxname) already exists (builder will refuse to overwrite during deployment): $(abspath $(outdir)/$(boxname)))
 endif
 
 ### Include various Makefile components containing configurations and macros
