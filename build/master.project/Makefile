@@ -135,9 +135,9 @@ endif
 
 ## Use the specified or detected service configuration
 
-# Prioritze a branch if one was found in the repository. The $(boxname_workdir)/serve
-# target is special in that it will clone the commit from repository_serve into
-# that specific directory
+# Prioritize a particular branch if one was found in the repository. The
+# $(boxname_workdir)/serve target is special in that it will actually clone
+# the commit from $(repository_serve) in order to deploy into the master.
 ifneq ($(repository_serve),)
     $(info [-] Using service configuration from commit: $(repository_serve))
     serve := $(boxname_workdir)/serve
