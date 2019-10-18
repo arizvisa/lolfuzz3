@@ -1,9 +1,7 @@
-# LOL
-```
+# General
 │00:42 <@navs> lol.
-```
 
-## Installation
+# Installation
 First clone the repository for some particular project. 
 
     $ git clone https://github.com/arizvisa/lolfuzz3 some-software-name.lol
@@ -20,7 +18,7 @@ option to `pip`.
 
     $ python -m pip install --user -r requirements.txt
 
-### HashiCorp Packer
+## HashiCorp Packer
 
 This software depends on [HashiCorp's Packer](http://packer.io/). This software
 is written in [Go](https://golang.org/) and is used to automate the building of
@@ -44,13 +42,13 @@ document is tag `v1.4.4`.
 After downloading or compiling packer, ensure the `packer` binary somewhere in
 your path. You can run `packer version` to confirm it is working.
 
-#### Post-Processor Plugin for HashiCorp Packer (packer-post-processor-vagrant-vmware-ovf)
+### Post-Processor Plugin for HashiCorp Packer (packer-post-processor-vagrant-vmware-ovf)
 
 To automatically output the resulting templates as a deploying OVF template, one
 can choose to install this plugin. The plugin itself is hosted on [GitHub](https://github.com/)
 and can be found under the repository [frapposelli/packer-post-processor-vagrant-vmware-ovf](https://github.com/frapposelli/packer-post-processor-vagrant-vmware-ovf).
 
-### GNU Make (and some posix tools)
+## GNU Make (and some posix tools)
 
 The makefiles within this software use specific features that are only available
 in GNU's flavor of `make` which is hosted at [ftp://ftp.gnu.org/pub/make](ftp://ftp.gnu.org/pub/make).
@@ -75,7 +73,7 @@ posix environment is not necessary and you should be fine just having these
 tools in your path. You will be calling `make` directly, so its name also
 doesn't really matter.
 
-### jq (Command-line JSON processor)
+## jq (Command-line JSON processor)
 
 JSON is used in numerous places and as a result, the `jq` tool is required to
 be in your path. This tool exposes the ability to query and transform JSON at
@@ -88,7 +86,7 @@ package manager, or you're using Windows or another alternative platform, a list
 of already built binaries can be found at [https://stedolan.github.io/jq/download](https://stedolan.github.io/jq/download/).
 After downloading it, simply ensure that it is in your path by trying `jq --version`.
 
-### OpenSSH (ssh-keygen)
+## OpenSSH (ssh-keygen)
 
 The SSH protocol is used to communicate with a master template and thus in order
 to facilitate authentication to a deployed template, an SSH client such as
@@ -116,7 +114,7 @@ Once `ssh-keygen` has finally been made available, simply ensure that it is in
 your path. This is the only [OpenSSH](https://www.openssh.com/) binary required
 for building templates.
 
-### OpenSSL (Cryptography and SSL/TLS Toolkit)
+## OpenSSL (Cryptography and SSL/TLS Toolkit)
 
 In order to facilitate authorization and authentication, [OpenSSL](https://www.openssl.org/)
 is needed. This is used to generate public/private keys as well as calculate
@@ -130,7 +128,7 @@ others can be found on the wiki page at [https://wiki.openssl.org/index.php/Bina
 Once `openssl` has been made available through some means, simply ensure that
 the `openssl` binary is in your path.
 
-### VMware's OVFTool
+## VMware's OVFTool
 
 If one wants to convert a VM built with HashiCorp's Packer into a packaged
 template in order to simplify deployment into VMware's platforms, VMware
