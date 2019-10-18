@@ -362,8 +362,8 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "echo - \"Clearing machine-id and preparing host for multiple deployment",
-                "rm -f /etc/machine-id"
+                "echo - \"Clearing machine-id and preparing host for multiple deployment\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "rm -vf /etc/machine-id 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
