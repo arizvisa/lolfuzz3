@@ -353,6 +353,21 @@
         },
 
         { "type" : "shell-local",
+            "command" : "echo \"[-] Clearing machine-id and preparing host for multiple deployment\""
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
+            "inline" : [
+                "echo - \"Clearing machine-id and preparing host for multiple deployment",
+                "rm -f /etc/machine-id"
+            ]
+        },
+
+        { "type" : "shell-local",
             "command" : "echo \"[*] Done!\""
         }
     ]
