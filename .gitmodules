@@ -1,8 +1,8 @@
 [submodule "boxcutter-windows"]
-	path = template/boxcutter-windows
+	path = build/boxcutter-windows
 	url = https://github.com/arizvisa/boxcutter-windows.git
 	branch = user
 [submodule "chef-bento"]
-	path = template/chef-bento
+	path = build/chef-bento
 	url = https://github.com/arizvisa/chef-bento.git
 	branch = user
