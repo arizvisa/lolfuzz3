@@ -353,6 +353,22 @@
         },
 
         { "type" : "shell-local",
+            "command" : "echo \"[*] Stopping etcd-schema.service\""
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log"
+            ],
+            "inline" : [
+                "echo - \"Stopping etcd-schema.service\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until systemctl stop etcd-schema.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "systemctl status etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
             "command" : "echo \"[-] Clearing machine-id and preparing host for multiple deployment\""
         },
         { "type" : "shell",
