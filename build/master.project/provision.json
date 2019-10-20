@@ -354,6 +354,25 @@
         },
 
         { "type" : "shell-local",
+            "command" : "echo \"[*] Saving etcd bootstrap identifier and updating its peer url\""
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log",
+                "ETCDCTL_API=3",
+                "ETCD_DB_DIR=/var/db/etcd"
+            ],
+            "inline" : [
+                "echo - \"Saving etcd bootstrap identifier and updating its peer url\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                ". \"$ROOT/etc/bootstrap-environment\"",
+                "curl -s \"http://127.0.0.1:2379/v2/members\" | jq -r --arg peer \"http://127.0.0.1:2380\" \".members | map(select(.peerURLs[] | contains($peer))) | .[].id\" >| \"$ROOT/$ETCD_DB_DIR/bootstrap.id\"",
+                "etcdctl --endpoints=\"http://127.0.0.1:2379\" member update \"$(cat $ETCD_DB_DIR/bootstrap.id)\" --peer-urls=\"http://$BOOTSTRAP_IPV4:2380\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
             "command" : "echo \"[*] Stopping etcd-schema.service\""
         },
         { "type" : "shell",
