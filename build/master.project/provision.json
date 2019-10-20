@@ -367,7 +367,7 @@
             "inline" : [
                 "echo - \"Saving etcd bootstrap identifier and updating its peer url\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 ". \"$ROOT/etc/bootstrap-environment\"",
-                "curl -s \"http://127.0.0.1:2379/v2/members\" | jq -r --arg peer \"http://127.0.0.1:2380\" \".members | map(select(.peerURLs[] | contains($peer))) | .[].id\" >| \"$ROOT/$ETCD_DB_DIR/bootstrap.id\"",
+                "curl -s 'http://127.0.0.1:2379/v2/members' | jq -r --arg peer 'http://127.0.0.1:2380' '.members | map(select(.peerURLs[] | contains($peer))) | .[].id' >| \"$ROOT/$ETCD_DB_DIR/bootstrap.id\"",
                 "etcdctl --endpoints=\"http://127.0.0.1:2379\" member update \"$(cat $ETCD_DB_DIR/bootstrap.id)\" --peer-urls=\"http://$BOOTSTRAP_IPV4:2380\" 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
