@@ -280,6 +280,7 @@
             ],
             "inline" : [
                 "echo - \"Starting etcd-schema.service\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "mkdir -vp \"$ROOT/var/db/etcd\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until systemctl start etcd-schema.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "systemctl status etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until etcdctl cluster-health; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
