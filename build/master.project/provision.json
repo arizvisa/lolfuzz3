@@ -270,7 +270,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo \"[*] Starting etcd-schema.service\""
+            "command" : "echo \"[*] Starting the etcd.target unit (etcd-schema.service)\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
@@ -279,11 +279,11 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "echo - \"Starting etcd-schema.service\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "echo - \"Starting the etcd.target unit (etcd-schema.service)\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "mkdir -vp \"$ROOT/var/db/etcd\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "until systemctl start etcd-schema.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "systemctl status etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until systemctl start etcd.target; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until etcdctl cluster-health; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "systemctl status etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "etcdctl setdir /coreos.com 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
