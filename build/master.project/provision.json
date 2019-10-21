@@ -269,7 +269,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo \"[*] Starting the etcd.target unit (etcd-schema.service)\""
+            "command" : "echo \"[*] Starting the etcd.target (etcd-schema.service) unit\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
@@ -278,7 +278,7 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "echo - \"Starting the etcd.target unit (etcd-schema.service)\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "echo - \"Starting the etcd.target (etcd-schema.service) unit\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "mkdir -vp \"$ROOT/var/db/etcd\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until systemctl start etcd.target; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until etcdctl cluster-health; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -324,7 +324,7 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo \"[-] Cleaning up etcd-schema.service\""
+            "command" : "echo \"[-] Cleaning up the etcd.target (etcd-schema.service) unit\""
         },
         { "type" : "shell",
             "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
@@ -333,8 +333,8 @@
                 "LOGFILE=/root/bootstrap.install.log"
             ],
             "inline" : [
-                "echo - \"Cleaning up etcd-schema.service\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "until systemctl stop etcd-schema.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "echo - \"Cleaning up the etcd.target (etcd-schema.service) unit\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until systemctl stop etcd.target; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "systemctl status etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
