@@ -5,7 +5,6 @@
 [Unit]
 Description=etcd
 Documentation=https://github.com/coreos/etcd
-Wants=etcd-member.service
 
 [Service]
 Type=oneshot
