@@ -22,10 +22,7 @@ TimeoutStartSec=0
 Environment="ETCD_DATA_DIR=/var/lib/etcd"
 Environment="RKT_RUN_ARGS=--uuid-file-save=/var/lib/coreos/etcd-member.uuid"
 
-ExecStartPre=-/bin/sh -c 'exec /bin/mkdir --parents "${ETCD_DATA_DIR}" /var/lib/coreos'
-ExecStartPre=-/bin/sh -c 'exec /usr/bin/chmod 0750 "${ETCD_DATA_DIR}"'
-ExecStartPre=-/bin/sh -c 'exec /usr/bin/chown "${ETCD_USER}:${ETCD_GROUP}" "${ETCD_DATA_DIR}"'
-
+ExecStartPre=-/bin/mkdir --parents /var/lib/coreos
 ExecStartPre=-/bin/rkt rm --uuid-file=/var/lib/coreos/etcd-member.uuid
 ExecStart=/lib/coreos/etcd-wrapper $ETCD_OPTS
 

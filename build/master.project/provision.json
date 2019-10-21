@@ -280,6 +280,7 @@
             ],
             "inline" : [
                 "echo - \"Starting etcd-schema.service\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "mkdir -vp \"$ROOT/var/db/etcd\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until systemctl start etcd-schema.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "systemctl status etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until etcdctl cluster-health; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
@@ -303,6 +304,27 @@
         },
 
         { "type" : "shell-local",
+            "command" : "echo \"[*] Saving etcd member identifier and updating its peer url\""
+        },
+        { "type" : "shell",
+            "execute_command" : "chmod +x '{{.Path}}'; sudo -H -E {{.Vars}} -- '{{.Path}}'",
+            "environment_vars" : [
+                "ROOT=/",
+                "LOGFILE=/root/bootstrap.install.log",
+                "ETCDCTL_API=3",
+                "ETCD_DB_DIR=/var/db/etcd"
+            ],
+            "inline" : [
+                ". \"$ROOT/etc/bootstrap-environment\"",
+                "echo - \"Querying etcd member identifier from server\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until curl -o \"$ETCD_DB_DIR/bootstrap.$$.json\" -s 'http://127.0.0.1:2379/v2/members'; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "jq -r --arg peer 'http://127.0.0.1:2380' '.members | map(select(.peerURLs[] | contains($peer))) | .[].id' \"$ETCD_DB_DIR/bootstrap.$$.json\" >| \"$ROOT/$ETCD_DB_DIR/bootstrap.id\"",
+                "echo - \"Updating etcd member's peer url\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until etcdctl --debug --endpoints=\"http://127.0.0.1:2379\" member update \"$(cat $ETCD_DB_DIR/bootstrap.id)\" --peer-urls=\"http://$BOOTSTRAP_IPV4:2380\"; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+            ]
+        },
+
+        { "type" : "shell-local",
             "command" : "echo \"[-] Cleaning up etcd-schema.service\""
         },
         { "type" : "shell",
@@ -313,7 +335,8 @@
             ],
             "inline" : [
                 "echo - \"Cleaning up etcd-schema.service\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "systemctl stop etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "until systemctl stop etcd-schema.service; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "systemctl status etcd-schema.service 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
