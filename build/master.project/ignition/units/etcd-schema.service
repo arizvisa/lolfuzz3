@@ -6,6 +6,7 @@
 [Unit]
 Description=etcd bootstrap - initialize schema
 Documentation=https://github.com/coreos/etcd
+PartOf=etcd.target
 
 [Service]
 Type=notify

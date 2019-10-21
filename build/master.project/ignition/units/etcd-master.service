@@ -10,6 +10,7 @@
 [Unit]
 Description=etcd - master
 Documentation=https://github.com/coreos/etcd
+PartOf=etcd.target
 
 [Service]
 Type=notify
