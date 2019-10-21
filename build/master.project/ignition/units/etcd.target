@@ -1,0 +1,9 @@
+[Unit]
+Description=etcd
+Documentation=https://github.com/coreos/etcd
+Wants=network.target
+Before=flanneld.service
+
+
+[Install]
+WantedBy=network-online.target
