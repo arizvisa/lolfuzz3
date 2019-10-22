@@ -10,6 +10,3 @@ Documentation=https://github.com/coreos/etcd
 Type=oneshot
 ExecStart=/bin/true
 RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
