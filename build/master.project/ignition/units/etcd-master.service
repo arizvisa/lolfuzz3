@@ -5,7 +5,7 @@
 
 ### Notes
 # ExecStart is actually overwritten by the 00-instance.conf dropin
-# for the etcd-master.service.
+# for the unit.
 
 [Unit]
 Description=etcd - master

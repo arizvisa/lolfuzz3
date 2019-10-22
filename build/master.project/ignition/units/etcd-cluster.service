@@ -1,6 +1,8 @@
 ### Summary
-# This is a pseudo service that is responsible for starting one of
-# the etcd services (master or member).
+# This is a pseudo service that is responsible for querying the bootstrap
+# server for cluster members, and using it to determine whether to continue
+# and eventually join the cluster (member) or fail so that the etcd.target unit
+# will initialize the cluster (master).
 
 [Unit]
 Description=etcd - query cluster
