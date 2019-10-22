@@ -100,34 +100,34 @@ Project key {{ MinionPillar | join(".") }}:
 
 ### Systemd Services
 
-# systemctl enable the etcd.service
-Enable systemd multi-user.target wants etcd.service:
+# systemctl enable the etcd.target
+Enable systemd multi-user.target wants etcd.targett:
     file.symlink:
-        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/etcd.service
-        - target: /etc/systemd/system/etcd.service
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/etcd.target
+        - target: /etc/systemd/system/etcd.target
         - makedirs: true
         - require:
-            - Dropin a before requisite to etcd.service
+            - Dropin a before requisite to etcd.target
 
 ### Etcd requisites
 
-## etcd.service
-Make dropin directory for etcd.service:
+## etcd.target
+Make dropin directory for etcd.target:
     file.directory:
-        - name: {{ Root }}/etc/systemd/system/etcd.service.d
+        - name: {{ Root }}/etc/systemd/system/etcd.target.d
         - mode: 0755
         - makedirs: true
 
-Dropin a before requisite to etcd.service:
+Dropin a before requisite to etcd.target:
     file.managed:
         - template: jinja
         - source: salt://etcd/requisite-before.dropin
-        - name: {{ Root }}/etc/systemd/system/etcd.service.d/15-requisite-before.conf
+        - name: {{ Root }}/etc/systemd/system/etcd.target.d/15-requisite-before.conf
         - defaults:
             units:
                 - flanneld.service
                 - salt-master.service
                 - salt-minion.service
         - require:
-            - Make dropin directory for etcd.service
+            - Make dropin directory for etcd.target
         - mode: 0644
