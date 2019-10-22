@@ -10,7 +10,7 @@
 
 [Unit]
 Description=etcd - member
-Documentation=https://github.com/coreos/etcd
+Documentation=man:etcd(1)
 
 [Service]
 Type=notify

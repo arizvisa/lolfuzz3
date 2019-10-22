@@ -3,8 +3,8 @@
 # the etcd services (master or member).
 
 [Unit]
-Description=etcd
-Documentation=https://github.com/coreos/etcd
+Description=etcd - query cluster
+Documentation=man:etcd(1)
 
 [Service]
 Type=oneshot

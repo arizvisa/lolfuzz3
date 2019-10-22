@@ -1,6 +1,12 @@
+### Summary
+# This target groups together all of the etcd units so that they can be managed
+# via a single unit. The units that are grouped by this target are mutually
+# exclusive with one another and the correct unit to start is chosen based on
+# the specific units required conditions.
+
 [Unit]
 Description=etcd
-Documentation=https://github.com/coreos/etcd
+Documentation=man:systemd.special(7)
 Wants=network.target
 Before=flanneld.service
 
