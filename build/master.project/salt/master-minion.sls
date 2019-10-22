@@ -199,8 +199,10 @@ Install salt-minion.service:
             execute: /usr/bin/salt-minion
             kill_mode: control-group
             after:
+                - etcd.target
                 - salt-master.service
             requires:
+                - etcd.target
                 - salt-master.service
 
             network: host

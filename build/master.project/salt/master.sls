@@ -233,6 +233,10 @@ Install salt-master.service:
 
             execute: /usr/bin/salt-master
             kill_mode: process
+            require:
+                - etcd.target
+            after:
+                - etcd.target
 
             network: host
 
