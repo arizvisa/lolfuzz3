@@ -1,5 +1,6 @@
 [Unit]
 Description=git-daemon
+Documentation=man:git-daemon(1)
 
 [Service]
 Restart=always
