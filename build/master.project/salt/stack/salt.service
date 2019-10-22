@@ -2,7 +2,7 @@
 Description={{ description }}
 ConditionPathExists={{ container_image_path }}/{{ image_path }}
 ConditionPathExists={{ configuration }}
-Wants=network.target etcd-master.service etcd-member.service
+Wants=network.target
 {%- if after is defined %}
 After={{ after | join(' ') }}
 {%- endif %}
