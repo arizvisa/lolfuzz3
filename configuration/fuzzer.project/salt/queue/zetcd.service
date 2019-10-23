@@ -4,8 +4,8 @@ Documentation=https://github.com/etcd-io/zetcd
 
 AssertPathExists={{ image_id_path }}
 
-Requires=etcd.service
-After=etcd.service
+Requires=etcd.target
+After=etcd.target
 Wants=network.target
 
 [Service]
