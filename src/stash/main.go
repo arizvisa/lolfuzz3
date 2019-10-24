@@ -95,8 +95,9 @@ func main() {
         Parameters.name = FormatNameFromParameters(Parameters.name, formatParameters)
     }
 
-    // and the metadata provided by the user
+    // and finally the metadata provided by the user
     UserMetadata := ReformatUserMetadata(formattedMetadata, formatParameters)
+    Parameters.options.UserMetadata = UserMetadata
 
     /// Notify the user the options we're going to be using
     Log.Noticef("Filename: %s", Parameters.name)
@@ -153,6 +154,7 @@ func main() {
 
     /// Initialize the fields that our output will choose from
     result := GetAvailableFields(formatParameters)
+    result["name"] = Parameters.name
     result["status"] = status
     result["size"] = strconv.FormatInt(n, 10)
     result["bucket"] = Parameters.bucket
@@ -230,7 +232,7 @@ func NotifyPutObjectOptions(options minio.PutObjectOptions) {
 
 func CheckAvailableFields(fields []string) error {
     available := []string{
-        "name", "path", "bucket", "size", "status", "content-type", "guid",
+        "name", "original", "path", "bucket", "size", "status", "content-type", "guid",
     }
 
     // iterate through the specified fields
@@ -256,12 +258,13 @@ func GetAvailableFields(params *FormatParametersStructure) map[string]string {
     result := map[string]string{}
 
     // assign all fields with known values
-    result["name"] = params.name
+    result["original"] = params.name
     result["path"] = params.path
     result["content-type"] = params.mimetype
     result["guid"] = params.guid.String()
 
-    // except for "status", "size", and "bucket"
+    // except for "name", "status", "size", and "bucket"
+    result["name"] = ""
     result["status"] = ""
     result["size"] = ""
     result["bucket"] = ""
