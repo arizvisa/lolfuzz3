@@ -125,7 +125,6 @@ func main() {
     }
 
     // Check to ensure the bucket exists
-/*
     Log.Infof("Checking existence of bucket: %s", Parameters.bucket)
     if ok, err := client.BucketExists(Parameters.bucket); err != nil {
         Log.Fatalf("Error verifying bucket (%s): %s", Parameters.bucket, err)
@@ -133,14 +132,12 @@ func main() {
     } else if !ok {
         Log.Fatalf("Bucket %s does not exist", Parameters.bucket)
     }
-*/
 
     /// Finally we can use our reader to upload the file
-    _ = bufio.NewReader(reader)
+    r := bufio.NewReader(reader)
     status := ""
-    n := formatParameters.size
 
-    //n, err := client.PutObjectWithContext(ctx, Parameters.bucket, Parameters.name, r, formatParameters.size, Parameters.options)
+    n, err := client.PutObjectWithContext(ctx, Parameters.bucket, Parameters.name, r, formatParameters.size, Parameters.options)
     if err != nil {
         Log.Fatalf("Unable to upload file %s to %s: %s", name, Parameters.name, err)
         status = "error"
