@@ -39,7 +39,7 @@ coreos_installer_files := $(foreach f,$(file <$(in_coreos_files)),$(workdir)/$(f
 #
 # Usage: coreos_download($target, $filename)
 define coreos_download
-$(1):	| $(dir $(1))
+$(1):	| $(patsubst %/,%,$(dir $(1)))
 	@printf '[!] Downloading CoreOS Installer file: %s\n' '$(coreos_url)/$(2)'
 	$${DOWNLOAD} -o '$$@' '$(coreos_url)/$(2)'
 endef
