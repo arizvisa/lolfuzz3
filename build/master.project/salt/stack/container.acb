@@ -25,7 +25,7 @@ run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 libsodium libyaml zeromq
 
 # Python dependencies containing some binaries which are needed by Salt
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pycurl {{python}}-Cython {{python}}-dbus {{python}}-systemd {{python}}-markupsafe {{python}}-tornado {{python}}-zmq
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pycurl {{python}}-Cython {{python}}-dbus {{python}}-systemd {{python}}-markupsafe {{python}}-zmq
 
 # Python dependencies containing binaries which are used by some of the available modules in Salt
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-gitdb {{python}}-psutil {{python}}-cffi {{python}}-pycryptodomex {{python}}-cryptography {{python}}-pygit2 {{python}}-pyyaml {{python}}-setproctitle
@@ -35,8 +35,8 @@ run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-
 ## Python packages used by the stack
 run -- {{pip}} --retries=65536 install --upgrade pip
 run -- {{pip}} --retries=65536 install backports_abc python-dateutil gitpython ioflo libnacl pycparser smmap
-run -- {{pip}} --retries=65536 install msgpack raet python-etcd
-run -- {{pip}} --retries=65536 install Genshi hjson Jinja2 Mako wempy
+run -- {{pip}} --retries=65536 install tornado==4.5.3 msgpack python-etcd
+run -- {{pip}} --retries=65536 install Genshi hjson Jinja2 Mako{%- if not python.endswith("3") %} wempy{%- endif %}
 
 # Optional modules which are used by Salt
 run -- {{pip}} --retries=65536 install dnspython tldextract click pyvmomi trollius certifi singledispatch twilio pyinotify textfsm netmiko paramiko pyroute2 pyOpenSSL
