@@ -131,9 +131,9 @@
                 "echo - \"Installing salt-minion dependencies into toolbox\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install ca-certificates procps-ng net-tools iproute openssh-clients git; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install systemd-container m2crypto PyYAML; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "until dnf -y {{user `dnf-options`}} install dnf-utils libyaml procps-ng python3-crypto python3-jinja2 ; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "until dnf -y {{user `dnf-options`}} install python3-msgpack python3-requests python3-zmq; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "until dnf -y {{user `dnf-options`}} install python3-etcd || python3 -mpip install python-etcd; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "until dnf -y {{user `dnf-options`}} install dnf-utils libyaml procps-ng {{user `salt-bootstrap-python`}}-crypto {{user `salt-bootstrap-python`}}-jinja2 ; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until dnf -y {{user `dnf-options`}} install {{user `salt-bootstrap-python`}}-msgpack {{user `salt-bootstrap-python`}}-requests {{user `salt-bootstrap-python`}}-zmq; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until dnf -y {{user `dnf-options`}} install {{user `salt-bootstrap-python`}}-etcd || {{user `salt-bootstrap-python`}} -mpip install python-etcd; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
@@ -150,7 +150,7 @@
             ],
             "inline" : [
                 "echo - \"Installing salt-minion into toolbox\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "until sh \"$ROOT/$STAGE\"/install-salt.sh {{user `salt-bootstrap-options`}} -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}}; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until sh \"$ROOT/$STAGE\"/install-salt.sh {{user `salt-bootstrap-options`}} -x {{user `salt-bootstrap-python`}} -i \"$MASTER_ID\" git v{{user `salt-bootstrap-version`}}; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "rm -vf \"$ROOT/$STAGE\"/install-salt.sh 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
@@ -193,7 +193,7 @@
                 "shopt -s nullglob",
                 "shopt -s dotglob",
                 "until dnf -y {{user `dnf-options`}} install patch; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "cd /usr/lib/python3*/site-packages 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "cd /usr/lib/{{user `salt-bootstrap-python`}}*/site-packages 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "files=( \"$ROOT/$STAGE\"/*.patch )",
                 "set -- \"${files[@]}\"",
                 "for fix; do patch --verbose -p1 < \"$fix\"; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",

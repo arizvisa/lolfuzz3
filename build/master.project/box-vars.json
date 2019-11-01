@@ -7,7 +7,8 @@
     "site-packages-stage" : "/home/core/patches",
 
     "dnf-options": "--nodocs --setopt=fastestmirror=true --setopt=retries=0",
-    "salt-bootstrap-options": "-X -x python3",
+    "salt-bootstrap-options": "-X -x",
+    "salt-bootstrap-python": "python2",
 
     "salt-bootstrap-installer" : "path-to-bootstrap-sh",
     "salt-bootstrap-config" : "path-to-bootstrap-config",
