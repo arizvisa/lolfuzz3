@@ -131,9 +131,11 @@
                 "echo - \"Installing salt-minion dependencies into toolbox\" 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install ca-certificates procps-ng net-tools iproute openssh-clients git; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
                 "until dnf -y {{user `dnf-options`}} install systemd-container m2crypto PyYAML; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "until dnf -y {{user `dnf-options`}} install dnf-utils libyaml procps-ng {{user `salt-bootstrap-python`}}-crypto {{user `salt-bootstrap-python`}}-jinja2 ; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "until dnf -y {{user `dnf-options`}} install {{user `salt-bootstrap-python`}}-msgpack {{user `salt-bootstrap-python`}}-requests {{user `salt-bootstrap-python`}}-zmq; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
-                "until dnf -y {{user `dnf-options`}} install {{user `salt-bootstrap-python`}}-etcd || {{user `salt-bootstrap-python`}} -mpip install python-etcd; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
+                "until dnf -y {{user `dnf-options`}} install dnf-utils libyaml procps-ng {{user `salt-bootstrap-python`}}-pip {{user `salt-bootstrap-python`}}-crypto; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until dnf -y {{user `dnf-options`}} install {{user `salt-bootstrap-python`}}-msgpack {{user `salt-bootstrap-python`}}-requests {{user `salt-bootstrap-python`}}-jinja2; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until dnf -y {{user `dnf-options`}} install {{user `salt-bootstrap-python`}}-tornado {{user `salt-bootstrap-python`}}-zmq ; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until dnf -y {{user `dnf-options`}} install {{user `salt-bootstrap-python`}}-etcd || {{user `salt-bootstrap-python`}} -mpip install python-etcd; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\"",
+                "until {{user `salt-bootstrap-python`}} -mpip install tornado==4.5.3; do :; done 2>&1 | tee -a \"$ROOT/$LOGFILE\""
             ]
         },
 
