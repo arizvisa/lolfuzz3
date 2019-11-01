@@ -4,8 +4,8 @@ container:
         bootstrap: https://bootstrap.saltstack.com
 
         version: 2019.2.0
-        python: python2
-        pip: pip2
+        python: python3
+        pip: pip3
 
 # configuration of the salt-stack services
 service:
