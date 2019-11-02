@@ -162,9 +162,9 @@
             "ssh_private_key_file" : "{{user `provision-key`}}",
             "ssh_timeout" : "{{user `timeout-wait`}}",
 
-            "cpu" : "{{user `guest-cpu-count`}}",
+            "cpus" : "{{user `guest-cpu-count`}}",
             "disk_size" : "{{user `guest-disk-size`}}",
-            "ram_size" : "{{user `guest-memory-size`}}"
+            "memory" : "{{user `guest-memory-size`}}"
         }
     ],
     "provisioners" : [],
