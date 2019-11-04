@@ -1,0 +1,58 @@
+###############################################################################
+# Makefile.bento
+#
+# This file specifies the build rules for the build/chef-bento module.
+###############################################################################
+
+ifeq ($(ROOTDIR),)
+    $(error Please do not use this file directly as it is intended to be included)
+endif
+
+# TODO: It might make more sense to build these in parallel, but I haven't tested
+# 		to see if packer builds in parallel w/o issues. The following eval will
+#		enable parallel building:
+# $$(eval $$(call build_bento_all,$(1),$$(patsubst %.json,%,$$(notdir $(1)))))
+
+BENTO_TEMPLATES :=
+
+define build_bento
+BENTO_TEMPLATES := $$(BENTO_TEMPLATES) $$(patsubst %.json,%,$$(notdir $(1)))
+.PHONY: bento/$$(patsubst %.json,%,$$(notdir $(1)))
+bento/$$(patsubst %.json,%,$$(notdir $(1))): $$(if $$(platform),$$(foreach target,$$(platform),bento/$$(patsubst %.json,%,$$(notdir $(1)))/$$(target)),bento/$$(patsubst %.json,%,$$(notdir $(1))/all))
+
+$$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)'),$$(eval $$(call build_bento_platform,$(1),$$(patsubst %.json,%,$$(notdir $(1))),$$(target))))
+endef
+
+### The following defines recipes to build an individual box
+define build_bento_platform
+.PHONY: bento/$(2)/$(3)
+bento/$(2)/$(3): $$(outdir)/$$(shell jq -r '.variables | if .box_basename? then .box_basename else .template end' '$(1)').$(3).box
+	@test -e '$$@'
+	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
+
+$$(outdir)/$$(shell jq -r '.variables | if .box_basename? then .box_basename else .template end' '$(1)').$(3).box: $(1) $$(workdir)/$(2).$(3).validate $$(MAKEDIR)/bento-vars.json
+	@printf '[!] Building %s from template: %s\n' '$$@' '$$<'
+	@packer build -only '$(3)-iso' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(outdir)' '$$<'
+
+$$(workdir)/$(2).$(3).validate: $(1) $$(MAKEDIR)/bento-vars.json
+	@printf '[*] Validating template: %s\n' '$$<'
+	@packer validate -only '$(3)-iso' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(outdir)' '$$<'
+	jq -r --arg platform '$(3)' '(.variables | if .box_basename? then .box_basename else .template end) as $$$$name | ($$$$name + "." + $$$$platform + ".box")' '$$<' >| '$$@'
+endef
+
+
+### The following defines recipes to build all platforms for a box in parallel
+define build_bento_all
+.PHONY: bento/$(2)/all
+bento/$(2)/all: $$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)'),$$(outdir)/$$(shell jq -r '.variables | if .box_basename? then .box_basename else .template end' '$(1)').$$(target).box)
+	@printf '[*] Successfully built %s from template $(1)\n' $$^
+
+$$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)'),$$(outdir)/$$(shell jq -r '.variables | if .box_basename? then .box_basename else .template end' '$(1)').$$(target).box): $(1) $$(workdir)/$(2).all.validate $$(MAKEDIR)/bento-vars.json
+	@printf '[!] Building %s from template: %s\n' '$$@' '$$<'
+	packer build -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(outdir)' '$$<'
+
+$$(workdir)/$(2).all.validate: $(1) $$(MAKEDIR)/bento-vars.json
+	@printf '[*] Validating template: %s\n' '$$<'
+	packer validate -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(outdir)' '$$<'
+	jq -r '(.variables | if .box_basename? then .box_basename else .template end) as $$$$name | [.builders[].type] | map($$$$name + "." + rtrimstr("-iso") + ".box") | .[] | unique' '$$<' >| '$$@'
+endef
