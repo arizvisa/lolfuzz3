@@ -9,7 +9,6 @@ cheroot==6.5.4
 CherryPy==17.4.1
 contextlib2==0.5.5
 dnspython==1.16.0
-enum34==1.1.6
 futures==3.2.0
 Genshi==0.7.1
 gitdb==0.6.4
