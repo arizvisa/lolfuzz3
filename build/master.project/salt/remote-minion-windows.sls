@@ -65,7 +65,7 @@ Update the Windows Service (salt-minion) to be able to interact with the desktop
 Restart minion with new configuration:
     module.run:
         - system.reboot:
-            - timeout: 0
+            - timeout: 1
         - require:
             - sls: remote-minion-common
             - Re-install minion configuration
@@ -74,6 +74,6 @@ Restart minion with new configuration:
 Restart minion on failure:
     module.run:
         - system.reboot:
-            - timeout: 0
+            - timeout: 1
         - onfail:
             - Install all required Python modules

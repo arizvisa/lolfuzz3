@@ -81,7 +81,7 @@ Re-install minion configuration:
 Restart minion with new configuration:
     module.run:
         - system.reboot:
-            - at_time: 0
+            - at_time: 1
         - require:
             - sls: remote-minion-common
             - Re-install minion configuration
@@ -89,6 +89,6 @@ Restart minion with new configuration:
 Restart minion on failure:
     module.run:
         - system.reboot:
-            - at_time: 0
+            - at_time: 1
         - onfail:
             - Install all required Python modules
