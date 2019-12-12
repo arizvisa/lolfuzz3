@@ -11,6 +11,7 @@ Install all required Python modules:
     pip.installed:
         - requirements: salt://config/requirements.txt
         - reload_modules: true
+        - ignore_installed: true
         - require:
             - Upgrade required package -- pip
 
