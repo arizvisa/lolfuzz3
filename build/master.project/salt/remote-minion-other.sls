@@ -80,13 +80,13 @@ Re-install minion configuration:
 
 Restart minion with new configuration:
     module.run:
-        - name: minion.restart
+        - name: system.reboot
         - require:
             - sls: remote-minion-common
             - Re-install minion configuration
 
 Restart minion on failure:
     module.run:
-        - name: minion.restart
+        - name: system.reboot
         - onfail:
             - Install all required Python modules
