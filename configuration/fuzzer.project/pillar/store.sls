@@ -28,3 +28,7 @@ store:
         groups:
             - name: minion
               policy: readwrite
+
+        buckets:
+            - name: empty
+              policy: none

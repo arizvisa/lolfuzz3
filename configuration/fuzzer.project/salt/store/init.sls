@@ -69,3 +69,40 @@ Set the {{ group["policy"] }} policy for the {{ group["name"] }} group on the {{
             - Add an account ({{ user["accessKey"] }}) to a group ({{ user["group"] }}) on the {{ pillar["container"]["minio"]["name"] }} server
             {% endfor %}
 {% endfor -%}
+
+{% for bucket in pillar["store"]["minio"]["buckets"] -%}
+Create a bucket ({{ bucket["name"] }}) on the {{ pillar["container"]["minio"]["name"] }} server:
+    cmd.run:
+        - name: >-
+            /usr/bin/ssh
+            -i "{{ Root }}{{ mpillar["toolbox"]["self-service"]["key"] }}"
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            --
+            {{ mpillar["toolbox"]["self-service"]["host"] | yaml_squote }}
+            sudo -i
+            --
+            {{ pillar["store"]["minio"]["client"] }} --no-color
+            mb
+            'local/{{ bucket["name"] }}'
+        - require:
+            - sls: store.deploy
+
+Set the {{ bucket["policy"] }} policy for the {{ bucket["name"] }} bucket on the {{ pillar["container"]["minio"]["name"] }} server:
+    cmd.run:
+        - name: >-
+            /usr/bin/ssh
+            -i "{{ Root }}{{ mpillar["toolbox"]["self-service"]["key"] }}"
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            --
+            {{ mpillar["toolbox"]["self-service"]["host"] | yaml_squote }}
+            sudo -i
+            --
+            {{ pillar["store"]["minio"]["client"] }} --no-color
+            policy
+            set {{ bucket["policy"] }}
+            'local/{{ bucket["name"] }}'
+        - require:
+            - Create a bucket ({{ bucket["name"] }}) on the {{ pillar["container"]["minio"]["name"] }} server
+{% endfor -%}
