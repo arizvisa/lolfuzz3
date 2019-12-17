@@ -11,6 +11,7 @@ container:
         version: latest
         uuid: /var/lib/coreos/minio-client.uuid
 
+{% import_yaml "/srv/bootstrap/pillar/project-name.sls" as project_name -%}
 store:
     minio:
         root: /srv/store
@@ -18,3 +19,12 @@ store:
 
         browser: true
         write-only-read-many: false
+
+        users:
+            - accessKey: {{ grains["id"] }}
+              secretKey: {{ project_name }}
+              group: minion
+
+        groups:
+            - name: minion
+              policy: readwrite
