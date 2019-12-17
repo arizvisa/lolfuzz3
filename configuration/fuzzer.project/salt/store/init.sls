@@ -21,8 +21,8 @@ Create a new account ({{ user["accessKey"] }}) on the {{ pillar["container"]["mi
             {{ pillar["store"]["minio"]["client"] }} --no-color
             admin user add
             local
-            {{ user["accessKey"] }}
-            {{ user["secretKey"] }}
+            "{{ user["accessKey"] }}"
+            "{{ user["secretKey"] }}"
         - require:
             - sls: store.deploy
 
@@ -40,8 +40,8 @@ Add an account ({{ user["accessKey"] }}) to a group ({{ user["group"] }}) on the
             {{ pillar["store"]["minio"]["client"] }} --no-color
             admin group add
             local
-            {{ user["group"] }}
-            {{ user["accessKey"] }}
+            "{{ user["group"] }}"
+            "{{ user["accessKey"] }}"
         - require:
             - Create a new account ({{ user["accessKey"] }}) on the {{ pillar["container"]["minio"]["name"] }} server
 {% endfor -%}
@@ -61,8 +61,8 @@ Set the {{ group["policy"] }} policy for the {{ group["name"] }} group on the {{
             {{ pillar["store"]["minio"]["client"] }} --no-color
             admin policy set
             local
-            {{ group["policy"] }}
-            'group={{ group["name"] }}'
+            "{{ group["policy"] }}"
+            "group={{ group["name"] }}"
         - require:
             - sls: store.deploy
             {% for user in pillar["store"]["minio"]["users"] -%}
@@ -84,7 +84,7 @@ Create a bucket ({{ bucket["name"] }}) on the {{ pillar["container"]["minio"]["n
             --
             {{ pillar["store"]["minio"]["client"] }} --no-color
             mb
-            'local/{{ bucket["name"] }}'
+            "local/{{ bucket["name"] }}"
         - require:
             - sls: store.deploy
 
@@ -100,9 +100,9 @@ Set the {{ bucket["policy"] }} policy for the {{ bucket["name"] }} bucket on the
             sudo -i
             --
             {{ pillar["store"]["minio"]["client"] }} --no-color
-            policy
-            set {{ bucket["policy"] }}
-            'local/{{ bucket["name"] }}'
+            policy set
+            "{{ bucket["policy"] }}"
+            "local/{{ bucket["name"] }}"
         - require:
             - Create a bucket ({{ bucket["name"] }}) on the {{ pillar["container"]["minio"]["name"] }} server
 {% endfor -%}
