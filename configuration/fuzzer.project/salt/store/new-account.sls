@@ -24,8 +24,7 @@ Create a new account for the client:
             sudo -i
             --
             {{ bpillar["store"]["minio"]["client"] }} --no-color
-            admin user
-            add
+            admin user add
             local
             "{{ pillar["accessKey"] }}"
             "{{ pillar["secretKey"] }}"
@@ -43,8 +42,7 @@ Add the newly created account for the client to a group:
             sudo -i
             --
             {{ bpillar["store"]["minio"]["client"] }} --no-color
-            admin group
-            add
+            admin group add
             local
             "{{ pillar["groupName"] }}"
             "{{ pillar["accessKey"] }}"
