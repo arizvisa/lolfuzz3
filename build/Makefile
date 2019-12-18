@@ -72,3 +72,7 @@ boxcutter: boxcutter/help
 .PHONY: boxcutter/help
 boxcutter/help:
 	$(error boxcutter is not implemented yet!)
+
+## Directory recipes for creating the output and work directories
+$(outdir) $(workdir):
+	@test -d '$@' || mkdir -p '$@'
