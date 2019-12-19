@@ -32,7 +32,7 @@ build_bento_platform_box := $$(shell jq -r '.variables | if .box_basename? then 
 ifeq ($(3),vmware)
 
 $$(eval $$(call box2ova,$$(build_bento_platform_box).$(3).box))
-bento/$(2)/$(3): $$(outdir)/$$(build_bento_platform_box).$(3).ova
+bento/$(2)/$(3): $$(outdir)/$$(build_bento_platform_box).ova
 	@test -e '$$<'
 	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
 

@@ -32,7 +32,7 @@ $$(workdir)/$(1).template.valid: $$(workdir)/$(1).template.count	| $$(workdir)
 	@printf '[*] Validating template name for "%s"...\n' '$(1)'
 	@test `cat '$$<'` -eq 1
 
-$$(outdir)/$(basename $(1)).ova: $$(workdir)/$(1).files $$(workdir)/$(1).name 
+$$(outdir)/$(basename $(basename $(1))).ova: $$(workdir)/$(1).files $$(workdir)/$(1).name
 	ovftool '$$<'/`cat '$$(workdir)/$(1).name'` '$$@'
 	@printf '[*] Successfully created template "%s"\n' '$$(notdir $$@)'
 endef
