@@ -1,0 +1,38 @@
+###############################################################################
+# Makefile.box
+#
+# This file specifies the build rules for interacting with .box files
+###############################################################################
+
+ifeq ($(ROOTDIR),)
+    $(error Please do not use this file directly as it is intended to be included)
+endif
+
+define box2ova
+# Locate all of the template names within the boxfile
+$$(workdir)/$(1).template: $$(workdir)/$(1)	| $$(workdir)
+	@printf '[!] Searching through "%s" for valid template...\n' '$$<'
+	tar --wildcards -tf '$$<' '*.vmx' >| '$$@'
+
+# Extract the files from the boxfile
+$$(workdir)/$(1).files: $$(workdir)/$(1)	| $$(workdir)
+	@mkdir '$$@'
+	@printf '[!] Extracting "%s" into "%s"...\n' '$$<' '$$@'
+	tar -C '$$@' -xf '$$<'
+
+# If the template and its name is valid, then this will write the name to a file
+$$(workdir)/$(1).name: $$(workdir)/$(1).template $$(workdir)/$(1).template.valid	| $$(workdir)
+	cp '$$<' '$$@'
+
+# Test that the template name is actually valid
+$$(workdir)/$(1).template.count: $$(workdir)/$(1).template	| $$(workdir)
+	@wc -l < '$$<' | tr -d ' ' >| '$$@'
+
+$$(workdir)/$(1).template.valid: $$(workdir)/$(1).template.count	| $$(workdir)
+	@printf '[*] Validating template name for "%s"...\n' '$(1)'
+	@test `cat '$$<'` -eq 1
+
+$$(outdir)/$(basename $(1)).ova: $$(workdir)/$(1).files $$(workdir)/$(1).name 
+	ovftool '$$<'/`cat '$$(workdir)/$(1).name'` '$$@'
+	@printf '[*] Successfully created template "%s"\n' '$$(notdir $$@)'
+endef

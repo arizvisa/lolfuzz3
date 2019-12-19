@@ -29,6 +29,7 @@ platform = $(subst $(comma),$(space),$(PLATFORM))
 #endif
 
 ### Include various Makefile components containing configurations and macros
+include $(MAKEDIR)Makefile.box
 include $(MAKEDIR)Makefile.bento
 
 ### General recipes used during building

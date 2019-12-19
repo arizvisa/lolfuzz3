@@ -27,34 +27,45 @@ endef
 define build_bento_platform
 build_bento_platform_box := $$(shell jq -r '.variables | if .box_basename? then .box_basename else .template end' '$(1)')
 .PHONY: bento/$(2)/$(3)
-bento/$(2)/$(3): $$(outdir)/$$(build_bento_platform_box).$(3).box
+
+# If we're building $(2) for vmware, then set the default recipe to build an ova template
+ifeq ($(3),vmware)
+
+$$(eval $$(call box2ova,$$(build_bento_platform_box).$(3).box))
+bento/$(2)/$(3): $$(outdir)/$$(build_bento_platform_box).$(3).ova
 	@test -e '$$<'
 	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
 
-$$(outdir)/$$(build_bento_platform_box).$(3).box: $(1) $$(workdir)/$(2).$(3).validate $$(MAKEDIR)/bento-vars.json	| $$(outdir)
+# Otherwise, $(2) is a vagrant box and we'll just emit that by default
+else
+bento/$(2)/$(3): $$(outdir)/$$(build_bento_platform_box).$(3).box
+	@test -e '$$<'
+	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
+endif
+
+$$(workdir)/$$(build_bento_platform_box).$(3).box: $(1) $$(workdir)/$(2).$(3).validate $$(MAKEDIR)/bento-vars.json	| $$(workdir)
 	@printf '[!] Building %s from template: %s\n' '$$@' '$$<'
-	@packer build -only '$(3)-iso' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(outdir)' '$$<'
+	@packer build -only '$(3)-iso' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(workdir)' '$$<'
 
 $$(workdir)/$(2).$(3).validate: $(1) $$(MAKEDIR)/bento-vars.json	| $$(workdir)
 	@printf '[*] Validating template: %s\n' '$$<'
-	@packer validate -only '$(3)-iso' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(outdir)' '$$<'
+	@packer validate -only '$(3)-iso' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(workdir)' '$$<'
 	jq -r --arg platform '$(3)' '(.variables | if .box_basename? then .box_basename else .template end) as $$$$name | ($$$$name + "." + $$$$platform + ".box")' '$$<' >| '$$@'
 endef
 
-
 ### The following defines recipes to build all platforms for a box in parallel
 define build_bento_all
-build_bento_all_boxen := $$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)'),$$(outdir)/$$(shell jq -r '.variables | if .box_basename? then .box_basename else .template end' '$(1)').$$(target).box)
+build_bento_all_boxen := $$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)'),$$(workdir)/$$(shell jq -r '.variables | if .box_basename? then .box_basename else .template end' '$(1)').$$(target).box)
 .PHONY: bento/$(2)/all
 bento/$(2)/all: $$(build_bento_all_boxen)
 	@printf '[*] Successfully built %s from template $(1)\n' $$^
 
-$$(build_bento_all_boxen): $(1) $$(workdir)/$(2).all.validate $$(MAKEDIR)/bento-vars.json	| $$(outdir)
+$$(build_bento_all_boxen): $(1) $$(workdir)/$(2).all.validate $$(MAKEDIR)/bento-vars.json	| $$(workdir)
 	@printf '[!] Building %s from template: %s\n' '$$@' '$$<'
-	packer build -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(outdir)' '$$<'
+	packer build -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(workdir)' '$$<'
 
 $$(workdir)/$(2).all.validate: $(1) $$(MAKEDIR)/bento-vars.json	| $$(workdir)
 	@printf '[*] Validating template: %s\n' '$$<'
-	packer validate -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(outdir)' '$$<'
+	packer validate -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(workdir)' '$$<'
 	jq -r '(.variables | if .box_basename? then .box_basename else .template end) as $$$$name | [.builders[].type] | map($$$$name + "." + rtrimstr("-iso") + ".box") | .[] | unique' '$$<' >| '$$@'
 endef
