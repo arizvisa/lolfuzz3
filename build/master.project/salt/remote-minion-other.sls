@@ -18,7 +18,7 @@ Install required package -- pythonX-pip:
         - name: python3-pip
         {%- endif %}
         - onfail:
-            Install required package -- python-pip
+            - Install required package -- python-pip
 
 Try installation of package -- pip:
     test.succeed_with_changes:
