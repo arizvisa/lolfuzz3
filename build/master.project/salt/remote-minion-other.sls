@@ -17,6 +17,8 @@ Install required package -- pythonX-pip:
         {% else -%}
         - name: python3-pip
         {%- endif %}
+        - onfail:
+            Install required package -- python-pip
 
 Try installation of package -- pip:
     test.succeed_with_changes:
@@ -34,6 +36,8 @@ Install required package -- pycurl:
 Install required package -- python-pycurl:
     pkg.installed:
         - name: python-pycurl
+        - onfail:
+            - Install required package -- pycurl
 
 Install required package -- pythonX-pycurl:
     pkg.installed:
@@ -42,6 +46,8 @@ Install required package -- pythonX-pycurl:
         {% else -%}
         - name: python3-pycurl
         {%- endif %}
+        - onfail:
+            - Install required package -- python-pycurl
 
 Try installation of package -- pycurl:
     test.succeed_with_changes:
@@ -80,15 +86,17 @@ Re-install minion configuration:
 
 Restart minion with new configuration:
     module.run:
-        - system.reboot:
-            - at_time: 1
+        - service.restart:
+            - name: salt-minion
+            - no_block: true
         - require:
             - sls: remote-minion-common
             - Re-install minion configuration
 
 Restart minion on failure:
     module.run:
-        - system.reboot:
-            - at_time: 1
+        - service.restart:
+            - name: salt-minion
+            - no_block: true
         - onfail:
             - Install all required Python modules
