@@ -206,6 +206,7 @@ Install salt-minion.service:
                 - salt-master.service
 
             network: host
+            resolver: host
 
             container_image_path: {{ pillar["service"]["container"]["paths"]["image"] | yaml_dquote }}
             container_service_path: {{ pillar["service"]["container"]["paths"]["service-tools"] | yaml_dquote }}

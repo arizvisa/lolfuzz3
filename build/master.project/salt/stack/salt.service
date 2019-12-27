@@ -26,6 +26,7 @@ ExecStartPre=/bin/bash -c \
     "{{ container_service_path }}/load.sh {{ container_image_path }}/{{ image_path }} | tee >( cut -d$'\t' -f3 >| {{ container_image_path }}/{{ image_uuid_path }} )"
 ExecStart=/bin/rkt run \
             --uuid-file-save={{ run_uuid_path }} \
+            --dns={{ resolver }} \
             --net={{ network }} \
 {%- if exposed is defined -%}
 {%- for port in exposed %}
