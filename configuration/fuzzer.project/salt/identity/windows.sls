@@ -1,4 +1,3 @@
-{% if grains["os_family"] == "Windows" -%}
 ## Windows
 Set the workgroup:
     system.workgroup:
@@ -31,17 +30,3 @@ Reboot after name change:
         - onchanges_any:
             - Set the hostname
             - Set the computer name
-
-{% else -%}
-## Linux (other)
-Set the hostname:
-    network.system:
-        - enabled: true
-        - hostname: {{ grains["id"].rsplit(".", 1)[0] }}.{{ pillar["project"]["name"] }}
-        - apply_hostname: true
-        - domainname: {{ pillar["project"]["name"] }}
-        - searchdomain: {{ pillar["project"]["name"] }}
-        - nozeroconf: true
-        - retain_settings: true
-
-{%- endif %}
