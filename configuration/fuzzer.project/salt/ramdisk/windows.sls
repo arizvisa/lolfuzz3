@@ -14,7 +14,7 @@ Make RamDisk directory:
 Copy ramdisk_setup.exe to target:
     file.managed:
         - name: {{ pillar["Drivers"]["RamDisk"]["Path"] }}/setup.exe
-        - source: salt://drivers/ramdisk_setup.exe
+        - source: salt://ramdisk/ramdisk_setup.exe
         - makedirs: true
         - require:
             - Make RamDisk directory
@@ -33,7 +33,7 @@ Install the ramdisk configuration:
     file.managed:
         - template: jinja
         - name: {{ ProgramData }}/SoftPerfect/RamDiskWS/RamDiskWS.xml
-        - source: salt://drivers/ramdisk-configuration.xml
+        - source: salt://ramdisk/ramdisk-configuration.xml
         - defaults:
             useraccess:  true
             locallinks: false
@@ -82,7 +82,7 @@ Install the ramdisk disks configuration:
     file.managed:
         - template: jinja
         - name: {{ pillar["Drivers"]["RamDisk"]["Path"] }}/Disks.xml
-        - source: salt://drivers/ramdisk-disks.xml
+        - source: salt://ramdisk/ramdisk-disks.xml
         - defaults:
               boot:
                 {% for disk in pillar["Drivers"]["RamDisk"]["Disks"] %}
