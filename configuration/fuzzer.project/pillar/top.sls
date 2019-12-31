@@ -10,7 +10,7 @@ base:
     'G@os_family:Windows':
         - windows-drivers
         - ramdisk
-        - windows-updates
+        - updates
 
     # All linux targets
     'not G@os_family:Windows':
