@@ -2,6 +2,7 @@
 {% set Config = salt["config.get"]("conf_file") %}
 {% set ConfigDir = Config.rsplit("/" if Config.startswith("/") else "\\", 1)[0] %}
 {% set PythonVersion = salt["grains.get"]("pythonversion") | join('.') %}
+{% set PythonSuffix = "2" if PythonVersion.startswith("2") else "3" %}
 
 include:
     - remote-minion-common
@@ -12,11 +13,7 @@ Install required package -- python-pip:
 
 Install required package -- pythonX-pip:
     pkg.installed:
-        {% if PythonVersion.startswith("2") -%}
-        - name: python2-pip
-        {% else -%}
-        - name: python3-pip
-        {%- endif %}
+        - name: python{{ PythonSuffix }}-pip
         - onfail:
             - Install required package -- python-pip
 
@@ -41,11 +38,7 @@ Install required package -- python-pycurl:
 
 Install required package -- pythonX-pycurl:
     pkg.installed:
-        {% if PythonVersion.startswith("2") -%}
-        - name: python2-pycurl
-        {% else -%}
-        - name: python3-pycurl
-        {%- endif %}
+        - name: python{{ PythonSuffix }}-pycurl
         - onfail:
             - Install required package -- python-pycurl
 
