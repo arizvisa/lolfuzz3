@@ -11,7 +11,7 @@ Make audio driver path:
 Extract audio drivers on target:
     archive.extracted:
         - name: {{ pillar["Drivers"]["Audio"]["Path"] }}
-        - source: salt://sound/vadrv.zip
+        - source: salt://audio/vadrv.zip
         - archive_format: zip
         - enforce_toplevel: false
         - require:
