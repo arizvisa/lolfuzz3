@@ -1,6 +1,6 @@
 include:
     {% if salt["grains.get"]("os_family") == "Windows" -%}
-    - power-management.windows
+    - power.windows
     {% else -%}
-    - power-management.linux
+    - power.linux
     {% endif %}
