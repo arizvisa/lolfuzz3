@@ -3,7 +3,7 @@ base:
     'G@role:master':
         - queue
         - store
-        - fuzzer
+        - fuzzer.deploy
 
     # All windows targets
     'G@os_family:Windows':
