@@ -1,5 +1,5 @@
 include:
-    - windows-drivers
+    - identity.windows-drivers
 
 Make audio driver path:
     file.directory:

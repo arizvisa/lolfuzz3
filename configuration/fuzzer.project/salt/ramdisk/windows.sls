@@ -2,7 +2,7 @@
 {% set ProgramFiles = salt["environ.get"]("PROGRAMW6432", default=salt["environ.get"]("PROGRAMFILES")) %}
 
 include:
-    - windows-drivers
+    - identity.windows-drivers
 
 Make RamDisk directory:
     file.directory:
