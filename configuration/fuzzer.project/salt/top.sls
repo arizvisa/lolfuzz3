@@ -8,14 +8,15 @@ base:
     # All windows targets
     'G@os_family:Windows':
         - identity
-        - audio
         - windows-services
-        - windows-ramdisk
+        - audio
+        - ramdisk
 
     # All linux targets
     'not G@os_family:Windows':
         - identity
         - audio
+        - ramdisk
         - linux-updates
 
     # All targets
