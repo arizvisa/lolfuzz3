@@ -17,7 +17,7 @@ base:
         - identity
         - audio
         - ramdisk
-        - linux-updates
+        - updates
 
     # All targets
     '*':
