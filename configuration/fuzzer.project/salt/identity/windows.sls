@@ -1,4 +1,41 @@
-## Windows
+### Windows
+
+## (Service) Windows Defender
+Stop Microsoft's Windows Defender:
+    {% if grains["osrelease"] in ("7", "8", "8.1") -%}
+    service.dead:
+        - name: WinDefend
+    {% else -%}
+    test.succeed_without_changes:
+        []
+    {% endif %}
+
+Disable Microsoft's Windows Defender:
+    {% if grains["osrelease"] in ("7", "8", "8.1") -%}
+    service.disabled:
+        - name: WinDefend
+    {% else -%}
+    cmd.run:
+        - name: Set-MpPreference -DisableRealtimeMonitoring $true
+        - shell: powershell
+    {% endif %}
+        - require:
+            - Stop Microsoft's Windows Defender
+
+Add the salt path to the exclusions for Windows Defender:
+    {% if grains["osrelease"] in ("7", "8", "8.1") %}
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
+        - vname: {{ grains["saltpath"].rsplit("\\", 4)[0] | yaml_dquote }}
+        - vtype: REG_DWORD
+        - vdata: 0x00000000
+    {% else %}
+    cmd.run:
+        - name: Add-MpPreference -ExclusionPath "{{ grains["saltpath"].rsplit("\\", 4)[0] }}"
+        - shell: powershell
+    {% endif %}
+
+## Hostname information
 Set the workgroup:
     system.workgroup:
         - name: {{ pillar["project"]["name"] }}
@@ -27,6 +64,8 @@ Reboot after name change:
         - only_on_pending_reboot: false
         - require:
             - Set the workgroup
+            - Disable Microsoft's Windows Defender
+            - Add the salt path to the exclusions for Windows Defender
         - onchanges_any:
             - Set the hostname
             - Set the computer name

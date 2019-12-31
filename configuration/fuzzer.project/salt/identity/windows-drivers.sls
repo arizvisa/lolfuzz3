@@ -1,3 +1,18 @@
+## (Service) Windows Defender
+Add the drivers path to the exclusions for Windows Defender:
+    {% if grains["osrelease"] in ("7", "8", "8.1") %}
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
+        - vname: {{ pillar["Drivers"]["Path"] | replace("/", "\\") | yaml_dquote }}
+        - vtype: REG_DWORD
+        - vdata: 0x00000000
+    {% else %}
+    cmd.run:
+        - name: Add-MpPreference -ExclusionPath "{{ pillar["Drivers"]["Path"] | replace("/", "\\") }}"
+        - shell: powershell
+    {% endif %}
+
+## Powershell
 Set Powershell Execution Policy:
     cmd.run:
         - name: 'powershell.exe -command Set-ExecutionPolicy Unrestricted'
@@ -6,6 +21,8 @@ Create the base driver directory:
     file.directory:
         - name: {{ pillar["Drivers"]["Path"] }}
         - makedirs: true
+        - require:
+            - Add the drivers path to the exclusions for Windows Defender
 
 Make PowerShell driver directory:
     file.directory:
@@ -23,6 +40,7 @@ Extract PowerShell DeviceManagement module on target:
         - require:
             - Make PowerShell driver directory
 
+## Driver tools
 Make driver tools directory:
     file.directory:
         - name: {{ pillar["Drivers"]["Tools"] }}

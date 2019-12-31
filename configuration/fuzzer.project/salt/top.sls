@@ -8,7 +8,6 @@ base:
     # All windows targets
     'G@os_family:Windows':
         - identity
-        - identity.windows-services
         - audio
         - ramdisk
 

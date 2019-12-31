@@ -29,6 +29,7 @@ Install SoftPerfect RAM Disk:
             - Make RamDisk directory
             - Copy ramdisk_setup.exe to target
 
+## Configuration and Tools
 Install the ramdisk configuration:
     file.managed:
         - template: jinja
@@ -78,6 +79,22 @@ Install volume unmount tool:
         - require:
             - Make driver tools directory
 
+
+{% for disk in pillar["Drivers"]["RamDisk"]["Disks"] %}
+Add the ramdisk path ({{ disk.drive }}:\) to the exclusions for Windows Defender:
+    {% if grains["osrelease"] in ("7", "8", "8.1") %}
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
+        - vname: {{ (disk.drive + ":\\") | yaml_dquote }}
+        - vtype: REG_DWORD
+        - vdata: 0x00000000
+    {% else %}
+    cmd.run:
+        - name: Add-MpPreference -ExclusionPath "{{ disk.drive + ":\\" }}"
+        - shell: powershell
+    {% endif %}
+{% endfor %}
+
 Install the ramdisk disks configuration:
     file.managed:
         - template: jinja
@@ -103,8 +120,13 @@ Install the ramdisk disks configuration:
                 {% endfor %}
         - require:
             - Make RamDisk directory
+            {% for disk in pillar["Drivers"]["RamDisk"]["Disks"] -%}
+            - Add the ramdisk path ({{ disk.drive }}:\) to the exclusions for Windows Defender
+            {% endfor %}
 
-## Use Windows Explorer to unmount all of the RamDisk volumes
+## Actions
+
+# Use Windows Explorer to unmount all of the RamDisk volumes
 {% for disk in pillar["Drivers"]["RamDisk"]["Disks"] %}
 Unmount drive {{ disk.drive }}:
     cmd.run:
@@ -118,7 +140,7 @@ Unmount drive {{ disk.drive }}:
             - Install the ramdisk disks configuration
 {%- endfor %}
 
-## Unmount volumes from SoftPerfect
+# Unmount volumes from SoftPerfect
 Unmount all of our ramdisk volumes:
     cmd.run:
         - cwd: '{{ ProgramFiles }}\SoftPerfect RAM Disk'
@@ -138,7 +160,7 @@ Unmount all of our ramdisk volumes:
         - require:
             - Unmount all of our ramdisk volumes
 
-## Flush disk configuration from SoftPerfect
+# Flush disk configuration from SoftPerfect
 Flush ramdisk configuration:
     cmd.run:
         - cwd: '{{ ProgramFiles }}\SoftPerfect RAM Disk'
@@ -157,7 +179,7 @@ Flush ramdisk configuration:
         - require:
             - Flush ramdisk configuration
 
-## Re-import the new disk configuration into SoftPerfect
+# Re-import the new disk configuration into SoftPerfect
 Import our disks configuration:
     cmd.run:
         - cwd: '{{ ProgramFiles }}\SoftPerfect RAM Disk'
