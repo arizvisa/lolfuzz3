@@ -17,7 +17,7 @@ Make PowerShell driver directory:
 Extract PowerShell DeviceManagement module on target:
     archive.extracted:
         - name: {{ pillar["Drivers"]["PowerShell"]["Path"] }}
-        - source: salt://drivers/DeviceManagement.zip
+        - source: salt://identity/DeviceManagement.zip
         - archive_format: zip
         - enforce_toplevel: false
         - require:
