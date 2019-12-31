@@ -1,5 +1,5 @@
 include:
-    - windows-services
+    - identity.windows-services
 
 ## Manually download and install any updates required to use the
 ## Windows Update system.
