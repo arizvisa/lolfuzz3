@@ -9,6 +9,7 @@ base:
     # All windows targets
     'G@os_family:Windows':
         - windows-drivers
+        - ramdisk
         - windows-updates
 
     # All linux targets
