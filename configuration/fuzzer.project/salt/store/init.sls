@@ -85,6 +85,19 @@ Create a bucket ({{ bucket["name"] }}) on the {{ pillar["container"]["minio"]["n
             {{ pillar["store"]["minio"]["client"] }} --no-color
             mb
             "local/{{ bucket["name"] }}"
+        - unless: >-
+            /usr/bin/ssh
+            -i "{{ Root }}{{ mpillar["toolbox"]["self-service"]["key"] }}"
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            --
+            {{ mpillar["toolbox"]["self-service"]["host"] | yaml_squote }}
+            sudo -i
+            --
+            {{ pillar["store"]["minio"]["client"] }} --no-color
+            ls
+            "local/{{ bucket["name"] }}"
+
         - require:
             - sls: store.deploy
 
@@ -105,4 +118,19 @@ Set the {{ bucket["policy"] }} policy for the {{ bucket["name"] }} bucket on the
             "local/{{ bucket["name"] }}"
         - require:
             - Create a bucket ({{ bucket["name"] }}) on the {{ pillar["container"]["minio"]["name"] }} server
+
+{% if "archive" in bucket -%}
+Initialize the {{ bucket["name"] }} bucket with the contents of an archive:
+    archive.extracted:
+        - name: {{ Root }}/srv/store/{{ bucket["name"] }}
+        - source: {{ bucket["archive"] }}
+        - skip_verify: true
+        - keep_source: false
+        - overwrite: true
+        - enforce_toplevel: false
+        - user: root
+        - group: root
+        - require:
+            - Create a bucket ({{ bucket["name"] }}) on the {{ pillar["container"]["minio"]["name"] }} server
+{% endif -%}
 {% endfor -%}
