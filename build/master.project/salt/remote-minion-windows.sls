@@ -1,9 +1,45 @@
 {% set Root = pillar["local"]["root"] %}
 {% set Config = salt["config.get"]("conf_file") %}
 {% set ConfigDir = Config.rsplit("/" if Config.startswith("/") else "\\", 1)[0] %}
+{% set PythonVersion = salt["grains.get"]("pythonversion") | join('.') %}
 
 include:
     - remote-minion-common
+
+Bootstrap an installation of the chocolatey package manager:
+    module.run:
+        - chocolatey.bootstrap:
+            []
+        - require_in:
+            - Install all required Python modules
+
+{% if PythonVersion.startswith("2") -%}
+Install Visual C++ 9.0 Runtime for Python 2.x:
+    chocolatey.installed:
+        - name: vcpython27
+        {% if grains["cpuarch"].lower() in ["x86"] -%}
+        - force_x86: true
+        {% else -%}
+        - force_x86: false
+        {% endif -%}
+        - require:
+            - Bootstrap an installation of the chocolatey package manager
+        - require_in:
+            - Install all required Python modules
+{% else -%}
+Install Visual C++ 14.0 Runtime for Python 3.x:
+    chocolatey.installed:
+        - name: vcredist140
+        {% if grains["cpuarch"].lower() in ["x86"] -%}
+        - force_x86: true
+        {% else -%}
+        - force_x86: false
+        {% endif -%}
+        - require:
+            - Bootstrap an installation of the chocolatey package manager
+        - require_in:
+            - Install all required Python modules
+{% endif -%}
 
 Install required Python module -- pycurl:
     pip.installed:
