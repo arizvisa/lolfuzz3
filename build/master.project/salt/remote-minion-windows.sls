@@ -12,7 +12,7 @@ Bootstrap an installation of the chocolatey package manager:
         - chocolatey.bootstrap:
             []
         - require_in:
-            - Install all required Python modules
+            - sls: remote-minion-common
 
 ## Install Microsoft's Visual C++ Runtime as required by Python
 {% if PythonVersion.startswith("2") -%}
@@ -27,7 +27,7 @@ Install Visual C++ 9.0 Runtime for Python 2.x:
         - require:
             - Bootstrap an installation of the chocolatey package manager
         - require_in:
-            - Install all required Python modules
+            - sls: remote-minion-common
 {% else -%}
 Install Visual C++ 14.0 Runtime for Python 3.x:
     chocolatey.installed:
@@ -40,7 +40,7 @@ Install Visual C++ 14.0 Runtime for Python 3.x:
         - require:
             - Bootstrap an installation of the chocolatey package manager
         - require_in:
-            - Install all required Python modules
+            - sls: remote-minion-common
 {% endif -%}
 
 ## Install the new Python interpreter
@@ -60,38 +60,36 @@ Install chocolatey package -- Python 2.x:
             - Install Visual C++ 14.0 Runtime for Python 3.x
             {% endif %}
         - require_in:
-            - Install all required Python modules
+            - sls: remote-minion-common
 
 ## Install the binary packages required by Salt
 Install required Python module -- pywin32:
     pip.installed:
         - name: pywin32
-        - bin_env: C:/Python27/Scripts/pip.exe
+        - bin_env: C:\Python27\Scripts\pip.exe
         - require:
             - Install chocolatey package -- Python 2.x
-        - require_in:
-            - Install all required Python modules
 
 Install required Python module -- pycurl:
     pip.installed:
         - name: pycurl >= 7.43.0.2
-        - bin_env: C:/Python27/Scripts/pip.exe
+        - bin_env: C:\Python27\Scripts\pip.exe
         - require:
-            - sls: remote-minion-common
+            - Install chocolatey package -- Python 2.x
 
 Install required Python module -- pythonnet:
     pip.installed:
         - name: pythonnet >= 2.3.0
-        - bin_env: C:/Python27/Scripts/pip.exe
+        - bin_env: C:\Python27\Scripts\pip.exe
         - require:
-            - sls: remote-minion-common
+            - Install chocolatey package -- Python 2.x
 
 ## Restart the minion into the new Python interpreter
 Update the Windows Service (salt-minion) to use new Python interpreter:
     reg.present:
-        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion
+        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters
         - vname: Application
-        - vdata: C:/Python27/python.exe
+        - vdata: C:\Python27\python.exe
         - vtype: REG_EXPAND_SZ
         - require:
             - Install chocolatey package -- Python 2.x
@@ -107,11 +105,8 @@ Restart minion into new Python interpreter:
             - Install chocolatey package -- Python 2.x
         - require:
             - Update the Windows Service (salt-minion) to use new Python interpreter
-            - Install required Python module -- pywin32
-            - Install required Python module -- pycurl
-            - Install required Python module -- pythonnet
         - require_in:
-            - Install all required Python modules
+            - sls: remote-minion-common
 
 ## Install the new minion configuration (and service configuration)
 Re-install minion configuration:
