@@ -6,6 +6,7 @@
 include:
     - remote-minion-common
 
+## Bootstrap the chocolatey package manager
 Bootstrap an installation of the chocolatey package manager:
     module.run:
         - chocolatey.bootstrap:
@@ -13,6 +14,7 @@ Bootstrap an installation of the chocolatey package manager:
         - require_in:
             - Install all required Python modules
 
+## Install Microsoft's Visual C++ Runtime as required by Python
 {% if PythonVersion.startswith("2") -%}
 Install Visual C++ 9.0 Runtime for Python 2.x:
     chocolatey.installed:
@@ -41,11 +43,17 @@ Install Visual C++ 14.0 Runtime for Python 3.x:
             - Install all required Python modules
 {% endif -%}
 
-Install required Python module -- pywin32:
-    pip.installed:
-        - name: pywin32
-        - ignore_installed: true
+## Install the new Python interpreter
+Install chocolatey package -- Python 2.x:
+    chocolatey.installed:
+        - name: python2
+        {% if grains["cpuarch"].lower() in ["x86"] -%}
+        - force_x86: true
+        {% else -%}
+        - force_x86: false
+        {% endif -%}
         - require:
+            - Bootstrap an installation of the chocolatey package manager
             {% if PythonVersion.startswith("2") -%}
             - Install Visual C++ 9.0 Runtime for Python 2.x
             {% else -%}
@@ -54,18 +62,58 @@ Install required Python module -- pywin32:
         - require_in:
             - Install all required Python modules
 
+## Install the binary packages required by Salt
+Install required Python module -- pywin32:
+    pip.installed:
+        - name: pywin32
+        - bin_env: C:/Python27/Scripts/pip.exe
+        - require:
+            - Install chocolatey package -- Python 2.x
+        - require_in:
+            - Install all required Python modules
+
 Install required Python module -- pycurl:
     pip.installed:
         - name: pycurl >= 7.43.0.2
+        - bin_env: C:/Python27/Scripts/pip.exe
         - require:
             - sls: remote-minion-common
 
 Install required Python module -- pythonnet:
     pip.installed:
         - name: pythonnet >= 2.3.0
+        - bin_env: C:/Python27/Scripts/pip.exe
         - require:
             - sls: remote-minion-common
 
+## Restart the minion into the new Python interpreter
+Update the Windows Service (salt-minion) to use new Python interpreter:
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion
+        - vname: Application
+        - vdata: C:/Python27/python.exe
+        - vtype: REG_EXPAND_SZ
+        - require:
+            - Install chocolatey package -- Python 2.x
+            - Install required Python module -- pywin32
+            - Install required Python module -- pycurl
+            - Install required Python module -- pythonnet
+
+Restart minion into new Python interpreter:
+    module.run:
+        - system.reboot:
+            - timeout: 1
+        - onchanges:
+            - Install chocolatey package -- Python 2.x
+        - require:
+            - Update the Windows Service (salt-minion) to use new Python interpreter
+            - Install required Python module -- pywin32
+            - Install required Python module -- pycurl
+            - Install required Python module -- pythonnet
+        - require_in:
+            - Install all required Python modules
+
+## Install the new minion configuration (and service configuration)
 Re-install minion configuration:
     file.managed:
         - template: jinja
@@ -85,6 +133,7 @@ Re-install minion configuration:
 
         - require:
             - sls: remote-minion-common
+            - Update the Windows Service (salt-minion) to use new Python interpreter
             - Install required Python module -- pywin32
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
@@ -112,6 +161,7 @@ Update the Windows Service (salt-minion) to be able to interact with the desktop
         - vdata: {{ Minion_ServiceType if Minion_ServiceType >= ServiceType_InteractiveProcess else Minion_ServiceType + ServiceType_InteractiveProcess }}
         - vtype: REG_DWORD
 
+## Restart the minion into the new cluster
 Restart minion with new configuration:
     module.run:
         - system.reboot:
