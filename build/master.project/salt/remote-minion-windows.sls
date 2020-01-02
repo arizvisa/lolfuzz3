@@ -41,6 +41,19 @@ Install Visual C++ 14.0 Runtime for Python 3.x:
             - Install all required Python modules
 {% endif -%}
 
+Install required Python module -- pywin32:
+    pip.installed:
+        - name: pywin32
+        - ignore_installed: true
+        - require:
+            {% if PythonVersion.startswith("2") -%}
+            - Install Visual C++ 9.0 Runtime for Python 2.x
+            {% else -%}
+            - Install Visual C++ 14.0 Runtime for Python 3.x
+            {% endif %}
+        - require_in:
+            - Install all required Python modules
+
 Install required Python module -- pycurl:
     pip.installed:
         - name: pycurl >= 7.43.0.2
@@ -72,6 +85,7 @@ Re-install minion configuration:
 
         - require:
             - sls: remote-minion-common
+            - Install required Python module -- pywin32
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
 
