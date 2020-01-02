@@ -170,5 +170,7 @@ Restart minion on failure:
     module.run:
         - system.reboot:
             - timeout: 1
+        - require:
+            - Update the Windows Service (salt-minion) to use new Python interpreter
         - onfail:
             - Install all required Python modules
