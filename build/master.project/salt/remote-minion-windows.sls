@@ -63,10 +63,19 @@ Install chocolatey package -- Python 2.x:
             - sls: remote-minion-common
 
 ## Install the binary packages required by Salt
+Upgrade required Python module -- pip:
+    pip.installed:
+        - name: pip
+        - upgrade: true
+        - bin_env: C:\Python27\Scripts\pip.exe
+        - require:
+            - Install chocolatey package -- Python 2.x
+
 Install required Python module -- pywin32:
     pip.installed:
         - name: pywin32
         - bin_env: C:\Python27\Scripts\pip.exe
+        - use_wheel: true
         - require:
             - Install chocolatey package -- Python 2.x
 
@@ -74,6 +83,7 @@ Install required Python module -- pycurl:
     pip.installed:
         - name: pycurl >= 7.43.0.2
         - bin_env: C:\Python27\Scripts\pip.exe
+        - use_wheel: true
         - require:
             - Install chocolatey package -- Python 2.x
 
@@ -81,6 +91,7 @@ Install required Python module -- pythonnet:
     pip.installed:
         - name: pythonnet >= 2.3.0
         - bin_env: C:\Python27\Scripts\pip.exe
+        - use_wheel: true
         - require:
             - Install chocolatey package -- Python 2.x
 
@@ -93,6 +104,7 @@ Update the Windows Service (salt-minion) to use new Python interpreter:
         - vtype: REG_EXPAND_SZ
         - require:
             - Install chocolatey package -- Python 2.x
+            - Upgrade required Python module -- pip
             - Install required Python module -- pywin32
             - Install required Python module -- pycurl
             - Install required Python module -- pythonnet
@@ -103,6 +115,10 @@ Restart minion into new Python interpreter:
             - timeout: 1
         - onchanges:
             - Install chocolatey package -- Python 2.x
+            - Upgrade required Python module -- pip
+            - Install required Python module -- pywin32
+            - Install required Python module -- pycurl
+            - Install required Python module -- pythonnet
         - require:
             - Update the Windows Service (salt-minion) to use new Python interpreter
         - require_in:
@@ -129,6 +145,7 @@ Re-install minion configuration:
         - require:
             - sls: remote-minion-common
             - Update the Windows Service (salt-minion) to use new Python interpreter
+            - Upgrade required Python module -- pip
             - Install required Python module -- pywin32
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
