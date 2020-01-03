@@ -12,7 +12,7 @@ Bootstrap an installation of the chocolatey package manager:
         - chocolatey.bootstrap:
             []
         - require_in:
-            - sls: remote-minion-common
+            - Install all required Python Modules
 
 ## Install Microsoft's Visual C++ Runtime as required by Python
 {% if PythonVersion.startswith("2") -%}
@@ -27,7 +27,7 @@ Install Visual C++ 9.0 Runtime for Python 2.x:
         - require:
             - Bootstrap an installation of the chocolatey package manager
         - require_in:
-            - sls: remote-minion-common
+            - Install all required Python Modules
 {% else -%}
 Install Visual C++ 14.0 Runtime for Python 3.x:
     chocolatey.installed:
@@ -40,89 +40,30 @@ Install Visual C++ 14.0 Runtime for Python 3.x:
         - require:
             - Bootstrap an installation of the chocolatey package manager
         - require_in:
-            - sls: remote-minion-common
+            - Install all required Python Modules
 {% endif -%}
 
-## Install the new Python interpreter
-Install chocolatey package -- Python 2.x:
-    chocolatey.installed:
-        - name: python2
-        {% if grains["cpuarch"].lower() in ["x86"] -%}
-        - force_x86: true
-        {% else -%}
-        - force_x86: false
-        {% endif -%}
-        - require:
-            - Bootstrap an installation of the chocolatey package manager
-            {% if PythonVersion.startswith("2") -%}
-            - Install Visual C++ 9.0 Runtime for Python 2.x
-            {% else -%}
-            - Install Visual C++ 14.0 Runtime for Python 3.x
-            {% endif %}
-        - require_in:
-            - sls: remote-minion-common
-
 ## Install the binary packages required by Salt
-Upgrade required Python module -- pip:
-    pip.installed:
-        - name: pip
-        - upgrade: true
-        - bin_env: C:\Python27\Scripts\pip.exe
-        - require:
-            - Install chocolatey package -- Python 2.x
-
 Install required Python module -- pywin32:
     pip.installed:
         - name: pywin32
-        - bin_env: C:\Python27\Scripts\pip.exe
         - use_wheel: true
         - require:
-            - Install chocolatey package -- Python 2.x
+            - Upgrade required package -- pip
 
 Install required Python module -- pycurl:
     pip.installed:
         - name: pycurl >= 7.43.0.2
-        - bin_env: C:\Python27\Scripts\pip.exe
         - use_wheel: true
         - require:
-            - Install chocolatey package -- Python 2.x
+            - Upgrade required package -- pip
 
 Install required Python module -- pythonnet:
     pip.installed:
         - name: pythonnet >= 2.3.0
-        - bin_env: C:\Python27\Scripts\pip.exe
         - use_wheel: true
         - require:
-            - Install chocolatey package -- Python 2.x
-
-## Restart the minion into the new Python interpreter
-Update the Windows Service (salt-minion) to use new Python interpreter:
-    reg.present:
-        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters
-        - vname: Application
-        - vdata: C:\Python27\python.exe
-        - vtype: REG_EXPAND_SZ
-        - require:
-            - Install chocolatey package -- Python 2.x
-            - Upgrade required Python module -- pip
-            - Install required Python module -- pywin32
-            - Install required Python module -- pycurl
-            - Install required Python module -- pythonnet
-
-Restart minion into new Python interpreter:
-    module.run:
-        - system.reboot:
-            - timeout: 1
-        - onchanges:
-            - Install chocolatey package -- Python 2.x
-            - Upgrade required Python module -- pip
-            - Install required Python module -- pywin32
-            - Install required Python module -- pycurl
-            - Install required Python module -- pythonnet
-        - require:
-            - Update the Windows Service (salt-minion) to use new Python interpreter
-        - require_in:
-            - sls: remote-minion-common
+            - Upgrade required package -- pip
 
 ## Install the new minion configuration (and service configuration)
 Re-install minion configuration:
@@ -143,12 +84,11 @@ Re-install minion configuration:
                 pillarenv: base
 
         - require:
-            - sls: remote-minion-common
-            - Update the Windows Service (salt-minion) to use new Python interpreter
-            - Upgrade required Python module -- pip
+            - Upgrade required package -- pip
             - Install required Python module -- pywin32
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
+            - Install all required Python Modules
 
 # There's no binary arithmetic or negation in Jinja, so we hack/cheat by
 # checking if the ServiceType is larger than the flag we want, if it
@@ -188,6 +128,9 @@ Restart minion on failure:
         - system.reboot:
             - timeout: 1
         - require:
-            - Update the Windows Service (salt-minion) to use new Python interpreter
+            - Upgrade required package -- pip
+            - Install required Python module -- pywin32
+            - Install required Python module -- pythonnet
+            - Install required Python module -- pycurl
         - onfail:
             - Install all required Python modules
