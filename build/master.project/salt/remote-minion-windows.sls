@@ -14,6 +14,16 @@ Bootstrap an installation of the chocolatey package manager:
         - chocolatey.bootstrap:
             []
 
+## Ensure the the Windows Update Service (wuauserv) is enabled and running
+## so that chocolatey can install windows components unhindered
+
+Ensure the Windows Update service is running:
+    service.running:
+        - name: wuauserv
+        - enable: true
+        - require:
+            - Bootstrap an installation of the chocolatey package manager
+
 ## Install Microsoft's Visual C++ Runtime as required by Python
 {% if PythonVersion.startswith("2") -%}
 Install Visual C++ 9.0 Runtime for Python 2.x:
@@ -26,6 +36,7 @@ Install Visual C++ 9.0 Runtime for Python 2.x:
         {% endif -%}
         - require:
             - Bootstrap an installation of the chocolatey package manager
+            - Ensure the Windows Update service is running
         - require_in:
             - Install required Python module -- pywin32
             - Install required Python module -- pycurl
@@ -41,6 +52,7 @@ Install Visual C++ 14.0 Runtime for Python 3.x:
         {% endif -%}
         - require:
             - Bootstrap an installation of the chocolatey package manager
+            - Ensure the Windows Update service is running
         - require_in:
             - Install required Python module -- pywin32
             - Install required Python module -- pycurl
@@ -51,21 +63,18 @@ Install Visual C++ 14.0 Runtime for Python 3.x:
 Install required Python module -- pywin32:
     pip.installed:
         - name: pywin32
-        - use_wheel: true
         - require:
             - Upgrade required package -- pip
 
 Install required Python module -- pycurl:
     pip.installed:
         - name: pycurl >= 7.43.0.2
-        - use_wheel: true
         - require:
             - Upgrade required package -- pip
 
 Install required Python module -- pythonnet:
     pip.installed:
         - name: pythonnet >= 2.3.0
-        - use_wheel: true
         - require:
             - Upgrade required package -- pip
 
