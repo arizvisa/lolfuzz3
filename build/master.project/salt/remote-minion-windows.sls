@@ -29,6 +29,17 @@ Install chocolatey package -- Python 2.x:
         - require:
             - Bootstrap an installation of the chocolatey package manager
 
+Install Visual C++ 9.0 Runtime for Python 2.x:
+    chocolatey.installed:
+        - name: vcpython27
+        {% if grains["cpuarch"].lower() in ["x86"] -%}
+        - force_x86: true
+        {% else -%}
+        - force_x86: false
+        {% endif -%}
+        - require:
+            - Install chocolatey package -- Python 2.x
+
 Upgrade required package -- pip:
     pip.installed:
         - name: pip
@@ -72,6 +83,7 @@ Install all required Python modules:
             - Install required Python module -- pywin32
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
+            - Install Visual C++ 9.0 Runtime for Python 2.x
 
 ### Module fixes required to work with the cluster
 Synchronize all modules for the minion:
