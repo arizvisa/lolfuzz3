@@ -18,7 +18,7 @@ Bootstrap an installation of the chocolatey package manager:
         - require:
             - Ensure the Windows Update service is running
 
-Install chocolatey package -- Python 2.x
+Install chocolatey package -- Python 2.x:
     chocolatey.installed:
         - name: python2
         {% if grains["cpuarch"].lower() in ["x86"] -%}
