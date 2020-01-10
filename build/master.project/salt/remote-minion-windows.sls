@@ -222,5 +222,10 @@ Restart minion on failure:
             - Install required Python module -- pywin32
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
-        - onfail:
+        - onfail_any:
+            {% if PythonVersion.startswith("2") -%}
+            - Install Visual C++ 9.0 Runtime for Python 2.x
+            {% else -%}
+            - Install Visual C++ 14.0 Runtime for Python 3.x
+            {% endif -%}
             - Install all required Python modules
