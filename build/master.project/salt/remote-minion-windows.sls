@@ -45,9 +45,11 @@ Install required Python module -- pywin32:
         - require:
             - Upgrade required package -- pip
 
+# We hardcode pycurl to 7.43.0.2 because there isn't a binary (wheel) for the
+# latest version (as of 2020/01/10)
 Install required Python module -- pycurl:
     pip.installed:
-        - name: pycurl >= 7.43.0.2
+        - name: pycurl == 7.43.0.2
         - bin_env: C:/Python27/Scripts/pip.exe
         - require:
             - Upgrade required package -- pip
