@@ -65,6 +65,15 @@ Install required Python module -- pycurl:
         - require:
             - Upgrade required package -- pip
 
+# We hardcode WMI to 1.4.9 because there isn't a binary (wheel) for the latest
+# version (as of 2020/01/10)
+Install required Python module -- WMI:
+    pip.installed:
+        - name: WMI == 1.4.9
+        - bin_env: C:/Python27/Scripts/pip.exe
+        - require:
+            - Upgrade required package -- pip
+
 Install required Python module -- pythonnet:
     pip.installed:
         - name: pythonnet >= 2.3.0
@@ -81,6 +90,7 @@ Install all required Python modules:
         - require:
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
+            - Install required Python module -- WMI
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
             - Install Visual C++ 9.0 Runtime for Python 2.x
@@ -215,6 +225,7 @@ Update the Windows Service (salt-minion) to use external Python interpreter:
             - Install chocolatey package -- Python 2.x
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
+            - Install required Python module -- WMI
             - Install required Python module -- pycurl
             - Install required Python module -- pythonnet
             - Install all required Python modules
@@ -239,6 +250,7 @@ Restart minion on failure:
             - Install chocolatey package -- Python 2.x
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
+            - Install required Python module -- WMI
             - Install required Python module -- pycurl
             - Install required Python module -- pythonnet
             - Install all required Python modules
