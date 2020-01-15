@@ -51,7 +51,7 @@ run -- {{pip}} --retries=65536 install pywinrm pywinrm[kerberos] pywinrm[credssp
 
 ### Installation of the stack (via bootstrap)
 run -- curl -L -o /root/install-salt.sh "{{bootstrap}}"
-run -- bash /root/install-salt.sh -b -x {{python}} -L -F -P -X -N -M git v{{version}}
+run -- bash /root/install-salt.sh -F -P -b -d -X -x {{python}} -M -S -L git v{{version}}
 
 {% if commands -%}
 # Custom commands
