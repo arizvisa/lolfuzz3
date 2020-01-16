@@ -55,7 +55,7 @@ Generate salt-stack container build rules:
             # Environment variables used to de-fang systemd used by salt-bootstrap
             environment:
                 SYSTEMD_OFFLINE: true
-                SYSTEMCTL_INSTALL_CLIENT_SIDE true
+                SYSTEMCTL_INSTALL_CLIENT_SIDE: true
 
             commands:
                 - run: dnf -y --setopt=fastestmirror=true --setopt=retries=0 upgrade
