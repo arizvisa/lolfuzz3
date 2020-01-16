@@ -52,6 +52,11 @@ Generate salt-stack container build rules:
             python: {{ pillar["container"]["salt-stack"]["python"] | yaml_dquote }}
             pip: {{ pillar["container"]["salt-stack"]["pip"] | yaml_dquote }}
 
+            # Environment variables used to de-fang systemd used by salt-bootstrap
+            environment:
+                SYSTEMD_OFFLINE: true
+                SYSTEMCTL_INSTALL_CLIENT_SIDE true
+
             commands:
                 - run: dnf -y --setopt=fastestmirror=true --setopt=retries=0 upgrade
 
