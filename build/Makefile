@@ -74,7 +74,8 @@ boxcutter: boxcutter/help
 
 .PHONY: boxcutter/help
 boxcutter/help:
-	$(error boxcutter is not implemented yet!)
+	@printf 'Please specify one of the following recipes to build:\n\n'
+	@printf '\tboxcutter/%s\n' $(foreach name,$(BOXCUTTER_TEMPLATES),'$(name)')
 
 ## Directory recipes for creating the output and work directories
 $(outdir) $(workdir):
