@@ -18,7 +18,10 @@ BENTO_TEMPLATES :=
 define build_bento
 BENTO_TEMPLATES := $$(BENTO_TEMPLATES) $$(patsubst %.json,%,$$(notdir $(1)))
 .PHONY: bento/$$(patsubst %.json,%,$$(notdir $(1)))
-bento/$$(patsubst %.json,%,$$(notdir $(1))): $$(if $$(platform),$$(foreach target,$$(platform),bento/$$(patsubst %.json,%,$$(notdir $(1)))/$$(target)),bento/$$(patsubst %.json,%,$$(notdir $(1))/all))
+bento/$$(patsubst %.json,%,$$(notdir $(1))): $$(if $$(platform),$$(foreach target,$$(platform),bento/$$(patsubst %.json,%,$$(notdir $(1)))/$$(target)),bento/$$(patsubst %.json,%,$$(notdir $(1)))/all)
+
+.PHONY: bento/$$(patsubst %.json,%,$$(notdir $(1)))/all
+bento/$$(patsubst %.json,%,$$(notdir $(1)))/all: bento/$$(patsubst %.json,%,$$(notdir $(1)))/help
 
 .PHONY: bento/$$(patsubst %.json,%,$$(notdir $(1)))/help
 bento/$$(patsubst %.json,%,$$(notdir $(1)))/help:
