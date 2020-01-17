@@ -53,6 +53,7 @@ $$(outdir)/$$(build_bento_platform_box).$(3).box: $$(workdir)/$$(build_bento_pla
 	@ln '$$<' '$$@'
 
 $$(workdir)/$$(build_bento_platform_box).$(3).box: $(1) $$(workdir)/$(2).$(3).validate $$(MAKEDIR)/bento-vars.json	| $$(workdir)
+	@test -e $$(workdir)/$(2).$(3).validate
 	@printf '[!] Building %s from template: %s\n' '$$@' '$$<'
 	@packer build -only '$(3)-iso' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(workdir)' '$$<'
 
