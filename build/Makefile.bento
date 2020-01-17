@@ -20,6 +20,11 @@ BENTO_TEMPLATES := $$(BENTO_TEMPLATES) $$(patsubst %.json,%,$$(notdir $(1)))
 .PHONY: bento/$$(patsubst %.json,%,$$(notdir $(1)))
 bento/$$(patsubst %.json,%,$$(notdir $(1))): $$(if $$(platform),$$(foreach target,$$(platform),bento/$$(patsubst %.json,%,$$(notdir $(1)))/$$(target)),bento/$$(patsubst %.json,%,$$(notdir $(1))/all))
 
+.PHONY: bento/$$(patsubst %.json,%,$$(notdir $(1)))/help
+bento/$$(patsubst %.json,%,$$(notdir $(1)))/help:
+	@printf 'The following platforms are available for bento/%s:\n\n' '$$(patsubst %.json,%,$$(notdir $(1)))'
+	@printf '\tbento/$$(patsubst %.json,%,$$(notdir $(1)))/%s\n' $$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)')
+
 $$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)'),$$(eval $$(call build_bento_platform,$(1),$$(patsubst %.json,%,$$(notdir $(1))),$$(target))))
 endef
 
@@ -31,7 +36,7 @@ build_bento_platform_box := $$(shell jq -r '.variables | if .box_basename? then 
 # If we're building $(2) for vmware, then set the default recipe to build an ova template
 ifeq ($(3),vmware)
 
-$$(eval $$(call box2ova,$$(build_bento_platform_box).$(3).box))
+$$(eval $$(call box2ova,$$(workdir)/$$(build_bento_platform_box).$(3).box,$$(outdir)/$$(build_bento_platform_box).ova))
 bento/$(2)/$(3): $$(outdir)/$$(build_bento_platform_box).ova
 	@test -e '$$<'
 	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
@@ -42,6 +47,10 @@ bento/$(2)/$(3): $$(outdir)/$$(build_bento_platform_box).$(3).box
 	@test -e '$$<'
 	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
 endif
+
+$$(outdir)/$$(build_bento_platform_box).$(3).box: $$(workdir)/$$(build_bento_platform_box).$(3).box
+	@test -e '$$<'
+	@ln '$$<' '$$@'
 
 $$(workdir)/$$(build_bento_platform_box).$(3).box: $(1) $$(workdir)/$(2).$(3).validate $$(MAKEDIR)/bento-vars.json	| $$(workdir)
 	@printf '[!] Building %s from template: %s\n' '$$@' '$$<'
