@@ -1,0 +1,67 @@
+###############################################################################
+# Makefile.boxcutter
+#
+# This file specifies the build rules for the build/boxcutter-windows module.
+###############################################################################
+
+ifeq ($(ROOTDIR),)
+    $(error Please do not use this file directly as it is intended to be included)
+endif
+
+BOXCUTTER_TEMPLATES :=
+
+# Where we'll output all templates built with packer
+$(foreach platform,vmware virtualbox parallels hyperv,$(workdir)/boxcutter-$(platform)):	| $(workdir)
+	@test -d '$@' || mkdir -p '$@'
+
+define build_boxcutter
+BOXCUTTER_TEMPLATES := $$(BOXCUTTER_TEMPLATES) $$(patsubst %.json,%,$$(notdir $(1)))
+.PHONY: boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))
+boxcutter/$$(patsubst %.json,%,$$(notdir $(1))): $$(if $$(platform),$$(foreach target,$$(platform),boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/$$(target)),boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/all)
+
+.PHONY: boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/all
+boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/all: boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/help
+
+.PHONY: boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/help
+boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/help:
+	@printf 'The following platforms are available for boxcutter/%s:\n\n' '$$(patsubst %.json,%,$$(notdir $(1)))'
+	@printf '\tboxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/%s\n' $$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)')
+
+$$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)'),$$(eval $$(call build_boxcutter_platform,$(1),$$(patsubst %.json,%,$$(notdir $(1))),$$(target))))
+endef
+
+### The following defines recipes to build an individual box
+define build_boxcutter_platform
+build_boxcutter_platform_box := $$(shell jq -r --arg cm "nocm" '[.variables.vm_name + .variables.vm_suffix, $$$$cm, .variables.version] | join("-")' '$(1)')
+
+.PHONY: boxcutter/$(2)/$(3)
+
+# If we're building $(2) for vmware, then set the default recipe to build an ova template
+ifeq ($(3),vmware)
+
+$$(eval $$(call box2ova,$$(workdir)/boxcutter-$(3)/$$(build_boxcutter_platform_box).box,$$(outdir)/$(2).ova))
+boxcutter/$(2)/$(3): $$(outdir)/$(2).ova
+	@test -e '$$<'
+	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
+
+# Otherwise, $(2) is a vagrant box and we'll just emit that by default
+else
+boxcutter/$(2)/$(3): $$(outdir)/$(2).$(3).box
+	@test -e '$$<'
+	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
+endif
+
+$$(outdir)/$(2).$(3).box: $$(workdir)/boxcutter-$(3)/$$(build_boxcutter_platform_box).box
+	@test -e '$$<'
+	@ln '$$<' '$$@'
+
+$$(workdir)/boxcutter-$(3)/$$(build_boxcutter_platform_box).box: $$(MAKEDIR)/boxcutter-windows/$(2).json $$(workdir)/boxcutter-$(3).$(2).validate $$(MAKEDIR)/boxcutter-vars.json	| $$(workdir)
+	@test -e $$(workdir)/boxcutter-$(3).$(2).validate
+	@printf '[!] Building %s from template: %s\n' 'boxcutter-$(3)/$$(notdir $$@)' '$$<'
+	@packer build -only '$(3)-iso' -var-file '$$(MAKEDIR)/boxcutter-vars.json' -var 'box_directory=$$(workdir)/boxcutter-' '$$<'
+
+$$(workdir)/boxcutter-$(3).$(2).validate: $$(MAKEDIR)/boxcutter-windows/$(2).json $$(MAKEDIR)/boxcutter-vars.json	| $$(workdir)
+	@printf '[*] Validating template: %s\n' '$$<'
+	@packer validate -only '$(3)-iso' -var-file '$$(MAKEDIR)/boxcutter-vars.json' -var 'box_directory=$$(workdir)/boxcutter-' '$$<'
+	touch '$$@'
+endef

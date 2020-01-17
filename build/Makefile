@@ -31,6 +31,7 @@ platform = $(subst $(comma),$(space),$(PLATFORM))
 ### Include various Makefile components containing configurations and macros
 include $(MAKEDIR)Makefile.box
 include $(MAKEDIR)Makefile.bento
+include $(MAKEDIR)Makefile.boxcutter
 
 ### General recipes used during building
 .DEFAULT_GOAL := help
@@ -65,6 +66,7 @@ bento/help:
 	@printf '\tbento/%s\n' $(foreach name,$(BENTO_TEMPLATES),'$(name)')
 
 $(foreach f,$(filter-out %-ppc64el.json,$(wildcard $(MAKEDIR)/chef-bento/*/*/*.json)),$(eval $(call build_bento,$(f))))
+$(foreach f,$(filter-out %-ssh.json,$(filter-out %-cygwin.json,$(wildcard $(MAKEDIR)/boxcutter-windows/*.json))),$(eval $(call build_boxcutter,$(f))))
 
 ## Recipes for boxcutter-windows templates
 .PHONY: boxcutter
