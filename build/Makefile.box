@@ -10,26 +10,26 @@ endif
 
 define box2ova
 # Locate all of the template names within the boxfile
-$(1).template: $(1)	| $$(dir $(1))
+$(1).template: $(1)	| $$(patsubst %/,%,$$(dir $(1)))
 	@printf '[!] Searching through "%s" for valid template...\n' '$$<'
 	tar --wildcards -tf '$$<' '*.vmx' >| '$$@'
 
 # Extract the files from the boxfile
-$(1).files: $(1)	| $$(dir $(1))
+$(1).files: $(1)	| $$(patsubst %/,%,$$(dir $(1)))
 	@mkdir '$$@'
 	@printf '[!] Extracting "%s" into "%s"...\n' '$$<' '$$@'
 	tar -C '$$@' -xf '$$<'
 
 # If the template and its name is valid, then this will write the name to a file
-$(1).name: $(1).template $(1).template.valid	| $$(dir $(1))
-	cp '$$<' '$$@'
+$(1).name: $(1).template $(1).template.valid	| $$(patsubst %/,%,$$(dir $(1)))
+	ln '$$<' '$$@'
 
 # Test that the template name is actually valid
-$(1).template.count: $(1).template	| $$(dir $(1))
+$(1).template.count: $(1).template	| $$(patsubst %/,%,$$(dir $(1)))
 	@wc -l < '$$<' | tr -d ' ' >| '$$@'
 
-$(1).template.valid: $(1).template.count	| $$(dir $(1))
-	@printf '[*] Validating template name for "%s"...\n' '$(1)'
+$(1).template.valid: $(1).template.count	| $$(patsubst %/,%,$$(dir $(1)))
+	@printf '[*] Validating template name for "%s"...\n' '$$(notdir $(1))'
 	@test `cat '$$<'` -eq 1
 
 $(2): $(1).files $(1).name
