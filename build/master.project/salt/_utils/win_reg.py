@@ -88,6 +88,8 @@ def _to_unicode(vdata):
     # None does not convert to Unicode
     if vdata is None:
         return None
+    if isinstance(vdata, int):
+        vdata = str(vdata)
     return salt.utils.stringutils.to_unicode(vdata, 'utf-8')
 
 
@@ -161,7 +163,7 @@ class Registry(object):  # pylint: disable=R0903
 def key_exists(hive, key, use_32bit_registry=False):
     '''
     Check that the key is found in the registry. This refers to keys and not
-    value/data pairs.
+    value/data pairs. To check value/data pairs, use ``value_exists``
 
     Args:
 
@@ -191,12 +193,80 @@ def key_exists(hive, key, use_32bit_registry=False):
         raise CommandExecutionError('Invalid Hive: {0}'.format(local_hive))
     access_mask = registry.registry_32[use_32bit_registry]
 
+    handle = None
     try:
         handle = win32api.RegOpenKeyEx(hkey, local_key, 0, access_mask)
-        win32api.RegCloseKey(handle)
         return True
-    except Exception:  # pylint: disable=E0602
-        return False
+    except win32api.error as exc:
+        if exc.winerror == 2:
+            return False
+        raise
+    finally:
+        if handle:
+            win32api.RegCloseKey(handle)
+
+
+def value_exists(hive, key, vname, use_32bit_registry=False):
+    '''
+    Check that the value/data pair is found in the registry.
+
+    .. versionadded:: 2018.3.4
+
+    Args:
+
+        hive (str): The hive to connect to
+
+        key (str): The key to check in
+
+        vname (str): The name of the value/data pair you're checking
+
+        use_32bit_registry (bool): Look in the 32bit portion of the registry
+
+    Returns:
+        bool: True if exists, otherwise False
+
+    Usage:
+
+        .. code-block:: python
+
+            import salt.utils.win_reg
+            winreg.value_exists(hive='HKLM',
+                                key='SOFTWARE\\Microsoft\\Windows\\CurrentVersion',
+                                vname='CommonFilesDir')
+    '''
+    local_hive = _to_unicode(hive)
+    local_key = _to_unicode(key)
+    local_vname = _to_unicode(vname)
+
+    registry = Registry()
+    try:
+        hkey = registry.hkeys[local_hive]
+    except KeyError:
+        raise CommandExecutionError('Invalid Hive: {0}'.format(local_hive))
+    access_mask = registry.registry_32[use_32bit_registry]
+
+    try:
+        handle = win32api.RegOpenKeyEx(hkey, local_key, 0, access_mask)
+    except win32api.error as exc:
+        if exc.winerror == 2:
+            # The key containing the value/data pair does not exist
+            return False
+        raise
+
+    try:
+        # RegQueryValueEx returns and accepts unicode data
+        _, _ = win32api.RegQueryValueEx(handle, local_vname)
+        # value/data pair exists
+        return True
+    except win32api.error as exc:
+        if exc.winerror == 2 and vname is None:
+            # value/data pair exists but is empty
+            return True
+        else:
+            # value/data pair not found
+            return False
+    finally:
+        win32api.RegCloseKey(handle)
 
 
 def broadcast_change():
@@ -235,7 +305,7 @@ def list_keys(hive, key=None, use_32bit_registry=False):
 
                 - HKEY_LOCAL_MACHINE or HKLM
                 - HKEY_CURRENT_USER or HKCU
-                - HKEY_USER or HKU
+                - HKEY_USERS or HKU
                 - HKEY_CLASSES_ROOT or HKCR
                 - HKEY_CURRENT_CONFIG or HKCC
 
@@ -269,6 +339,7 @@ def list_keys(hive, key=None, use_32bit_registry=False):
     access_mask = registry.registry_32[use_32bit_registry]
 
     subkeys = []
+    handle = None
     try:
         handle = win32api.RegOpenKeyEx(hkey, local_key, 0, access_mask)
 
@@ -279,18 +350,26 @@ def list_keys(hive, key=None, use_32bit_registry=False):
             else:
                 subkeys.append(subkey)
 
-        handle.Close()
+    except win32api.error as exc:
+        if exc.winerror == 2:
+            log.debug(r'Cannot find key: %s\%s', hive, key, exc_info=True)
+            return False, r'Cannot find key: {0}\{1}'.format(hive, key)
+        raise
 
-    except Exception:  # pylint: disable=E0602
-        log.debug(r'Cannot find key: %s\%s', hive, key, exc_info=True)
-        return False, r'Cannot find key: {0}\{1}'.format(hive, key)
+    finally:
+        if handle:
+            handle.Close()
 
     return subkeys
 
 
-def list_values(hive, key=None, use_32bit_registry=False, include_default=True):
+def list_values(hive, key=None, use_32bit_registry=False):
     '''
     Enumerates the values in a registry key or hive.
+
+    .. note::
+        The ``(Default)`` value will only be returned if it is set, otherwise it
+        will not be returned in the list of values.
 
     Args:
 
@@ -310,9 +389,6 @@ def list_values(hive, key=None, use_32bit_registry=False, include_default=True):
         use_32bit_registry (bool):
             Accesses the 32bit portion of the registry on 64 bit installations.
             On 32bit machines this is ignored.
-
-        include_default (bool):
-            Toggle whether to include the '(Default)' value.
 
     Returns:
         list: A list of values under the hive or key.
@@ -358,9 +434,13 @@ def list_values(hive, key=None, use_32bit_registry=False, include_default=True):
             else:
                 value['vdata'] = vdata
             values.append(value)
-    except Exception as exc:  # pylint: disable=E0602
-        log.debug(r'Cannot find key: %s\%s', hive, key, exc_info=True)
-        return False, r'Cannot find key: {0}\{1}'.format(hive, key)
+
+    except win32api.error as exc:
+        if exc.winerror == 2:
+            log.debug(r'Cannot find key: %s\%s', hive, key)
+            return False, r'Cannot find key: {0}\{1}'.format(hive, key)
+        raise
+
     finally:
         if handle:
             handle.Close()
@@ -453,7 +533,7 @@ def read_value(hive, key, vname=None, use_32bit_registry=False):
         try:
             # RegQueryValueEx returns and accepts unicode data
             vdata, vtype = win32api.RegQueryValueEx(handle, local_vname)
-            if vdata or vdata in [0, '']:
+            if vdata or vdata in [0, '', []]:
                 # Only convert text types to unicode
                 ret['vtype'] = registry.vtype_reverse[vtype]
                 if vtype == win32con.REG_MULTI_SZ:
@@ -464,23 +544,28 @@ def read_value(hive, key, vname=None, use_32bit_registry=False):
                     ret['vdata'] = vdata
             else:
                 ret['comment'] = 'Empty Value'
-        except Exception as exc:
+        except win32api.error as exc:
             if exc.winerror == 2 and vname is None:
                 ret['vdata'] = ('(value not set)')
                 ret['vtype'] = 'REG_SZ'
-            else:
+            elif exc.winerror == 2:
                 msg = 'Cannot find {0} in {1}\\{2}' \
                       ''.format(local_vname, local_hive, local_key)
                 log.trace(exc)
                 log.trace(msg)
                 ret['comment'] = msg
                 ret['success'] = False
-    except Exception as exc:  # pylint: disable=E0602
-        msg = 'Cannot find key: {0}\\{1}'.format(local_hive, local_key)
-        log.trace(exc)
-        log.trace(msg)
-        ret['comment'] = msg
-        ret['success'] = False
+            else:
+                raise
+    except win32api.error as exc:
+        if exc.winerror == 2:
+            msg = 'Cannot find key: {0}\\{1}'.format(local_hive, local_key)
+            log.trace(exc)
+            log.trace(msg)
+            ret['comment'] = msg
+            ret['success'] = False
+        else:
+            raise
     return ret
 
 
@@ -632,17 +717,35 @@ def set_value(hive,
     else:
         create_options = registry.opttype['REG_OPTION_NON_VOLATILE']
 
+    handle = None
     try:
-        handle, _ = win32api.RegCreateKeyEx(hkey, local_key, access_mask,
-                                            Options=create_options)
-        win32api.RegSetValueEx(handle, local_vname, 0, vtype_value, local_vdata)
-        win32api.RegFlushKey(handle)
-        win32api.RegCloseKey(handle)
-        broadcast_change()
-        return True
-    except (win32api.error, SystemError, ValueError, TypeError):  # pylint: disable=E0602
-        log.exception('Encountered error setting registry value')
+        handle, result = win32api.RegCreateKeyEx(hkey, local_key, access_mask,
+                                                 Options=create_options)
+        msg = 'Created new key: %s\\%s' if result == 1 else \
+            'Opened existing key: %s\\%s'
+        log.debug(msg, local_hive, local_key)
+
+        try:
+            win32api.RegSetValueEx(handle, local_vname, 0, vtype_value, local_vdata)
+            win32api.RegFlushKey(handle)
+            broadcast_change()
+            return True
+        except TypeError as exc:
+            log.exception('"vdata" does not match the expected data type.\n%s',
+                          exc)
+            return False
+        except (SystemError, ValueError) as exc:
+            log.exception('Encountered error setting registry value.\n%s', exc)
+            return False
+
+    except win32api.error as exc:
+        log.exception('Error creating/opening key: %s\\%s\n%s', local_hive,
+                      local_key, exc.winerror)
         return False
+
+    finally:
+        if handle:
+            win32api.RegCloseKey(handle)
 
 
 def cast_vdata(vdata=None, vtype='REG_SZ'):
@@ -695,6 +798,9 @@ def cast_vdata(vdata=None, vtype='REG_SZ'):
     # Make sure REG_MULTI_SZ is a list of strings
     elif vtype_value == win32con.REG_MULTI_SZ:
         return [_to_unicode(i) for i in vdata]
+    # Make sure REG_QWORD is a 64 bit integer
+    elif vtype_value == win32con.REG_QWORD:
+        return int(vdata) if six.PY3 else long(vdata)  # pylint: disable=undefined-variable,incompatible-py3-code
     # Everything else is int
     else:
         return int(vdata)
@@ -752,13 +858,12 @@ def delete_key_recursive(hive, key, use_32bit_registry=False):
     access_mask = registry.registry_32[use_32bit_registry] | win32con.KEY_ALL_ACCESS
 
     if not key_exists(local_hive, local_key, use_32bit_registry):
+        log.debug('"%s\\%s" not found', hive, key)
         return False
 
     if (len(key) > 1) and (key.count('\\', 1) < registry.subkey_slash_check[hkey]):
         log.error(
-            'Hive:%s Key:%s; key is too close to root, not safe to remove',
-            hive, key
-        )
+            '"%s\\%s" is too close to root, not safe to remove', hive, key)
         return False
 
     # Functions for traversing the registry tree
@@ -772,7 +877,7 @@ def delete_key_recursive(hive, key, use_32bit_registry=False):
                 subkey = win32api.RegEnumKey(_key, i)
                 yield _to_mbcs(subkey)
                 i += 1
-            except Exception:  # pylint: disable=E0602
+            except win32api.error:
                 break
 
     def _traverse_registry_tree(_hkey, _keypath, _ret, _access_mask):
@@ -797,13 +902,21 @@ def delete_key_recursive(hive, key, use_32bit_registry=False):
 
     # Delete all sub_keys
     for sub_key_path in key_list:
+        key_handle = None
         try:
             key_handle = win32api.RegOpenKeyEx(hkey, sub_key_path, 0, access_mask)
-            win32api.RegDeleteKey(key_handle, '')
-            ret['Deleted'].append(r'{0}\{1}'.format(hive, sub_key_path))
-        except WindowsError as exc:  # pylint: disable=E0602
+            try:
+                win32api.RegDeleteKey(key_handle, '')
+                ret['Deleted'].append(r'{0}\{1}'.format(hive, sub_key_path))
+            except WindowsError as exc:  # pylint: disable=undefined-variable
+                log.error(exc, exc_info=True)
+                ret['Failed'].append(r'{0}\{1} {2}'.format(hive, sub_key_path, exc))
+        except win32api.error as exc:
             log.error(exc, exc_info=True)
-            ret['Failed'].append(r'{0}\{1} {2}'.format(hive, sub_key_path, exc))
+            ret['Failed'].append(r'{0}\{1} {2}'.format(hive, sub_key_path, exc.strerror))
+        finally:
+            if key_handle:
+                win32api.CloseHandle(key_handle)
 
     broadcast_change()
 
@@ -857,19 +970,16 @@ def delete_value(hive, key, vname=None, use_32bit_registry=False):
         raise CommandExecutionError('Invalid Hive: {0}'.format(local_hive))
     access_mask = registry.registry_32[use_32bit_registry] | win32con.KEY_ALL_ACCESS
 
+    handle = None
     try:
         handle = win32api.RegOpenKeyEx(hkey, local_key, 0, access_mask)
         win32api.RegDeleteValue(handle, local_vname)
-        win32api.RegCloseKey(handle)
         broadcast_change()
         return True
-    except Exception as exc:  # pylint: disable=E0602
+    except win32api.error as exc:
         if exc.winerror == 2:
             return None
-        else:
-            log.error(exc, exc_info=True)
-            log.error('Hive: %s', local_hive)
-            log.error('Key: %s', local_key)
-            log.error('ValueName: %s', local_vname)
-            log.error('32bit Reg: %s', use_32bit_registry)
-            return False
+        raise
+    finally:
+        if handle:
+            win32api.RegCloseKey(handle)
