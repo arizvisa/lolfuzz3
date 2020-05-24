@@ -105,7 +105,7 @@ endef
 define checksum
 $(3): $(1)
 	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
-	@printf '[-] Calculating %s checksum for %s: $$@\n' '$(2)' '$$<'
+	@printf '[-] Calculating %s checksum for %s: $$@\n' '$$(call uc,$(2))' '$$<'
 	@openssl dgst -$(2) '$$<' | rev | cut -d' ' -f 1 | rev | tr -d '\r\n' >| '$$@'
 endef
 
@@ -116,6 +116,22 @@ endef
 define checksum_extract
 $(4): $(1)
 	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
-	@printf '[-] Extracting %s checksum for %s from %s: $$@\n' '$(call uc,$(2))' '$(3)' '$$<'
-	@grep -A1 '^# $(call uc,$(2)) HASH' '$(1)' | grep -v '^#' | grep '$(3)$$$$' | cut -d' ' -f1 | tr -d '\r\n' >| '$$@'
+	@printf '[-] Extracting %s checksum for %s from %s: $$@\n' '$$(call uc,$(2))' '$(3)' '$$<'
+	@grep -A1 '^# $$(call uc,$(2)) HASH' '$(1)' | grep -v '^#' | grep '$(3)$$$$' | cut -d' ' -f1 | tr -d '\r\n' >| '$$@'
+endef
+
+# Generate a recipe that compares the two provided checksum files to see if
+# they match. If they do, then create the described target. Otherwise, remove
+# the described file.
+#
+# Usage: checksum_verify($file, $checksum1, $checksum2, $target)
+define checksum_verify
+$(4): $(1) $(2) $(3)
+	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
+	@printf '[*] Verifying checksum for file: %s\n' '$$<'
+	-cmp -s '$(2)' '$(3)' && touch '$$@'
+	-test -e '$$@' && printf '[!] Checksum for file matches: %s\n' '$$<'
+	-test ! -e '$$@' && printf '[!] Invalid checksum for file: %s\n' '$$<'
+	-test ! -e '$$@' && rm -f '$(2)' '$(3)'
+	@test -e '$$@'
 endef

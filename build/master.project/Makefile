@@ -221,7 +221,7 @@ all: download template output
 
 ## downloading
 .PHONY: download-installer
-download-installer: $(coreos_installer_files)
+download-installer: $(coreos_installer_files) $(foreach f,$(filter %.DIGESTS,$(coreos_installer_files)),$(patsubst %.DIGESTS,%.verified,$(f)))
 	@printf '[*] Successfully downloaded CoreOS installer files\n'
 
 .PHONY: download-tools
@@ -356,7 +356,7 @@ else
 endif
 
 # Build json file containing all information about the iso
-$(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(workdir)/$(coreos_iso).verified $(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw	| $(boxname_workdir)
 	@printf '[-] Generating iso variables for %s: %s\n' '$@' '$<'
 	@jq -n --arg checksum_type '$(checksum_type)' --arg url '$<' --slurpfile iso_checksum '$(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": $$checksum_type, "iso-url": $$url, "iso-checksum": $$iso_checksum[0] }' >| '$@'
 
@@ -586,6 +586,10 @@ endif
 
 # Download the CoreOS installer
 $(foreach name,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(workdir)/$(name),$(name))))
+
+# Verify hashes for all downloaded files
+$(foreach f,$(filter-out %.DIGESTS,$(coreos_installer_files)),$(eval $(call checksum,$(f),$(checksum_type),$(f).checksum)))
+$(foreach f,$(filter %.DIGESTS,$(coreos_installer_files)),$(eval $(call checksum_verify,$(patsubst %.DIGESTS,%,$(f)),$(patsubst %.DIGESTS,%,$(f)).checksum,$(patsubst %.DIGESTS,%,$(f)).$(checksum_type),$(patsubst %.DIGESTS,%,$(f)).verified)))
 
 # Extract hashes for all downloaded files and generate the ones that can't be extracted
 $(foreach f,$(filter %.DIGESTS,$(coreos_installer_files)),$(eval $(call checksum_extract,$(f),$(checksum_type),$(notdir $(patsubst %.DIGESTS,%,$(f))),$(patsubst %.DIGESTS,%,$(f)).$(checksum_type))))
