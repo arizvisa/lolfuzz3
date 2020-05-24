@@ -2,3 +2,7 @@ coreos_production_iso_image.iso
 coreos_production_image.bin.bz2
 coreos_production_image.bin.bz2.sig
 version.txt
+coreos_production_iso_image.iso.DIGESTS
+coreos_production_image.bin.bz2.DIGESTS
+version.txt.DIGESTS
+

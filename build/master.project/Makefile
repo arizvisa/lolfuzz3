@@ -587,9 +587,9 @@ endif
 # Download the CoreOS installer
 $(foreach name,$(file <$(in_coreos_files)),$(eval $(call coreos_download,$(workdir)/$(name),$(name))))
 
-# Generate hashes for all downloaded files
-$(foreach f,$(coreos_installer_files),$(eval $(call checksum,$(f),$(checksum_type),$(f).$(checksum_type))))
-$(foreach f,$(coreos_installer_files),$(eval $(call json_rawfile,$(f).$(checksum_type),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)))
+# Extract hashes for all downloaded files and generate the ones that can't be extracted
+$(foreach f,$(filter %.DIGESTS,$(coreos_installer_files)),$(eval $(call checksum_extract,$(f),$(checksum_type),$(notdir $(patsubst %.DIGESTS,%,$(f))),$(patsubst %.DIGESTS,%,$(f)).$(checksum_type))))
+$(foreach f,$(filter-out %.DIGESTS,$(coreos_installer_files)),$(eval $(call json_rawfile,$(f).$(checksum_type),$(boxname_workdir)/$(notdir $(f)).$(checksum_type).json-raw)))
 
 # Fetch the acbuild tool
 $(foreach u,$(shell ${GH_FETCH} '$(acbuild_metaurl)' | jq -r '.assets[].browser_download_url'),$(eval $(call gh_download,$(filesdir)/$(notdir $(u)),$(u))))
