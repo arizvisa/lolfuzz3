@@ -84,6 +84,16 @@ $(2)/$(notdir $(1)): $(1)	| $(2)
 	@cp '$$<' '$$@'
 endef
 
+# Same as the checksum function except the generated recipe also appends a
+# newline to the file that gets written.
+#
+# Usage: newline_file($filename, $target)
+define newline_file
+$(2): $(1)
+	@cp '$$<' '$$@'
+	@echo >> '$$@'
+endef
+
 # Generate a recipe that converts the source file (raw) into a json form that
 # is properly escaped. This is necessary if trying to use the contents of a raw
 # file as a field in json.

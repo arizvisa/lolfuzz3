@@ -56,6 +56,7 @@ boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
 # List of static files that are required for deployment (does not include template)
+output_identity := $(boxname).name $(boxname).iid
 output_config := $(boxname).config
 output_keypair := $(boxname).id_rsa $(boxname).id_rsa.pub
 
@@ -84,11 +85,6 @@ build := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(build
 
 ifeq ($(build),0)
     $(warning User has requested to skip building the target: $(boxname_template))
-endif
-
-## Timeout option
-ifdef TIMEOUT
-    $(info [-] User has specified an initial boot timeout of $(TIMEOUT))
 endif
 
 ## Debug option
@@ -198,7 +194,6 @@ help:
 	@printf '\tOUTPUT: (default /template) Path to deploy the template, its config, and auth keypair to\n'
 	@printf '\tSERVE: Path of initial service directory that is deployed to the template after installation of salt\n'
 	@printf '\tBUILDDIR: (default /build.dir) Path containing intermediary files for building template\n'
-	@printf '\tTIMEOUT: (default 1m30s) Measurement of time that `packer` should wait for the OS to boot up\n'
 	@printf '\tBUILD: (default true) Whether to actually build the template, or to just generate the config\n'
 	@printf '\tVALIDATE: (default true) Whether to validate the config via "%s"\n' "https://coreos.com/validate"
 	@printf '\tDEBUG: (default false) Emit more logging, and ask the user before unregistering (and removing) the template\n'
@@ -233,7 +228,7 @@ download: download-installer download-tools
 	@printf '[*] Successfully downloaded all required files\n'
 
 .PHONY: output
-output: $(outdir)/$(boxname) $(project_filename) $(foreach f,$(output_config) $(output_keypair),$(outdir)/$(f))
+output: $(outdir)/$(boxname) $(project_filename) $(foreach f,$(output_identity),$(outdir)/$(f)) $(foreach f,$(output_config),$(outdir)/$(f)) $(foreach f,$(output_keypair),$(outdir)/$(f))
 	@printf '[*] Sucessfully wrote output files to %s: %s\n' '$(outdir)' '$^'
 
 ## cleaning up files
@@ -242,6 +237,7 @@ clean-output:
 	@printf '[*] Erasing template: %s\n' '$(outdir)/$(boxname)'
 	-rm -rf '$(outdir)/$(boxname)'
 	@printf '[*] Erasing output files from %s\n' '$(outdir)'
+	-rm -f $(foreach f,$(output_identity),'$(outdir)/$(f)')
 	-rm -f $(foreach f,$(output_config),'$(outdir)/$(f)')
 
 .PHONY: clean-installer
@@ -260,6 +256,7 @@ clean-template:
 clean-build:
 	@printf '[*] Erasing temporary output files from %s\n' '$(workdir)'
 	-rm -f $(foreach f,$(output_config),'$(workdir)/$(f)')
+	-rm -f $(foreach f,$(output_identity),'$(workdir)/$(f)')
 
 .PHONY: clean-provisioning
 clean-provisioning:
@@ -298,14 +295,20 @@ clean-ignition:
 	@printf '[*] Erasing temporary files for ssh keys: %s\n' '$(boxname_workdir)/$(boxname).id_rsa*'
 	-rm -f '$(boxname_workdir)/$(boxname).id_rsa'*
 	@printf '[*] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network rootfs,$(boxname_workdir)/$(boxname).config-$(name))'
-	-rm -f $(foreach name,original files units users hostname sysctl pubkey network rootfs,'$(boxname_workdir)/$(boxname).config-$(name)')
+	-rm -f $(foreach name,original files units users identifier sysctl pubkey network rootfs,'$(boxname_workdir)/$(boxname).config-$(name)')
 	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
 	-rm -f '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
+	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/ignition-id.json' '$(boxname_workdir)/ignition-id.json-raw'
+	-rm -f '$(boxname_workdir)/ignition-id.json' '$(boxname_workdir)/ignition-id.json-raw'
+	@printf '[*] Erasing hostname files: %s %s %s\n' '$(boxname_workdir)/$(boxname).name.newline' '$(boxname_workdir)/ignition-hostname.json' '$(boxname_workdir)/ignition-hostname.json-raw'
+	-rm -f '$(boxname_workdir)/$(boxname).name.newline' '$(boxname_workdir)/ignition-hostname.json' '$(boxname_workdir)/ignition-hostname.json-raw'
 
 .PHONY: clean-json
 clean-json:
 	@printf '[*] Erasing temporary packer template: %s\n' '$(boxname).json'
 	-rm -f '$(boxname_workdir)/$(boxname).json'
+	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/$(boxname).iid' '$(boxname_workdir)/$(boxname).iid.json-raw'
+	-rm -f '$(boxname_workdir)/$(boxname).iid' '$(boxname_workdir)/$(boxname).iid.json-raw'
 	@printf '[*] Erasing temporary files for building packer template: %s\n' '$(foreach suffix,base iso salt ssh tools,$(boxname_workdir)/$(boxname)-vars.json.$(suffix))'
 	-rm -f '$(boxname_workdir)/$(boxname)-vars.json'{,.base,.iso,.salt,.ssh,.tools}
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
@@ -366,15 +369,9 @@ $(boxname_workdir)/$(boxname)-vars.json.ssh: $(workdir)/$(boxname).id_rsa	| $(bo
 	@jq -n --arg key '$<' '{ "provision-key": $$key }' >| '$@'
 
 # Build json file containing any build-specific variables
-ifndef TIMEOUT
-$(boxname_workdir)/$(boxname)-vars.json.base: FORCE	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname)-vars.json.base: $(boxname_workdir)/$(boxname).iid.json-raw	| $(boxname_workdir)
 	@printf '[-] Generating build variables: %s\n' '$@'
-	@jq -n --arg name '$(boxname)' --arg input '$(workdir)' --arg output '$(boxname_template)' '{ "guest-name": $$name, "install-input": $$input, "install-output": $$output }' >| '$@'
-else
-$(boxname_workdir)/$(boxname)-vars.json.base: FORCE	| $(boxname_workdir)
-	@printf '[-] Generating build variables: %s\n' '$@'
-	@jq -n --arg name '$(boxname)' --arg input '$(workdir)' --arg output '$(boxname_template)' --arg timeout '$(TIMEOUT)' '{ "guest-name": $$name, "install-input": $$input, "install-output": $$output, "timeout-boot": $$timeout }' >| '$@'
-endif
+	@jq -n --arg name '$(boxname)' --slurpfile id '$<' --arg input '$(workdir)' --arg output '$(boxname_template)' '{ "guest-name": $$name, "guest-id": $$id | join(""), "install-input": $$input, "install-output": $$output }' >| '$@'
 
 # Concatenate entire template configuration into a single .json file
 $(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workdir)/$(boxname)-vars.json.iso $(boxname_workdir)/$(boxname)-vars.json.ssh $(boxname_workdir)/$(boxname)-vars.json.salt $(boxname_workdir)/$(boxname)-vars.json.tools $(boxname_workdir)/$(boxname)-vars.json.base
@@ -396,7 +393,7 @@ else
 endif
 
 # Concatenate json template into a single .json file together with plugins
-$(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json 	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json	| $(boxname_workdir)
 	@printf '[*] Merging box with enabled plugins into %s: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach json,$^,'$(json)') >| '$@'
 
@@ -472,10 +469,16 @@ $(boxname_workdir)/$(boxname).config: $(outdir)/$(output_config)
 	cp '$<' '$@'
 endif
 
-# Set the hostname using $(boxname) with the mode 420 (0644 in octal)
-$(boxname_workdir)/$(boxname).config-hostname:	| $(boxname_workdir)
-	@printf '[-] Building the ignition configuration file for the hostname: %s\n' '$(boxname)'
-	@jq -n --arg content '$(boxname)' '[{ filesystem: "root", path: "/etc/hostname", mode: 420, contents: { source: ("data:," + ($$content | @uri)) } }]' >| '$@'
+# Write the hostname
+$(workdir)/$(boxname).name:	| $(workdir)
+	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!)
+	@printf '[-] Writing name of host into file: %s\n' '$@'
+	@printf -- '%s' '$(boxname)' >| '$@'
+
+# Pack the machine identifier and hostname into an array
+$(boxname_workdir)/$(boxname).config-identifier: $(boxname_workdir)/ignition-id.json $(boxname_workdir)/ignition-hostname.json	| $(boxname_workdir)
+	@printf '[-] Packing the ignition machine identifier and hostname into an array: %s\n' '$<'
+	@jq '[., inputs]' $(foreach file,$^,'$(file)') >| '$@'
 
 # Bootstrap the ignition/sysctl directory
 ifneq ($(ignition_sysctl_files),)
@@ -499,7 +502,7 @@ $(boxname_workdir)/$(boxname).config-rootfs:
 endif
 
 # Combine all ignition file jsons into a single one
-$(boxname_workdir)/$(boxname).config-files: $(boxname_workdir)/$(boxname).config-hostname $(boxname_workdir)/$(boxname).config-sysctl $(boxname_workdir)/$(boxname).config-rootfs
+$(boxname_workdir)/$(boxname).config-files: $(boxname_workdir)/$(boxname).config-identifier $(boxname_workdir)/$(boxname).config-sysctl $(boxname_workdir)/$(boxname).config-rootfs
 	@printf '[*] Merging the ignition file section into %s: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . + $$item)' $(foreach config,$^,'$(config)') >| '$@'
 
@@ -582,6 +585,9 @@ ifeq ($(wildcard $(outdir)/$(boxname).id_rsa),)
 $(eval $(call output_file,$(workdir)/$(boxname).id_rsa,$(outdir)))
 endif
 
+# Mark the identity files as things to output as well
+$(foreach name,$(output_identity),$(eval $(call output_file,$(workdir)/$(name),$(outdir))))
+
 ## Container Linux installation and configuration
 
 # Download the CoreOS installer
@@ -608,6 +614,22 @@ $(foreach f,$(extra_tools_files),$(eval $(call stage_tool,$(tools_config)/$(f),$
 $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_file_url)))
 
 ## Components used to build the Ignition configuration
+
+# Generate a static machine identifier for the master to work around hashicorp/packer#8528
+$(eval $(call checksum,$(workdir)/$(boxname).name,md5,$(boxname_workdir)/$(boxname).iid))
+$(eval $(call newline_file,$(boxname_workdir)/$(boxname).iid,$(workdir)/$(boxname).iid))
+
+# This id is fed to the kernel at bootup in order to force the machine id
+$(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).iid,$(boxname_workdir)/$(boxname).iid.json-raw))
+
+# This id is fed to ignition so that the id never changes
+$(eval $(call json_rawfile,$(workdir)/$(boxname).iid,$(boxname_workdir)/ignition-id.json-raw))
+$(eval $(call ignition_root_file,$(boxname_workdir)/ignition-id.json-raw,$(boxname_workdir)/ignition-id.json,etc/machine-id,292))
+
+# Generate an ignition file to write the hostname file
+$(eval $(call newline_file,$(workdir)/$(boxname).name,$(boxname_workdir)/$(boxname).name.newline))
+$(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).name.newline,$(boxname_workdir)/ignition-hostname.json-raw))
+$(eval $(call ignition_root_file,$(boxname_workdir)/ignition-hostname.json-raw,$(boxname_workdir)/ignition-hostname.json,etc/hostname,420))
 
 # Making the ignition sysctl list
 $(foreach f,$(ignition_sysctl_files),$(eval $(call ignition_sysctl,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)).json-raw,$(boxname_workdir)/ignition-sysctl.json-$(notdir $(f)),$(notdir $(f)),$(call decimal_mode,$(f)))))

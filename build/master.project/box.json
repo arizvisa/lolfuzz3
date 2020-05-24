@@ -4,6 +4,11 @@
             "headless" : false,
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
+                "................",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "",
+                "coreos systemd.machine_id={{user `guest-id`}}<enter><wait45s>",
+                "",
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -L -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
@@ -34,6 +39,11 @@
         { "type" : "parallels-iso",
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
+                "................",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "",
+                "coreos systemd.machine_id={{user `guest-id`}}<enter><wait45s>",
+                "",
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
@@ -68,6 +78,11 @@
             "headless" : false,
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
+                "................",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "",
+                "coreos systemd.machine_id={{user `guest-id`}}<enter><wait45s>",
+                "",
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
@@ -103,6 +118,11 @@
             "headless" : false,
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
+                "................",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "",
+                "coreos systemd.machine_id={{user `guest-id`}}<enter><wait45s>",
+                "",
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
@@ -140,6 +160,11 @@
         { "type" : "hyperv-iso",
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
+                "................",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "",
+                "coreos systemd.machine_id={{user `guest-id`}}<enter><wait45s>",
+                "",
                 "sudo -i<enter><wait><enter>",
                 "systemctl stop sshd.socket<enter>",
                 "curl --retry 10 --retry-connrefused --retry-max-time 0 -O http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `guest-config`}}<enter>",
@@ -170,15 +195,16 @@
     "provisioners" : [],
     "post-processors" : [],
     "variables" : {
-        "timeout-boot" : "1m30s",
+        "timeout-boot" : "1s",
         "timeout-wait" : "10m",
 
         "guest-name" : "master.unnamed",
+        "guest-id": "0123456789abcdef0123456789abcdef",
+
         "guest-cpu-count" : "1",
         "guest-disk-size" : "102400",
         "guest-memory-size" : "4096",
         "guest-config" : "path-to-yaml-file",
-
         "guest-network" : "nat",
         "guest-serial" : "none",
 
