@@ -128,9 +128,9 @@ endef
 define checksum_verify
 $(4): $(1) $(2) $(3)
 	$$(call verify_expression,$$(wildcard $$<),File not found: $$<)
-	@printf '[*] Verifying checksum for file: %s\n' '$$<'
+	@printf '[-] Verifying checksum for file: %s\n' '$$<'
 	-cmp -s '$(2)' '$(3)' && touch '$$@'
-	-test -e '$$@' && printf '[!] Checksum for file matches: %s\n' '$$<'
+	-test -e '$$@' && printf '[*] Successfully verified checksum for file: %s\n' '$$<'
 	-test ! -e '$$@' && printf '[!] Invalid checksum for file: %s\n' '$$<'
 	-test ! -e '$$@' && rm -f '$(2)' '$(3)'
 	@test -e '$$@'

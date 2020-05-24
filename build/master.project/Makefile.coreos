@@ -17,8 +17,9 @@ in_coreos_version=$(MAKEDIR)coreos.version
 in_coreos_validate=$(MAKEDIR)coreos.validate.url
 in_coreos_files=$(MAKEDIR)coreos.files
 
-# Filename in coreos.files that represents the iso used to install CoreOS.
+# Filenames in coreos.files that represents are used to install CoreOS.
 coreos_iso=coreos_production_iso_image.iso
+coreos_required=version.txt coreos_production_iso_image.iso coreos_production_image.bin.bz2
 
 # Export the variables assigned in in_coreos_version so that they
 # can be composed into the URL for the latest stable version.
