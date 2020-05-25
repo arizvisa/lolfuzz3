@@ -19,7 +19,7 @@ run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install sysstat hdp
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}
 
 # Python libraries needed to install packages
-run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pip {{python}}-setuptools {{python}}-six {{python}}-requests {{python}}-urllib3
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install {{python}}-pip {{python}}-setuptools {{python}}-six {{python}}-requests {{python}}-urllib3 {{python}}-wheel
 
 # Binary libraries needed for various packages
 run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install libgit2 libsodium libyaml zeromq
@@ -50,8 +50,12 @@ run -- {{pip}} --retries=65536 install pywinrm pywinrm[kerberos] pywinrm[credssp
 # run -- {{pip}} -- retries=65536 install python-gssapi
 
 ### Installation of the stack (via bootstrap)
+{% if bootstrap is defined -%}
 run -- curl -L -o /root/install-salt.sh "{{bootstrap}}"
-run -- env {%- if environment is defined -%}{%- for name in environment %} {{name}}={{environment[name]}}{%- endfor %}{%- endif %} bash /root/install-salt.sh -F -P -b -d -X -x {{python}} -M -S -L git v{{version}}
+run -- env {%- if environment is defined -%}{%- for name in environment %} {{name}}={{environment[name]}}{%- endfor %}{%- endif %} bash /root/install-salt.sh -F -b -d -X -x {{python}} -M -S -L git v{{version}}
+{% else -%}
+run -- dnf -y --setopt=fastestmirror=true --setopt=retries=0 install salt salt-master salt-minion salt-cloud
+{% endif %}
 
 {% if commands -%}
 # Custom commands

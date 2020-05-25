@@ -47,7 +47,9 @@ Generate salt-stack container build rules:
         - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb'
 
         - context:
+            {% if "bootstrap" in pillar["container"]["salt-stack"] -%}
             bootstrap: {{ pillar["container"]["salt-stack"]["bootstrap"] | yaml_dquote }}
+            {% endif -%}
             version: {{ pillar["container"]["salt-stack"]["version"] | yaml_dquote }}
             python: {{ pillar["container"]["salt-stack"]["python"] | yaml_dquote }}
             pip: {{ pillar["container"]["salt-stack"]["pip"] | yaml_dquote }}
@@ -62,6 +64,9 @@ Generate salt-stack container build rules:
 
         - defaults:
             volumes:
+                sys-fs:
+                    source: /sys
+                    mount: /sys
                 dbus-socket:
                     source: /var/run/dbus
                     mount: /var/run/dbus
@@ -134,6 +139,7 @@ Install the salt-toolbox wrapper:
 
         - context:
             mounts:
+                - /sys
                 - /var/run/dbus
                 - /etc/systemd
                 - /opt
