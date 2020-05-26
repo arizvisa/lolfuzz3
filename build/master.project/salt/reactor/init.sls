@@ -1,5 +1,5 @@
 {% set Root = pillar["local"]["root"] %}
-{% set ProjectPath = pillar["project"] %}
+{% set ProjectPath = pillar["configuration"] %}
 
 include:
     - stack

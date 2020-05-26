@@ -1,6 +1,5 @@
 {% set Root = pillar["local"]["root"] %}
 {% set ConfigurationPillar = pillar["configuration"] %}
-{% set ProjectPath = pillar["project"] %}
 
 ### Macros to recursively serialize arbitrary data structures into etcd
 {% macro project_set_value(root, name, value) %}
@@ -48,10 +47,9 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
             - Check firewall rules
 
 ### Project configuration
-
-{% set ProjectRoot = ProjectPath["base"].split("/") -%}
-{% set ProjectPillar = ProjectPath["pillar"].split("/") + ["project"] -%}
-{% set MinionPillar = ProjectPath["minion"].split("/") -%}
+{% set ProjectRoot = ConfigurationPillar["base"].split("/") -%}
+{% set ProjectPath = ConfigurationPillar["pillar"].split("/") + ["configuration"] -%}
+{% set MinionPath = ConfigurationPillar["minion"].split("/") -%}
 
 Project key {{ ProjectRoot | join(".") }}:
     etcd.directory:
@@ -60,31 +58,31 @@ Project key {{ ProjectRoot | join(".") }}:
         - requires:
             - Check firewall rules
 
-Project key {{ ProjectPillar | join(".") }}:
+Project key {{ ProjectPath | join(".") }}:
     etcd.directory:
-        - name: {{ ProjectPillar | join("/") | yaml_dquote }}
+        - name: {{ ProjectPath | join("/") | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Project key {{ ProjectRoot | join(".") }}
 
-Project key {{ MinionPillar | join(".") }}:
+Project key {{ MinionPath | join(".") }}:
     etcd.directory:
-        - name: {{ MinionPillar | join("/") | yaml_dquote }}
+        - name: {{ MinionPath | join("/") | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Project key {{ ProjectRoot | join(".") }}
 
 # Project name
 {{ project_set_value(ProjectRoot, "name", ConfigurationPillar["name"]) }}
-{{ project_set_value(ProjectPillar, "name", ConfigurationPillar["name"]) }}
+{{ project_set_value(ProjectPath, "name", ConfigurationPillar["name"]) }}
 
 # Project repository uri
 {{ project_set_value(ProjectRoot, "repository", ConfigurationPillar["path"]) }}
 
 # Salt/Project/Minion namespace paths
-{{ project_set_value(ProjectPillar, "salt", ProjectPath["salt"]) }}
-{{ project_set_value(ProjectPillar, "pillar", ProjectPath["pillar"]) }}
-{{ project_set_value(ProjectPillar, "minion", ProjectPath["minion"]) }}
+{{ project_set_value(ProjectPath, "salt", ConfigurationPillar["salt"]) }}
+{{ project_set_value(ProjectPath, "pillar", ConfigurationPillar["pillar"]) }}
+{{ project_set_value(ProjectPath, "minion", ConfigurationPillar["minion"]) }}
 
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
 {% set Defaults = ConfigurationPillar["defaults"] %}
