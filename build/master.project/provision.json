@@ -34,7 +34,8 @@
         { "type" : "shell",
             "inline" : [
                 "mkdir -vp /home/core/.ssh",
-                "chmod -vc 0700 /home/core/.ssh"
+                "chmod -vc 0700 /home/core/.ssh",
+                "rm -f /home/core/.ssh/id_rsa"
             ]
         },
         { "type" : "file",
