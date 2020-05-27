@@ -7,8 +7,8 @@ master:
         - master-network
 
         # project configuration
-        - project
-        - project-path
+        - configuration
+        - configuration-path
 
         # bootstrap configuration
         - flannel
