@@ -73,7 +73,6 @@ Configuration key {{ MinionPath | join(".") }}:
             - Configuration key {{ RootPath | join(".") }}
 
 # Project name
-{{ etcd_set_value(RootPath, "name", ConfigurationPillar["name"]) }}
 {{ etcd_set_value(ConfigurationPath, "name", ConfigurationPillar["name"]) }}
 
 # Project repository uri
