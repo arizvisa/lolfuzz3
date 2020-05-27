@@ -2,31 +2,31 @@
 {% set ConfigurationPillar = pillar["configuration"] %}
 
 ### Macros to recursively serialize arbitrary data structures into etcd
-{% macro project_set_value(root, name, value) %}
-Project variable {{ (root + [name]) | join(".") }}:
+{% macro etcd_set_value(root, name, value) %}
+Configuration variable {{ (root + [name]) | join(".") }}:
     etcd.set:
         - name: {{ (root + [name]) | join("/") | yaml_dquote }}
         - value: {{ value }}
         - profile: root_etcd
         - requires:
-            - Project key {{ root }}
+            - Configuration key {{ root }}
 {% endmacro %}
 
-{% macro project_set_mapping(root, name, value) %}
-Project key {{ (root + [name]) | join(".") }}:
+{% macro etcd_set_mapping(root, name, value) %}
+Configuration key {{ (root + [name]) | join(".") }}:
     etcd.directory:
         - name: {{ (root + [name]) | join("/") | yaml_dquote }}
         - profile: root_etcd
         - requires:
-            - Project key {{ root }}
+            - Configuration key {{ root }}
 
     {%- for item in value -%}
         {%- if value[item] is mapping -%}
-{{ project_set_mapping(root + [name], item, value[item]) }}
+{{ etcd_set_mapping(root + [name], item, value[item]) }}
         {%- elif value[item] is sequence and value[item] is not string -%}
-{{ raise("Unable to serialize a sequence within the project namespace") }}
+{{ raise("Unable to serialize a sequence within the configuration namespace") }}
         {%- else -%}
-{{ project_set_value(root + [name], item, value[item]) }}
+{{ etcd_set_value(root + [name], item, value[item]) }}
         {%- endif -%}
     {%- endfor -%}
 {% endmacro %}
@@ -46,53 +46,53 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
         - requires:
             - Check firewall rules
 
-### Project configuration
-{% set ProjectRoot = ConfigurationPillar["base"].split("/") -%}
-{% set ProjectPath = ConfigurationPillar["pillar"].split("/") + ["configuration"] -%}
+### Configuration in etcd
+{% set RootPath = ConfigurationPillar["base"].split("/") -%}
+{% set ConfigurationPath = ConfigurationPillar["pillar"].split("/") + ["configuration"] -%}
 {% set MinionPath = ConfigurationPillar["minion"].split("/") -%}
 
-Project key {{ ProjectRoot | join(".") }}:
+Configuration key {{ RootPath | join(".") }}:
     etcd.directory:
-        - name: {{ ProjectRoot | join("/") | yaml_dquote }}
+        - name: {{ RootPath | join("/") | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check firewall rules
 
-Project key {{ ProjectPath | join(".") }}:
+Configuration key {{ ConfigurationPath | join(".") }}:
     etcd.directory:
-        - name: {{ ProjectPath | join("/") | yaml_dquote }}
+        - name: {{ ConfigurationPath | join("/") | yaml_dquote }}
         - profile: root_etcd
         - requires:
-            - Project key {{ ProjectRoot | join(".") }}
+            - Configuration key {{ RootPath | join(".") }}
 
-Project key {{ MinionPath | join(".") }}:
+Configuration key {{ MinionPath | join(".") }}:
     etcd.directory:
         - name: {{ MinionPath | join("/") | yaml_dquote }}
         - profile: root_etcd
         - requires:
-            - Project key {{ ProjectRoot | join(".") }}
+            - Configuration key {{ RootPath | join(".") }}
 
 # Project name
-{{ project_set_value(ProjectRoot, "name", ConfigurationPillar["name"]) }}
-{{ project_set_value(ProjectPath, "name", ConfigurationPillar["name"]) }}
+{{ etcd_set_value(RootPath, "name", ConfigurationPillar["name"]) }}
+{{ etcd_set_value(ConfigurationPath, "name", ConfigurationPillar["name"]) }}
 
 # Project repository uri
-{{ project_set_value(ProjectRoot, "repository", ConfigurationPillar["path"]) }}
+{{ etcd_set_value(RootPath, "repository", ConfigurationPillar["path"]) }}
 
 # Salt/Project/Minion namespace paths
-{{ project_set_value(ProjectPath, "salt", ConfigurationPillar["salt"]) }}
-{{ project_set_value(ProjectPath, "pillar", ConfigurationPillar["pillar"]) }}
-{{ project_set_value(ProjectPath, "minion", ConfigurationPillar["minion"]) }}
+{{ etcd_set_value(ConfigurationPath, "salt", ConfigurationPillar["salt"]) }}
+{{ etcd_set_value(ConfigurationPath, "pillar", ConfigurationPillar["pillar"]) }}
+{{ etcd_set_value(ConfigurationPath, "minion", ConfigurationPillar["minion"]) }}
 
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
 {% set Defaults = ConfigurationPillar["defaults"] %}
 {% for item in Defaults %}
     {%- if Defaults[item] is mapping -%}
-{{ project_set_mapping(ProjectRoot, item, Defaults[item]) }}
+{{ etcd_set_mapping(RootPath, item, Defaults[item]) }}
     {%- elif Defaults[item] is sequence and Defaults[item] is not string -%}
-{{ raise("Unable to serialize a sequence within the project namespace") }}
+{{ raise("Unable to serialize a sequence within the configuration namespace") }}
     {%- else -%}
-{{ project_set_value(ProjectRoot, item, Defaults[item]) }}
+{{ etcd_set_value(RootPath, item, Defaults[item]) }}
     {%- endif -%}
 {% endfor %}
 
