@@ -69,6 +69,7 @@ Synchronize all modules for the minion:
         - require:
             - Install all required Python modules
 
+{% if grains["saltversioninfo"][0] | int < 3000 -%}
 Deploy the salt.utils.templates module directly into the remote-minion's site-packages:
     file.managed:
         - name: {{ grains["saltpath"] }}/utils/templates.py
@@ -82,3 +83,4 @@ Deploy the salt.utils.path module directly into the remote-minion's site-package
         - source: salt://_utils/path.py
         - require:
             - Install all required Python modules
+{% endif -%}

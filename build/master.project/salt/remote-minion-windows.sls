@@ -104,6 +104,7 @@ Synchronize all modules for the minion:
         - require:
             - Install all required Python modules
 
+{% if grains["saltversioninfo"][0] | int < 3000 -%}
 Deploy the salt.utils.templates module directly into the remote-minion's site-packages:
     file.managed:
         - name: {{ grains["saltpath"] }}/utils/templates.py
@@ -117,6 +118,7 @@ Deploy the salt.utils.path module directly into the remote-minion's site-package
         - source: salt://_utils/path.py
         - require:
             - Install all required Python modules
+{% endif -%}
 
 ## Install the new minion configuration (and service configuration)
 Create minion configuration directory:
@@ -187,8 +189,10 @@ Re-install minion configuration:
             - Upgrade required package -- pip
             - Install all required Python Modules
             - Synchronize all modules for the minion
+            {% if grains["saltversioninfo"][0] | int < 3000 -%}
             - Deploy the salt.utils.templates module directly into the remote-minion's site-packages
             - Deploy the salt.utils.path module directly into the remote-minion's site-packages
+            {% endif -%}
             - Install minion common configuration
             - Install minion etcd configuration
 

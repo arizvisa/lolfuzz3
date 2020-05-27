@@ -11,6 +11,7 @@ Synchronize all modules for the minion:
         - require:
             - sls: master-minion
 
+{% if grains["saltversioninfo"][0] | int < 3000 -%}
 Deploy the salt.utils.templates module directly into the master-minion's site-packages:
     file.managed:
         - name: {{ grains["saltpath"] }}/utils/templates.py
@@ -22,3 +23,4 @@ Deploy the salt.utils.path module directly into the master-minion's site-package
         - name: {{ grains["saltpath"] }}/utils/path.py
         - source: salt://_utils/path.py
         - mode: 0644
+{% endif -%}
