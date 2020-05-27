@@ -562,7 +562,7 @@ $(boxname_workdir)/pillar/acbuild.sls: $(acbuild_files)	| $(boxname_workdir)/pil
 	@printf '[-] Generating default pillar configuration: %s\n' '$^'
 	@printf -- '- Source: %s\n  Algo: %s\n  Hash: %s\n\n' $(foreach f,$^,'$(shell basename $(f))' '$(checksum_type)' '$(shell openssl dgst -$(checksum_type) "$(f)" | rev | cut -d" " -f1 | rev)') >| '$@'
 
-$(boxname_workdir)/pillar/project-name.sls:	| $(boxname_workdir)/pillar
+$(boxname_workdir)/pillar/configuration-name.sls:	| $(boxname_workdir)/pillar
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!)
 	@printf '[-] Writing project name into pillar configuration: %s\n' '$@'
 	@printf -- '%s\n' '$(project)' >| '$@'
