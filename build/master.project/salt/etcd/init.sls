@@ -48,7 +48,7 @@ Register the etcd cluster-size for the machine-id with the v2 discovery protocol
 
 ### Configuration in etcd
 {% set RootPath = ConfigurationPillar["base"].split("/") -%}
-{% set ConfigurationPath = ConfigurationPillar["pillar"].split("/") + ["configuration"] -%}
+{% set ConfigurationPath = ConfigurationPillar["base"].split("/") + ["configuration"] -%}
 {% set MinionPath = ConfigurationPillar["minion"].split("/") -%}
 
 Configuration key {{ RootPath | join(".") }}:
@@ -78,9 +78,8 @@ Configuration key {{ MinionPath | join(".") }}:
 # Project repository uri
 {{ etcd_set_value(RootPath, "repository", ConfigurationPillar["path"]) }}
 
-# Salt/Project/Minion namespace paths
+# Salt/Minion namespace paths
 {{ etcd_set_value(ConfigurationPath, "salt", ConfigurationPillar["salt"]) }}
-{{ etcd_set_value(ConfigurationPath, "pillar", ConfigurationPillar["pillar"]) }}
 {{ etcd_set_value(ConfigurationPath, "minion", ConfigurationPillar["minion"]) }}
 
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
