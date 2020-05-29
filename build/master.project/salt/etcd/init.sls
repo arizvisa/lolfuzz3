@@ -1,5 +1,5 @@
 {% set Root = pillar["local"]["root"] %}
-{% set ConfigurationPillar = pillar["configuration"] %}
+{% set ConfigurationBootstrapPillar = pillar["configuration"] %}
 
 ### Macros to recursively serialize arbitrary data structures into etcd
 {% macro etcd_set_value(root, name, value) %}
@@ -40,16 +40,16 @@ Check firewall rules:
 
 Register the etcd cluster-size for the machine-id with the v2 discovery protocol:
     etcd.set:
-        - name: '{{ ConfigurationPillar["etcd"]["discovery"] }}/{{ pillar["local"]["machine_id"] }}/_config/size'
-        - value: {{ ConfigurationPillar["etcd"]["cluster-size"] | yaml_dquote }}
+        - name: '{{ ConfigurationBootstrapPillar["etcd"]["discovery"] }}/{{ pillar["local"]["machine_id"] }}/_config/size'
+        - value: {{ ConfigurationBootstrapPillar["etcd"]["cluster-size"] | yaml_dquote }}
         - profile: root_etcd
         - requires:
             - Check firewall rules
 
-### Configuration in etcd
-{% set RootPath = ConfigurationPillar["base"].split("/") -%}
-{% set ConfigurationPath = ConfigurationPillar["base"].split("/") + ["configuration"] -%}
-{% set MinionPath = ConfigurationPillar["minion"].split("/") -%}
+### Grab configuration from pillar (files) and write them into extended pillar (etcd)
+{% set RootPath = ConfigurationBootstrapPillar["base"].split("/") -%}
+{% set ConfigurationPath = ConfigurationBootstrapPillar["base"].split("/") + ["configuration"] -%}
+{% set MinionPath = ConfigurationBootstrapPillar["minion"].split("/") -%}
 
 Configuration key {{ RootPath | join(".") }}:
     etcd.directory:
@@ -73,17 +73,18 @@ Configuration key {{ MinionPath | join(".") }}:
             - Configuration key {{ RootPath | join(".") }}
 
 # Project name
-{{ etcd_set_value(ConfigurationPath, "name", ConfigurationPillar["name"]) }}
+{{ etcd_set_value(ConfigurationPath, "name", ConfigurationBootstrapPillar["name"]) }}
 
 # Project repository uri
-{{ etcd_set_value(RootPath, "repository", ConfigurationPillar["path"]) }}
+{{ etcd_set_value(ConfigurationPath, "repository", ConfigurationBootstrapPillar["path"]) }}
 
 # Salt/Minion namespace paths
-{{ etcd_set_value(ConfigurationPath, "salt", ConfigurationPillar["salt"]) }}
-{{ etcd_set_value(ConfigurationPath, "minion", ConfigurationPillar["minion"]) }}
+{{ etcd_set_value(ConfigurationPath, "base", ConfigurationBootstrapPillar["salt"]) }}
+{{ etcd_set_value(ConfigurationPath, "salt", ConfigurationBootstrapPillar["salt"]) }}
+{{ etcd_set_value(ConfigurationPath, "minion", ConfigurationBootstrapPillar["minion"]) }}
 
 # Recursively populate the /config key with the defaults specified in the bootstrap pillar
-{% set Defaults = ConfigurationPillar["defaults"] %}
+{% set Defaults = ConfigurationBootstrapPillar["defaults"] %}
 {% for item in Defaults %}
     {%- if Defaults[item] is mapping -%}
 {{ etcd_set_mapping(RootPath, item, Defaults[item]) }}
