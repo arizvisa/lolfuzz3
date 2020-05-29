@@ -10,5 +10,5 @@
             - pillarenv: base
             - pillar:
                 accessKey: {{ data.id }}
-                secretKey: {{ pillar["project"]["name"] }}
+                secretKey: {{ pillar["configuration"]["name"] }}
                 groupName: minion

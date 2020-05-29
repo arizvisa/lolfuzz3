@@ -38,7 +38,7 @@ Add the salt path to the exclusions for Windows Defender:
 ## Hostname information
 Set the workgroup:
     system.workgroup:
-        - name: {{ pillar["project"]["name"] }}
+        - name: {{ pillar["configuration"]["name"] }}
 
 Set the hostname:
     system.hostname:
