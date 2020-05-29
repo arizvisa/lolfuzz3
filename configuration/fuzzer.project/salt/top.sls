@@ -7,11 +7,11 @@ base:
         - fuzzer.deploy
 
     # All windows targets
-    'G@os_family:Windows':
+    'G@os_family:Windows and not G@role:master':
         []
 
     # All linux targets
-    'not G@os_family:Windows':
+    'not G@os_family:Windows and not G@role:master':
         - updates
 
     # All targets
