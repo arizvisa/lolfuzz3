@@ -11,7 +11,7 @@ container:
         version: latest
         uuid: /var/lib/coreos/minio-client.uuid
 
-{% import_yaml "/srv/bootstrap/pillar/project-name.sls" as project_name -%}
+{% import_yaml "/srv/bootstrap/pillar/configuration-name.sls" as project_name -%}
 store:
     minio:
         root: /srv/store
