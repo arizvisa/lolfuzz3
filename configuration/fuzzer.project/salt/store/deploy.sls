@@ -5,7 +5,7 @@
 
 Create the {{ pillar["container"]["minio"]["name"] }}.service data store:
     file.directory:
-        - name: '{{ Root }}/{{ pillar["store"]["minio"]["root"] }}'
+        - name: '{{ Root }}{{ pillar["store"]["minio"]["root"] }}'
         - mode: 0775
         - makedirs: true
 
@@ -25,13 +25,13 @@ Fetch the {{ pillar["container"]["minio"]["name"] }} image:
             fetch
             {{ pillar["container"]["minio"]["image"] }}:{{ pillar["container"]["minio"]["version"] }}
             >|
-            "{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio"]["name"] }}:{{ pillar["container"]["minio"]["version"] }}.id"
+            "{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio"]["name"] }}:{{ pillar["container"]["minio"]["version"] }}.id"
 
-        - creates: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio"]["name"] }}:{{ pillar["container"]["minio"]["version"] }}.id'
+        - creates: '{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio"]["name"] }}:{{ pillar["container"]["minio"]["version"] }}.id'
 
 Check that the {{ pillar["container"]["minio"]["name"] }} image has been fetched:
     file.exists:
-        - name: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio"]["name"] }}:{{ pillar["container"]["minio"]["version"] }}.id'
+        - name: '{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio"]["name"] }}:{{ pillar["container"]["minio"]["version"] }}.id'
         - require:
             - Fetch the {{ pillar["container"]["minio"]["name"] }} image
 
@@ -126,13 +126,13 @@ Fetch the {{ pillar["container"]["minio-client"]["name"] }} image:
             fetch
             {{ pillar["container"]["minio-client"]["image"] }}:{{ pillar["container"]["minio-client"]["version"] }}
             >|
-            "{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio-client"]["name"] }}:{{ pillar["container"]["minio-client"]["version"] }}.id"
+            "{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio-client"]["name"] }}:{{ pillar["container"]["minio-client"]["version"] }}.id"
 
-        - creates: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio-client"]["name"] }}:{{ pillar["container"]["minio-client"]["version"] }}.id'
+        - creates: '{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio-client"]["name"] }}:{{ pillar["container"]["minio-client"]["version"] }}.id'
 
 Check that the {{ pillar["container"]["minio-client"]["name"] }} image has been fetched:
     file.exists:
-        - name: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio-client"]["name"] }}:{{ pillar["container"]["minio-client"]["version"] }}.id'
+        - name: '{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["minio-client"]["name"] }}:{{ pillar["container"]["minio-client"]["version"] }}.id'
         - require:
             - Fetch the {{ pillar["container"]["minio-client"]["name"] }} image
 
@@ -140,7 +140,7 @@ Deploy the {{ pillar["container"]["minio-client"]["name"] }} command:
     file.managed:
         - template: jinja
         - source: salt://store/minio-client.command
-        - name: {{ Root }}/{{ pillar["store"]["minio"]["client"] }}
+        - name: {{ Root }}{{ pillar["store"]["minio"]["client"] }}
         - defaults:
             rkt: /bin/rkt
             cachedir: $HOME/.mc

@@ -3,28 +3,28 @@
 ### container directory structure
 Make container build directory:
     file.directory:
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["build"] }}'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["build"] }}'
         - makedirs: true
         - dir_mode: 1755
         - file_mode: 0664
 
 Make container image directory:
     file.directory:
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["image"] }}'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["image"] }}'
         - makedirs: true
         - dir_mode: 0755
         - file_mode: 0664
 
 Make container tools directory:
     file.directory:
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["tools"] }}'
         - makedirs: true
         - dir_mode: 0755
         - file_mode: 0664
 
 Make container service-tools directory:
     file.directory:
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["service-tools"] }}'
         - makedirs: true
         - dir_mode: 0755
         - file_mode: 0664
@@ -32,7 +32,7 @@ Make container service-tools directory:
 ### container tools
 Create temporary directory for container tools:
     file.directory:
-        - name: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}'
+        - name: '{{ Root }}{{ pillar["toolbox"]["self-service"]["temporary"] }}'
         - makedirs: true
 
 {% for item in pillar["service"]["container"]["tools"] %}
@@ -40,7 +40,7 @@ Transfer container tools ({{ item.Source }}):
     file.managed:
         - source: 'salt://files/{{ item.Source }}'
         - source_hash: '{{ item.Algo }}={{ item.Hash }}'
-        - name: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ item.Source }}'
+        - name: '{{ Root }}{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ item.Source }}'
         - require:
             - Create temporary directory for container tools
         - mode: 0640
@@ -53,7 +53,7 @@ Create temporary tools-extraction directory:
 
 Extract container tools:
     archive.extracted:
-        - source: '{{ Root }}/{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ pillar["service"]["container"]["tools"] | map(attribute="Source") | first }}'
+        - source: '{{ Root }}{{ pillar["toolbox"]["self-service"]["temporary"] }}/{{ pillar["service"]["container"]["tools"] | map(attribute="Source") | first }}'
         - name: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
         - require:
             - Create temporary tools-extraction directory
@@ -65,7 +65,7 @@ Extract container tools:
 
 Deploy container tools:
     cmd.run:
-        - name: 'mv -v {{ pillar["service"]["container"]["tools-extract"]["match"] }} "{{ Root }}/{{ pillar["service"]["container"]["paths"]["tools"] }}"'
+        - name: 'mv -v {{ pillar["service"]["container"]["tools-extract"]["match"] }} "{{ Root }}{{ pillar["service"]["container"]["paths"]["tools"] }}"'
         - cwd: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
         - require:
             - Extract container tools
@@ -76,7 +76,7 @@ Deploy container tools:
 Install container build script:
     file.managed:
         - source: salt://container/build.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh'
         - require:
             - Make container service-tools directory
             - Deploy container tools
@@ -85,7 +85,7 @@ Install container build script:
 Install container-build.service script:
     file.managed:
         - source: salt://container/container-build.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/container-build.sh'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["service-tools"] }}/container-build.sh'
         - use:
             - file: Install container build script
         - require:
@@ -121,7 +121,7 @@ Install container-build.path:
 Install container load script:
     file.managed:
         - source: salt://container/load.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/load.sh'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["service-tools"] }}/load.sh'
         - require:
             - Make container service-tools directory
         - mode: 0775
@@ -129,7 +129,7 @@ Install container load script:
 Install container-load.service script:
     file.managed:
         - source: salt://container/container-load.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/container-load.sh'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["service-tools"] }}/container-load.sh'
         - use:
             - Install container load script
         - require:
@@ -163,7 +163,7 @@ Install container-load.path:
 Install container update script:
     file.managed:
         - source: salt://container/update.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/update.sh'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["service-tools"] }}/update.sh'
         - require:
             - Make container service-tools directory
             - Make container image directory
@@ -172,7 +172,7 @@ Install container update script:
 Install container-sync.service script:
     file.managed:
         - source: salt://container/container-update.sh
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["service-tools"] }}/container-update.sh'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["service-tools"] }}/container-update.sh'
         - use:
             - Install container update script
         - require:

@@ -20,13 +20,13 @@ Fetch the {{ pillar["container"]["zetcd"]["name"] }} image:
             {{ pillar["container"]["zetcd"]["image"] }}:{{ pillar["container"]["zetcd"]["version"] }}
             | tail -n 1
             >|
-            "{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["zetcd"]["name"] }}:{{ pillar["container"]["zetcd"]["version"] }}.id"
+            "{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["zetcd"]["name"] }}:{{ pillar["container"]["zetcd"]["version"] }}.id"
 
-        - creates: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["zetcd"]["name"] }}:{{ pillar["container"]["zetcd"]["version"] }}.id'
+        - creates: '{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["zetcd"]["name"] }}:{{ pillar["container"]["zetcd"]["version"] }}.id'
 
 Check that the {{ pillar["container"]["zetcd"]["name"] }} image has been fetched:
     file.exists:
-        - name: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["zetcd"]["name"] }}:{{ pillar["container"]["zetcd"]["version"] }}.id'
+        - name: '{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["zetcd"]["name"] }}:{{ pillar["container"]["zetcd"]["version"] }}.id'
         - require:
             - Fetch the {{ pillar["container"]["zetcd"]["name"] }} image
 
@@ -58,7 +58,7 @@ Enable systemd multi-user.target wants {{ pillar["container"]["zetcd"]["name"] }
 
 Check that the {{ pillar["container"]["kafka"]["name"] }} container exists:
     file.exists:
-        - name: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["build"] }}/{{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}.aci.sh'
+        - name: '{{ Root }}{{ mpillar["service"]["container"]["paths"]["build"] }}/{{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}.aci.sh'
 
 Build the {{ pillar["container"]["kafka"]["name"] }} image:
     cmd.run:
@@ -76,7 +76,7 @@ Build the {{ pillar["container"]["kafka"]["name"] }} image:
             "{{ mpillar["service"]["container"]["paths"]["service-tools"] }}/build.sh"
             "{{ mpillar["service"]["container"]["paths"]["build"] }}/{{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}.aci.sh"
 
-        - creates: '{{ Root }}/{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}.aci'
+        - creates: '{{ Root }}{{ mpillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["kafka"]["name"] }}:{{ pillar["container"]["kafka"]["version"] }}.aci'
         - require:
             - Check that the {{ pillar["container"]["kafka"]["name"] }} container exists
 

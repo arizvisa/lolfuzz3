@@ -44,7 +44,7 @@ Generate salt-stack container build rules:
     file.managed:
         - template: jinja
         - source: salt://stack/container.acb
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb'
 
         - context:
             {% if "bootstrap" in pillar["container"]["salt-stack"] -%}
@@ -114,14 +114,14 @@ Build the salt-stack image:
             "{{ pillar["service"]["container"]["paths"]["service-tools"] }}/build.sh"
             "{{ pillar["service"]["container"]["paths"]["build"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.acb"
 
-        - creates: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["image"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
+        - creates: '{{ Root }}{{ pillar["service"]["container"]["paths"]["image"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
         - require:
             - Generate salt-stack container build rules
             - Install container build script
 
 Finished building the salt-stack image:
     file.managed:
-        - name: '{{ Root }}/{{ pillar["service"]["container"]["paths"]["image"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["image"] }}/salt-stack:{{ pillar["container"]["salt-stack"]["version"] }}.aci'
         - mode: 0664
         - replace: false
         - watch:
