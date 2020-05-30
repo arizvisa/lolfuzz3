@@ -25,12 +25,15 @@ boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/all: boxcutter/$$(patsubst %.jso
 .PHONY: boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/help
 boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/help:
 	@printf 'The following platforms are available for boxcutter/%s:\n\n' '$$(patsubst %.json,%,$$(notdir $(1)))'
-	@printf '\tboxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/%s\n' $$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)')
+	@printf '\tboxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/%s\n' 'download' $$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)')
 
 $$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)'),$$(eval $$(call build_boxcutter_platform,$(1),$$(patsubst %.json,%,$$(notdir $(1))),$$(target))))
 
 # Recipes for building the iso-vars variables used for the box's iso_url and its checksums
 build_boxcutter_platform_checksum := $$(shell jq -r '.variables.iso_checksum' '$(1)')
+
+.PHONY: boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/download
+boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/download: $$(workdir)/$$(build_boxcutter_platform_checksum).iso $$(workdir)/$$(build_boxcutter_platform_checksum).verified $(1)
 
 $$(workdir)/boxcutter-$(patsubst %.json,%,$(notdir $(1)))-iso-vars.json: $$(workdir)/$$(build_boxcutter_platform_checksum).iso $$(workdir)/$$(build_boxcutter_platform_checksum).verified $(1)	| $$(workdir)
 	echo trying $(1) $$(build_boxcutter_platform_checksum)
@@ -39,26 +42,26 @@ $$(workdir)/boxcutter-$(patsubst %.json,%,$(notdir $(1)))-iso-vars.json: $$(work
 endef
 
 define download_with_checksum
-$$(workdir)/$(2).verified: $$(workdir)/$(2).$(call lc,$(1)) $$(workdir)/$(2).checksum
+$$(workdir)/$(2).verified: $$(workdir)/$(2).$(call lc,$(1)) $$(workdir)/$(2).checksum	| $$(workdir)
 	@printf '[-] Verifying checksum for iso: %s\n' '$$(workdir)/$(2).iso'
 	-cmp -s $$^ && touch '$$@'
 	-test -e '$$@' && printf '[*] Successfully verified checksum for file: %s\n' '$$(workdir)/$(2).iso'
 	-test ! -e '$$@' && printf '[!] Invalid checksum for file: %s\n' '$$(workdir)/$(2).iso'
 	@test -e '$$@'
 
-$$(workdir)/$(2).checksum: $$(workdir)/$(2).iso
+$$(workdir)/$(2).checksum: $$(workdir)/$(2).iso	| $$(workdir)
 	@printf '[-] Calculating %s checksum: %s\n' '$(call uc,$(1))' '$$<'
 	@openssl dgst -$(1) '$$<' | rev | cut -d' ' -f1 | rev | tr -d '\r\n' >| '$$@'
 
-$$(workdir)/$(2).$(call lc,$(1)):
+$$(workdir)/$(2).$(call lc,$(1)):	| $$(workdir)
 	@echo -n '$(2)' >| '$$@'
 
 ifneq ($$(findstring http://,$(3))$$(findstring https://,$(3)),)
-$$(workdir)/$(2).iso:
+$$(workdir)/$(2).iso:	| $$(workdir)
 	@printf '[*] Downloading iso from url: %s\n' '$(3)'
 	curl -L -C- --progress-bar -o '$$@' '$(3)'
 else
-$$(workdir)/$(2).iso:
+$$(workdir)/$(2).iso:	| $$(workdir)
 	@test -e '$(3)'
 	ln -s '$(3)' '$$@'
 endif
