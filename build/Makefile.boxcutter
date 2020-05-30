@@ -30,21 +30,50 @@ boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/help:
 $$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | unique | join(" ")' '$(1)'),$$(eval $$(call build_boxcutter_platform,$(1),$$(patsubst %.json,%,$$(notdir $(1))),$$(target))))
 
 # Recipes for building the iso-vars variables used for the box's iso_url and its checksums
-$$(workdir)/boxcutter-$$(patsubst %.json,%,$$(notdir $(1)))-iso-vars.json: $(1)	| $$(workdir)
-	jq '{ iso_url: .variables.iso_url, iso_checksum: .variables.iso_checksum, iso_checksum_type: .variables.iso_checksum_type }' '$$<' >| $$@
+build_boxcutter_platform_checksum := $$(shell jq -r '.variables.iso_checksum' '$(1)')
 
+$$(workdir)/boxcutter-$(patsubst %.json,%,$(notdir $(1)))-iso-vars.json: $$(workdir)/$$(build_boxcutter_platform_checksum).iso $$(workdir)/$$(build_boxcutter_platform_checksum).verified $(1)	| $$(workdir)
+	echo trying $(1) $$(build_boxcutter_platform_checksum)
+	jq --arg iso_path '$$<' '{ iso_url: $$$$iso_path, iso_checksum: .variables.iso_checksum, iso_checksum_type: .variables.iso_checksum_type }' '$(1)' >| '$$@'
+
+endef
+
+define download_with_checksum
+$$(workdir)/$(2).verified: $$(workdir)/$(2).$(call lc,$(1)) $$(workdir)/$(2).checksum
+	@printf '[-] Verifying checksum for iso: %s\n' '$$(workdir)/$(2).iso'
+	-cmp -s $$^ && touch '$$@'
+	-test -e '$$@' && printf '[*] Successfully verified checksum for file: %s\n' '$$(workdir)/$(2).iso'
+	-test ! -e '$$@' && printf '[!] Invalid checksum for file: %s\n' '$$(workdir)/$(2).iso'
+	@test -e '$$@'
+
+$$(workdir)/$(2).checksum: $$(workdir)/$(2).iso
+	@printf '[-] Calculating %s checksum: %s\n' '$(call uc,$(1))' '$$<'
+	@openssl dgst -$(1) '$$<' | rev | cut -d' ' -f1 | rev | tr -d '\r\n' >| '$$@'
+
+$$(workdir)/$(2).$(call lc,$(1)):
+	@echo -n '$(2)' >| '$$@'
+
+ifneq ($$(findstring http://,$(3))$$(findstring https://,$(3)),)
+$$(workdir)/$(2).iso:
+	@printf '[*] Downloading iso from url: %s\n' '$(3)'
+	curl -L -C- --progress-bar -o '$$@' '$(3)'
+else
+$$(workdir)/$(2).iso:
+	@test -e '$(3)'
+	ln -s '$(3)' '$$@'
+endif
 endef
 
 ### The following defines recipes to build an individual box
 define build_boxcutter_platform
-build_boxcutter_platform_box := $$(shell jq -r --arg cm "nocm" '[.variables.vm_name + .variables.vm_suffix, $$$$cm, .variables.version] | join("-")' '$(1)')
+build_boxcutter_platform_box := $(shell jq -r --arg cm "nocm" '[.variables.vm_name + .variables.vm_suffix, $$cm, .variables.version] | join("-")' '$(1)')
 
 .PHONY: boxcutter/$(2)/$(3)
 
 # If we're building $(2) for vmware, then set the default recipe to build an ova template
 ifeq ($(3),vmware)
 
-$$(eval $$(call box2ova,$$(workdir)/boxcutter-$(3)/$$(build_boxcutter_platform_box).box,$$(outdir)/$(2).ova))
+$$(eval $$(call box2ova,$$(workdir)/boxcutter-$(3)/$(build_boxcutter_platform_box).box,$$(outdir)/$(2).ova))
 boxcutter/$(2)/$(3): $$(outdir)/$(2).ova
 	@test -e '$$<'
 	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
@@ -56,11 +85,11 @@ boxcutter/$(2)/$(3): $$(outdir)/$(2).$(3).box
 	@printf '[*] Successfully built %s from template %s\n' '$$@' '$(1)'
 endif
 
-$$(outdir)/$(2).$(3).box: $$(workdir)/boxcutter-$(3)/$$(build_boxcutter_platform_box).box
+$$(outdir)/$(2).$(3).box: $$(workdir)/boxcutter-$(3)/$(build_boxcutter_platform_box).box
 	@test -e '$$<'
 	@ln '$$<' '$$@'
 
-$$(workdir)/boxcutter-$(3)/$$(build_boxcutter_platform_box).box: $$(MAKEDIR)/boxcutter-windows/$(2).json $$(workdir)/boxcutter-$(3).$(2).validate $$(MAKEDIR)/boxcutter-vars.json $$(workdir)/boxcutter-$(2)-iso-vars.json	| $$(workdir)
+$$(workdir)/boxcutter-$(3)/$(build_boxcutter_platform_box).box: $$(MAKEDIR)/boxcutter-windows/$(2).json $$(workdir)/boxcutter-$(3).$(2).validate $$(MAKEDIR)/boxcutter-vars.json $$(workdir)/boxcutter-$(2)-iso-vars.json	| $$(workdir)
 	@test -e $$(workdir)/boxcutter-$(3).$(2).validate
 	@printf '[!] Building %s from template: %s\n' 'boxcutter-$(3)/$$(notdir $$@)' '$$<'
 	@packer build -only '$(3)-iso' -var-file '$$(MAKEDIR)/boxcutter-vars.json' -var-file '$$(workdir)/boxcutter-$(2)-iso-vars.json' -var 'box_directory=$$(workdir)/boxcutter-' '$$<'
