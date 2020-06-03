@@ -131,7 +131,7 @@ Finished building the salt-stack image:
 Install the salt-toolbox wrapper:
     file.managed:
         - template: jinja
-        - source: salt://scripts/salt-toolbox.command
+        - source: salt://scripts/toolbox.command
         - name: /opt/sbin/salt-toolbox
 
         - defaults:
