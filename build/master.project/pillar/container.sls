@@ -7,6 +7,7 @@ service:
         paths:
             build: /srv/containers
             image: /var/lib/containers
+            run: /var/run/containers
             tools: /opt/bin
             service-tools: /opt/libexec/containers
 

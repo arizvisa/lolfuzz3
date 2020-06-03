@@ -18,12 +18,15 @@ Install the lol-toolbox wrapper:
                 - /var/cache/salt
                 - /var/run/salt
                 - /var/log/salt
-                - /var/lib/containers
-                - /var/run/containers
+                - {{ pillar["service"]["container"]["paths"]["image"] }}
+                - {{ pillar["service"]["container"]["paths"]["run"] }}
                 - /srv
 
         - mode: 0755
         - makedirs: true
+        - require:
+            - Make container image directory
+            - Make container run directory
 
 ### oci containers
 Install some tools for dealing with OCI containers into the toolbox:
@@ -43,6 +46,7 @@ Install some tools for dealing with OCI containers into the toolbox:
         - require:
             - Install the lol-toolbox wrapper
             - Make container image directory
+            - Make container run directory
 
 ### container directory structure
 Make container build directory:
@@ -55,6 +59,13 @@ Make container build directory:
 Make container image directory:
     file.directory:
         - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["image"] }}'
+        - makedirs: true
+        - dir_mode: 0755
+        - file_mode: 0664
+
+Make container run directory:
+    file.directory:
+        - name: '{{ Root }}{{ pillar["service"]["container"]["paths"]["run"] }}'
         - makedirs: true
         - dir_mode: 0755
         - file_mode: 0664
