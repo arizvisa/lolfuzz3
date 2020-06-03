@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Build images based on the rules within the filesystem
 
-BUILDDIR=${BUILDDIR:-"/srv/container"}
-IMAGEDIR=${IMAGEDIR:-"/var/lib/container"}
-SERVICEDIR=${SERVICEDIR:-"/opt/libexec/container"}
+BUILDDIR=${BUILDDIR:-"/srv/containers"}
+IMAGEDIR=${IMAGEDIR:-"/var/lib/containers"}
+SERVICEDIR=${SERVICEDIR:-"/opt/libexec/containers"}
 
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin
 umask 027

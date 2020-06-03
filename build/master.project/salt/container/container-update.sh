@@ -2,7 +2,7 @@
 # Update images that are in the repository to the latest available
 #   version on the filesystem according to the timestamp.
 
-IMAGEDIR=${IMAGEDIR:-"/var/lib/container"}
+IMAGEDIR=${IMAGEDIR:-"/var/lib/containers"}
 
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin
 umask 077

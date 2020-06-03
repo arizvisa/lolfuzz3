@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Add images into the repository using the images available on the filesystem.
 
-IMAGEDIR=${IMAGEDIR:-"/var/lib/container"}
-SERVICEDIR=${SERVICEDIR:-"/opt/libexec/container"}
+IMAGEDIR=${IMAGEDIR:-"/var/lib/containers"}
+SERVICEDIR=${SERVICEDIR:-"/opt/libexec/containers"}
 
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin
 umask 077

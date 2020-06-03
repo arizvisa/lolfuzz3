@@ -5,15 +5,15 @@
 service:
     container:
         paths:
-            build: /srv/container
-            image: /var/lib/container
+            build: /srv/containers
+            image: /var/lib/containers
             tools: /opt/bin
-            service-tools: /opt/libexec/container
+            service-tools: /opt/libexec/containers
 
         # directories used to extract the tools listed below
         tools-extract:
             # temporary directory that archive gets extracted to
-            temporary: /tmp/container
+            temporary: /tmp/containers
 
             # glob that matches the files that we care about from the archive
             match: '*/*'
