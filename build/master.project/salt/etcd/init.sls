@@ -72,6 +72,9 @@ Configuration key {{ MinionPath | join(".") }}:
         - requires:
             - Configuration key {{ RootPath | join(".") }}
 
+# Bootstrap master
+{{ etcd_set_value(ConfigurationPath, "bootstrap", pillar["local"]["machine_id"]) }}
+
 # Project name
 {{ etcd_set_value(ConfigurationPath, "name", ConfigurationBootstrapPillar["name"]) }}
 
