@@ -1,5 +1,49 @@
 {% set Root = pillar["local"]["root"] %}
 
+Install the lol-toolbox wrapper:
+    file.managed:
+        - template: jinja
+        - source: salt://container/toolbox.command
+        - name: /opt/sbin/lol-toolbox
+
+        - defaults:
+            toolbox: /bin/toolbox
+
+        - context:
+            mounts:
+                - /sys
+                - /var/run/dbus
+                - /etc/systemd
+                - /opt
+                - /var/cache/salt
+                - /var/run/salt
+                - /var/log/salt
+                - /var/lib/containers
+                - /var/run/containers
+                - /srv
+
+        - mode: 0755
+        - makedirs: true
+
+### oci containers
+Install some tools for dealing with OCI containers into the toolbox:
+    cmd.run:
+        - name: >-
+            /usr/bin/ssh
+            -i "{{ Root }}{{ pillar["toolbox"]["self-service"]["key"] }}"
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            --
+            {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }}
+            sudo
+            --
+            /opt/sbin/lol-toolbox
+            dnf -y install buildah skopeo
+
+        - require:
+            - Install the lol-toolbox wrapper
+            - Make container image directory
+
 ### container directory structure
 Make container build directory:
     file.directory:
@@ -68,6 +112,7 @@ Deploy container tools:
         - name: 'mv -v {{ pillar["service"]["container"]["tools-extract"]["match"] }} "{{ Root }}{{ pillar["service"]["container"]["paths"]["tools"] }}"'
         - cwd: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
         - require:
+            - Install some tools for dealing with OCI containers into the toolbox
             - Extract container tools
             - Create temporary tools-extraction directory
             - Make container tools directory
