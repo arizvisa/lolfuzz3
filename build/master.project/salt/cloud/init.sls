@@ -131,7 +131,20 @@ Install an example cloud profile:
         - replace: false
         - defaults:
               profiles:
-                  {}
+                  windows-profile@{{ pillar["configuration"]["name"] }}:
+                      win_username: administrator
+                      win_password: password
+                      grains:
+                          role: role
+                      provider: saltify-windows
+
+                  linux-profile@{{ pillar["configuration"]["name"] }}:
+                      ssh_username: root
+                      password: password
+                      grains:
+                          role: role
+                      provider: saltify-linux
+
         - require:
             - Make salt-cloud profiles directory
         - mode: 0664
