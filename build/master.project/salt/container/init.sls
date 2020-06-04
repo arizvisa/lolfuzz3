@@ -3,7 +3,7 @@
 Install the lol-toolbox wrapper:
     file.managed:
         - template: jinja
-        - source: salt://container/toolbox.command
+        - source: salt://scripts/toolbox.command
         - name: /opt/sbin/lol-toolbox
 
         - defaults:
