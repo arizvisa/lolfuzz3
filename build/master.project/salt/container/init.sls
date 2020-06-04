@@ -28,26 +28,6 @@ Install the lol-toolbox wrapper:
             - Make container image directory
             - Make container run directory
 
-### oci containers
-Install some tools for dealing with OCI containers into the toolbox:
-    cmd.run:
-        - name: >-
-            /usr/bin/ssh
-            -i "{{ Root }}{{ pillar["toolbox"]["self-service"]["key"] }}"
-            -o StrictHostKeyChecking=no
-            -o UserKnownHostsFile=/dev/null
-            --
-            {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }}
-            sudo
-            --
-            /opt/sbin/lol-toolbox
-            dnf -y install buildah skopeo
-
-        - require:
-            - Install the lol-toolbox wrapper
-            - Make container image directory
-            - Make container run directory
-
 ### container directory structure
 Make container build directory:
     file.directory:
@@ -123,7 +103,6 @@ Deploy container tools:
         - name: 'mv -v {{ pillar["service"]["container"]["tools-extract"]["match"] }} "{{ Root }}{{ pillar["service"]["container"]["paths"]["tools"] }}"'
         - cwd: {{ pillar["service"]["container"]["tools-extract"]["temporary"] | yaml_dquote }}
         - require:
-            - Install some tools for dealing with OCI containers into the toolbox
             - Extract container tools
             - Create temporary tools-extraction directory
             - Make container tools directory
