@@ -16,6 +16,7 @@ OUTPUT?=$(ROOTDIR)/template
 ### Internal variables that are used for building
 outdir := $(patsubst %/,%,$(OUTPUT))
 workdir := $(BUILDDIR)
+cachedir := $(BUILDDIR)/iso
 
 ## Available platform types to build the template for
 platform = $(subst $(comma),$(space),$(PLATFORM))
@@ -76,7 +77,7 @@ bento/help:
 $(foreach f,$(filter-out %-ppc64el.json,$(wildcard $(MAKEDIR)/chef-bento/*/*/*.json)),$(eval $(call build_bento,$(f))))
 
 ## Auto-generated boxcutter-windows recipes for both isos and the templates
-$(foreach item,$(shell jq -r '[inputs] | map([([.variables.iso_checksum_type, .variables.iso_checksum] | join(":")), .variables.iso_url]) | unique_by(first) | map(join("$$")) | .[]' $(MAKEDIR)/boxcutter-windows/*.json),$(eval $(call download_with_checksum,$(firstword $(subst :, ,$(item))),$(lastword $(subst :, ,$(firstword $(subst $$, ,$(item))))),$(lastword $(subst $$, ,$(item))))))
+$(foreach item,$(shell jq -r '[inputs] | map([([.variables.iso_checksum_type, .variables.iso_checksum] | join(":")), .variables.iso_url]) | unique_by(first) | map(join("$$")) | .[]' $(MAKEDIR)/boxcutter-windows/*.json),$(eval $(call checksum_cached_iso,$(firstword $(subst :, ,$(item))),$(lastword $(subst :, ,$(firstword $(subst $$, ,$(item))))),$(lastword $(subst $$, ,$(item)))))$(eval $(call download_iso_to_cache,$(lastword $(subst $$, ,$(item))))))
 $(foreach f,$(filter-out %-ssh.json,$(filter-out %-cygwin.json,$(wildcard $(MAKEDIR)/boxcutter-windows/*.json))),$(eval $(call build_boxcutter,$(f))))
 
 ## Recipes for boxcutter-windows templates
@@ -89,5 +90,5 @@ boxcutter/help:
 	@printf '\tboxcutter/%s\n' $(foreach name,$(BOXCUTTER_TEMPLATES),'$(name)')
 
 ## Directory recipes for creating the output and work directories
-$(outdir) $(workdir):
+$(outdir) $(workdir) $(cachedir):
 	@test -d '$@' || mkdir -p '$@'

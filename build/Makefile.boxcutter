@@ -33,37 +33,44 @@ $$(foreach target,$$(shell jq -r '[.builders[].type] | map(rtrimstr("-iso")) | u
 build_boxcutter_platform_checksum := $$(shell jq -r '.variables.iso_checksum' '$(1)')
 
 .PHONY: boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/download
-boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/download: $$(workdir)/$$(build_boxcutter_platform_checksum).iso $$(workdir)/$$(build_boxcutter_platform_checksum).verified $(1)
+boxcutter/$$(patsubst %.json,%,$$(notdir $(1)))/download: $$(workdir)/$$(build_boxcutter_platform_checksum).iso $(1)
 
-$$(workdir)/boxcutter-$(patsubst %.json,%,$(notdir $(1)))-iso-vars.json: $$(workdir)/$$(build_boxcutter_platform_checksum).iso $$(workdir)/$$(build_boxcutter_platform_checksum).verified $(1)	| $$(workdir)
-	echo trying $(1) $$(build_boxcutter_platform_checksum)
+$$(workdir)/boxcutter-$(patsubst %.json,%,$(notdir $(1)))-iso-vars.json: $$(workdir)/$$(build_boxcutter_platform_checksum).iso $(1)	| $$(workdir)
+	@printf '[*] Generating ISO variables for hash %s: %s\n' '$$(build_boxcutter_platform_checksum)' '$(1)'
 	jq --arg iso_path '$$<' '{ iso_url: $$$$iso_path, iso_checksum: .variables.iso_checksum, iso_checksum_type: .variables.iso_checksum_type }' '$(1)' >| '$$@'
 
 endef
 
-define download_with_checksum
-$$(workdir)/$(2).verified: $$(workdir)/$(2).$(call lc,$(1)) $$(workdir)/$(2).checksum	| $$(workdir)
-	@printf '[-] Verifying checksum for iso: %s\n' '$$(workdir)/$(2).iso'
+define checksum_cached_iso
+$$(workdir)/$(2).verified: $$(cachedir)/$$(notdir $(3)).$(call lc,$(1)) $$(workdir)/$(2).$(call lc,$(1))	| $$(workdir)
+	@printf '[-] Verifying checksum for iso: %s\n' '$$<'
 	-cmp -s $$^ && touch '$$@'
-	-test -e '$$@' && printf '[*] Successfully verified checksum for file: %s\n' '$$(workdir)/$(2).iso'
-	-test ! -e '$$@' && printf '[!] Invalid checksum for file: %s\n' '$$(workdir)/$(2).iso'
+	-test -e '$$@' && printf '[*] Successfully verified checksum for file: %s\n' '$$<'
+	-test ! -e '$$@' && printf '[!] Invalid checksum for file: %s\n' '$$<'
 	@test -e '$$@'
-
-$$(workdir)/$(2).checksum: $$(workdir)/$(2).iso	| $$(workdir)
-	@printf '[-] Calculating %s checksum: %s\n' '$(call uc,$(1))' '$$<'
-	@openssl dgst -$(1) '$$<' | rev | cut -d' ' -f1 | rev | tr -d '\r\n' >| '$$@'
 
 $$(workdir)/$(2).$(call lc,$(1)):	| $$(workdir)
 	@echo -n '$(2)' >| '$$@'
 
-ifneq ($$(findstring http://,$(3))$$(findstring https://,$(3)),)
-$$(workdir)/$(2).iso:	| $$(workdir)
-	@printf '[*] Downloading iso from url: %s\n' '$(3)'
-	curl -L -C- --progress-bar -o '$$@' '$(3)'
+$$(cachedir)/$$(notdir $(3)).$(call lc,$(1)): $$(cachedir)/$$(notdir $(3))	| $$(cachedir)
+	@printf '[-] Calculating %s checksum: %s\n' '$(call uc,$(1))' '$$<'
+	@openssl dgst -$(1) '$$<' | rev | cut -d' ' -f1 | rev | tr -d '\r\n' >| '$$@'
+
+$$(workdir)/$(2).iso: $$(cachedir)/$$(notdir $(3)) $$(workdir)/$(2).verified	| $$(workdir)
+	@printf '[-] Linking iso from cache (%s) to build directory: %s\n' '$$<' '$$@'
+	ln -sv '$$<' '$$@'
+endef
+
+define download_iso_to_cache
+ifneq ($$(findstring http://,$(1))$$(findstring https://,$(1)),)
+$$(cachedir)/$$(notdir $(1)):	| $$(cachedir)
+	@printf '[*] Downloading iso from url (%s) to cache: %s\n' '$(1)' '$$@'
+	curl -L -C- --progress-bar -o '$$@' '$(1)'
 else
-$$(workdir)/$(2).iso:	| $$(workdir)
-	@test -e '$(3)'
-	ln -s '$(3)' '$$@'
+$$(cachedir)/$$(notdir $(1)):	| $$(cachedir)
+	@printf '[*] Transferring iso from path (%s) to cache: %s\n' '$(1)' '$$@'
+	@test -e '$(1)'
+	ln -s '$(1)' '$$@'
 endif
 endef
 
