@@ -58,7 +58,7 @@ $$(cachedir)/$$(notdir $(3)).$(call lc,$(1)): $$(cachedir)/$$(notdir $(3))	| $$(
 
 $$(workdir)/$(2).iso: $$(cachedir)/$$(notdir $(3)) $$(workdir)/$(2).verified	| $$(workdir)
 	@printf '[-] Linking iso from cache (%s) to build directory: %s\n' '$$<' '$$@'
-	ln -sv '$$<' '$$@'
+	ln -svf '$$<' '$$@'
 endef
 
 define download_iso_to_cache
