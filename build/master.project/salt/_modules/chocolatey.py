@@ -220,8 +220,9 @@ def bootstrap(force=False):
 
     # Run the Chocolatey bootstrap.
     cmd = (
-        '{0} -NoProfile -ExecutionPolicy unrestricted '
-        '-Command "iex ((new-object net.webclient).'
+         '{0} -NoProfile -ExecutionPolicy unrestricted '
+        '-Command "[Net.ServicePointManager]::SecurityProtocol '
+        '= [Net.SecurityProtocolType]::Tls12; iex ((new-object net.webclient).'
         'DownloadString(\'https://chocolatey.org/install.ps1\'))" '
         '&& SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin'
         .format(ps_path)
