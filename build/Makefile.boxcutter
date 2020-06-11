@@ -65,7 +65,7 @@ define download_iso_to_cache
 ifneq ($$(findstring http://,$(1))$$(findstring https://,$(1)),)
 $$(cachedir)/$$(notdir $(1)):	| $$(cachedir)
 	@printf '[*] Downloading iso from url (%s) to cache: %s\n' '$(1)' '$$@'
-	curl -L -C- --progress-bar -o '$$@' '$(1)'
+	curl -L -C- --retry-connrefused --retry-max-time 0 --retry 64 --progress-bar -o '$$@' '$(1)'
 else
 $$(cachedir)/$$(notdir $(1)):	| $$(cachedir)
 	@printf '[*] Transferring iso from path (%s) to cache: %s\n' '$(1)' '$$@'

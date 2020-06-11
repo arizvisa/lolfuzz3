@@ -14,7 +14,7 @@ endif
 
 # Commands to use in order to interact with HTTP and various ways. Each of these
 # must write their output to stdout.
-DOWNLOAD := curl -L -C- --progress-bar
+DOWNLOAD := curl -L -C- --retry-connrefused --retry-max-time 0 --retry 64 --progress-bar
 FETCH := curl -L -s -S
 PUT := curl -L -s -S -X PUT --data-binary
 
