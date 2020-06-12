@@ -42,9 +42,10 @@ Bootstrap an installation of the chocolatey package manager:
             - Ensure the Windows Update service is running
             - Synchronize all modules for the minion
 
-Install chocolatey package -- Python 3.x:
+Install chocolatey package -- Python 3.7:
     chocolatey.installed:
         - name: python
+        - version: '3.7.7'
         {% if grains["cpuarch"].lower() in ["x86"] -%}
         - force_x86: true
         {% else -%}
@@ -57,47 +58,55 @@ Upgrade required package -- pip:
     pip.installed:
         - name: pip
         - upgrade: true
-        - bin_env: C:/Python38/Scripts/pip.exe
+        - bin_env: C:/Python37/Scripts/pip.exe
         - require:
-            - Install chocolatey package -- Python 3.x
+            - Install chocolatey package -- Python 3.7
+
+Install required Python module -- wheel:
+    pip.installed:
+        - name: wheel
+        - bin_env: C:/Python37/Scripts/pip.exe
+        - require:
+            - Upgrade required package -- pip
 
 ## Install the binary packages required by Salt
 Install required Python module -- pywin32:
     pip.installed:
-        - name: pywin32
-        - bin_env: C:/Python38/Scripts/pip.exe
+        - name: 'pywin32 == 224'
+        - bin_env: C:/Python37/Scripts/pip.exe
         - require:
-            - Upgrade required package -- pip
+            - Install required Python module -- wheel
 
 Install required Python module -- pycurl:
     pip.installed:
         - name: pycurl
-        - bin_env: C:/Python38/Scripts/pip.exe
+        - bin_env: C:/Python37/Scripts/pip.exe
         - require:
-            - Upgrade required package -- pip
+            - Install required Python module -- wheel
 
 Install required Python module -- WMI:
     pip.installed:
-        - name: WMI
-        - bin_env: C:/Python38/Scripts/pip.exe
+        - name: 'WMI == 1.4.9'
+        - bin_env: C:/Python37/Scripts/pip.exe
         - require:
-            - Upgrade required package -- pip
+            - Install required Python module -- wheel
 
 Install required Python module -- pythonnet:
     pip.installed:
         - name: pythonnet
-        - bin_env: C:/Python38/Scripts/pip.exe
+        - bin_env: C:/Python37/Scripts/pip.exe
         - require:
-            - Upgrade required package -- pip
+            - Install required Python module -- wheel
 
 Install all required Python modules:
     pip.installed:
         - requirements: salt://config/requirements.txt
         - reload_modules: true
         - ignore_installed: true
-        - bin_env: C:/Python38/Scripts/pip.exe
+        - bin_env: C:/Python37/Scripts/pip.exe
         - require:
             - Upgrade required package -- pip
+            - Install required Python module -- wheel
             - Install required Python module -- pywin32
             - Install required Python module -- WMI
             - Install required Python module -- pythonnet
@@ -206,10 +215,10 @@ Update the Windows Service (salt-minion) to use external Python interpreter (old
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion
         - vname: Application
-        - vdata: C:/Python38/python.exe
+        - vdata: C:/Python37/python.exe
         - vtype: REG_EXPAND_SZ
         - require:
-            - Install chocolatey package -- Python 3.x
+            - Install chocolatey package -- Python 3.7
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
             - Install required Python module -- WMI
@@ -221,10 +230,10 @@ Update the Windows Service (salt-minion) to use external Python interpreter:
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters\Application
         - vname: Application
-        - vdata: C:/Python38/python.exe
+        - vdata: C:/Python37/python.exe
         - vtype: REG_EXPAND_SZ
         - require:
-            - Install chocolatey package -- Python 3.x
+            - Install chocolatey package -- Python 3.7
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
             - Install required Python module -- WMI
@@ -250,7 +259,7 @@ Restart minion on failure:
         - require:
             - Bootstrap an installation of the chocolatey package manager
         - onfail_any:
-            - Install chocolatey package -- Python 3.x
+            - Install chocolatey package -- Python 3.7
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
             - Install required Python module -- WMI
