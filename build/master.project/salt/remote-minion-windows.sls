@@ -227,7 +227,7 @@ Update the Windows Service (salt-minion) to use external Python interpreter (old
 
 Update the Windows Service (salt-minion) to use external Python interpreter:
     reg.present:
-        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters\Application
+        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters
         - vname: Application
         - vdata: C:/Python37/python.exe
         - vtype: REG_EXPAND_SZ
