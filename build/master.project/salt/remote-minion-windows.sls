@@ -10,6 +10,29 @@ Ensure the Windows Update service is running:
         - name: wuauserv
         - enable: true
 
+### Module fixes required to work with the cluster
+Synchronize all modules for the minion:
+    module.run:
+        - func: saltutil.sync_all
+        - kwargs:
+            saltenv: bootstrap
+
+{% if grains["saltversioninfo"][0] | int < 3000 -%}
+Deploy the salt.utils.templates module directly into the remote-minion's site-packages:
+    file.managed:
+        - name: {{ grains["saltpath"] }}/utils/templates.py
+        - source: salt://_utils/templates.py
+        - require:
+            - Synchronize all modules for the minion
+
+Deploy the salt.utils.path module directly into the remote-minion's site-packages:
+    file.managed:
+        - name: {{ grains["saltpath"] }}/utils/path.py
+        - source: salt://_utils/path.py
+        - require:
+            - Synchronize all modules for the minion
+{% endif -%}
+
 ## Bootstrap chocolatey and install external version of Python
 Bootstrap an installation of the chocolatey package manager:
     module.run:
@@ -17,6 +40,7 @@ Bootstrap an installation of the chocolatey package manager:
             []
         - require:
             - Ensure the Windows Update service is running
+            - Synchronize all modules for the minion
 
 Install chocolatey package -- Python 3.x:
     chocolatey.installed:
@@ -78,31 +102,6 @@ Install all required Python modules:
             - Install required Python module -- WMI
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
-
-### Module fixes required to work with the cluster
-Synchronize all modules for the minion:
-    module.run:
-        - func: saltutil.sync_all
-        - kwargs:
-            saltenv: bootstrap
-        - require:
-            - Install all required Python modules
-
-{% if grains["saltversioninfo"][0] | int < 3000 -%}
-Deploy the salt.utils.templates module directly into the remote-minion's site-packages:
-    file.managed:
-        - name: {{ grains["saltpath"] }}/utils/templates.py
-        - source: salt://_utils/templates.py
-        - require:
-            - Install all required Python modules
-
-Deploy the salt.utils.path module directly into the remote-minion's site-packages:
-    file.managed:
-        - name: {{ grains["saltpath"] }}/utils/path.py
-        - source: salt://_utils/path.py
-        - require:
-            - Install all required Python modules
-{% endif -%}
 
 ## Install the new minion configuration (and service configuration)
 Create minion configuration directory:
