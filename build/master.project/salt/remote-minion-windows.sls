@@ -18,9 +18,9 @@ Bootstrap an installation of the chocolatey package manager:
         - require:
             - Ensure the Windows Update service is running
 
-Install chocolatey package -- Python 2.x:
+Install chocolatey package -- Python 3.x:
     chocolatey.installed:
-        - name: python2
+        - name: python
         {% if grains["cpuarch"].lower() in ["x86"] -%}
         - force_x86: true
         {% else -%}
@@ -29,55 +29,40 @@ Install chocolatey package -- Python 2.x:
         - require:
             - Bootstrap an installation of the chocolatey package manager
 
-Install Visual C++ 9.0 Runtime for Python 2.x:
-    chocolatey.installed:
-        - name: vcpython27
-        {% if grains["cpuarch"].lower() in ["x86"] -%}
-        - force_x86: true
-        {% else -%}
-        - force_x86: false
-        {% endif -%}
-        - require:
-            - Install chocolatey package -- Python 2.x
-
 Upgrade required package -- pip:
     pip.installed:
         - name: pip
         - upgrade: true
-        - bin_env: C:/Python27/Scripts/pip.exe
+        - bin_env: C:/Python38/Scripts/pip.exe
         - require:
-            - Install chocolatey package -- Python 2.x
+            - Install chocolatey package -- Python 3.x
 
 ## Install the binary packages required by Salt
 Install required Python module -- pywin32:
     pip.installed:
         - name: pywin32
-        - bin_env: C:/Python27/Scripts/pip.exe
+        - bin_env: C:/Python38/Scripts/pip.exe
         - require:
             - Upgrade required package -- pip
 
-# We hardcode pycurl to 7.43.0.2 because there isn't a binary (wheel) for the
-# latest version (as of 2020/01/10)
 Install required Python module -- pycurl:
     pip.installed:
-        - name: pycurl == 7.43.0.2
-        - bin_env: C:/Python27/Scripts/pip.exe
+        - name: pycurl
+        - bin_env: C:/Python38/Scripts/pip.exe
         - require:
             - Upgrade required package -- pip
 
-# We hardcode WMI to 1.4.9 because there isn't a binary (wheel) for the latest
-# version (as of 2020/01/10)
 Install required Python module -- WMI:
     pip.installed:
-        - name: WMI == 1.4.9
-        - bin_env: C:/Python27/Scripts/pip.exe
+        - name: WMI
+        - bin_env: C:/Python38/Scripts/pip.exe
         - require:
             - Upgrade required package -- pip
 
 Install required Python module -- pythonnet:
     pip.installed:
-        - name: pythonnet >= 2.3.0
-        - bin_env: C:/Python27/Scripts/pip.exe
+        - name: pythonnet
+        - bin_env: C:/Python38/Scripts/pip.exe
         - require:
             - Upgrade required package -- pip
 
@@ -86,14 +71,13 @@ Install all required Python modules:
         - requirements: salt://config/requirements.txt
         - reload_modules: true
         - ignore_installed: true
-        - bin_env: C:/Python27/Scripts/pip.exe
+        - bin_env: C:/Python38/Scripts/pip.exe
         - require:
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
             - Install required Python module -- WMI
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
-            - Install Visual C++ 9.0 Runtime for Python 2.x
 
 ### Module fixes required to work with the cluster
 Synchronize all modules for the minion:
@@ -223,10 +207,10 @@ Update the Windows Service (salt-minion) to use external Python interpreter:
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion
         - vname: Application
-        - vdata: C:/Python27/python.exe
+        - vdata: C:/Python38/python.exe
         - vtype: REG_EXPAND_SZ
         - require:
-            - Install chocolatey package -- Python 2.x
+            - Install chocolatey package -- Python 3.x
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
             - Install required Python module -- WMI
@@ -251,7 +235,7 @@ Restart minion on failure:
         - require:
             - Bootstrap an installation of the chocolatey package manager
         - onfail_any:
-            - Install chocolatey package -- Python 2.x
+            - Install chocolatey package -- Python 3.x
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
             - Install required Python module -- WMI
