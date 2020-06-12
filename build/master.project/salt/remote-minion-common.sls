@@ -62,10 +62,9 @@ Install minion etcd configuration:
             - Create minion configuration directory
 
 Synchronize all modules for the minion:
-    module.run:
-        - saltutil.sync_all:
-            - saltenv: bootstrap
-            - refresh: true
+    saltutil.sync_all:
+        - saltenv: bootstrap
+        - refresh: true
         - require:
             - Install all required Python modules
 

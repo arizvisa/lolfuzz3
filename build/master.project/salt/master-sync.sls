@@ -14,10 +14,9 @@ Synchronize all modules for the master:
             - sls: master-minion
 
 Synchronize all modules for the minion:
-    module.run:
-        - saltutil.sync_all:
-            - refresh: true
-            - saltenv: master
+    saltutil.sync_all:
+        - refresh: true
+        - saltenv: master
         - require:
             - sls: master
-        - sls: master-minion
+            - sls: master-minion
