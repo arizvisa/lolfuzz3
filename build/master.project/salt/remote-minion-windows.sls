@@ -203,9 +203,24 @@ Update the Windows Service (salt-minion) to be able to interact with the desktop
         - vdata: {{ Minion_ServiceType if Minion_ServiceType >= ServiceType_InteractiveProcess else Minion_ServiceType + ServiceType_InteractiveProcess }}
         - vtype: REG_DWORD
 
-Update the Windows Service (salt-minion) to use external Python interpreter:
+Update the Windows Service (salt-minion) to use external Python interpreter (old):
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion
+        - vname: Application
+        - vdata: C:/Python38/python.exe
+        - vtype: REG_EXPAND_SZ
+        - require:
+            - Install chocolatey package -- Python 3.x
+            - Upgrade required package -- pip
+            - Install required Python module -- pywin32
+            - Install required Python module -- WMI
+            - Install required Python module -- pycurl
+            - Install required Python module -- pythonnet
+            - Install all required Python modules
+
+Update the Windows Service (salt-minion) to use external Python interpreter:
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters\Application
         - vname: Application
         - vdata: C:/Python38/python.exe
         - vtype: REG_EXPAND_SZ
@@ -224,6 +239,7 @@ Restart minion with new configuration:
         - system.reboot:
             - timeout: 1
         - require:
+            - Update the Windows Service (salt-minion) to use external Python interpreter (old)
             - Update the Windows Service (salt-minion) to use external Python interpreter
             - Update the Windows Service (salt-minion) to be able to interact with the desktop
             - Re-install minion configuration
