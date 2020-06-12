@@ -13,9 +13,9 @@ Ensure the Windows Update service is running:
 ### Module fixes required to work with the cluster
 Synchronize all modules for the minion:
     module.run:
-        - func: saltutil.sync_all
-        - kwargs:
-            saltenv: bootstrap
+        - saltutil.sync_all:
+            - refresh: true
+            - saltenv: bootstrap
 
 {% if grains["saltversioninfo"][0] | int < 3000 -%}
 Deploy the salt.utils.templates module directly into the remote-minion's site-packages:

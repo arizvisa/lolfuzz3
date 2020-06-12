@@ -52,30 +52,30 @@ Installed all manual updates:
 
 Download Windows Updates:
     module.run:
-        - name: win_wua.list
-        - download: true
-        - skip_installed: true
-        {% if pillar["Updates"]["Categories"] -%}
-        - categories:
-            {% for cat in pillar["Updates"]["Categories"] -%}
-            - {{ cat }}
-            {% endfor %}
-        {% endif -%}
+        - win_wua.list:
+            - download: true
+            - skip_installed: true
+            {% if pillar["Updates"]["Categories"] -%}
+            - categories:
+                {% for cat in pillar["Updates"]["Categories"] -%}
+                - {{ cat }}
+                {% endfor %}
+            {% endif %}
         - require:
             - Installed all manual updates
 
 Install Windows Updates:
     module.run:
-        - name: win_wua.list
-        - download: false
-        - install: true
-        - skip_installed: true
-        {% if pillar["Updates"]["Categories"] -%}
-        - categories:
-            {% for cat in pillar["Updates"]["Categories"] -%}
-            - {{ cat }}
-            {% endfor %}
-        {% endif -%}
+        - win_wua.list:
+            - download: false
+            - install: true
+            - skip_installed: true
+            {% if pillar["Updates"]["Categories"] -%}
+            - categories:
+                {% for cat in pillar["Updates"]["Categories"] -%}
+                - {{ cat }}
+                {% endfor %}
+            {% endif %}
         - require:
             - Download Windows Updates
 

@@ -12,16 +12,16 @@ Stop Microsoft's Windows Defender:
 ## Updates
 Download Windows Updates:
     module.run:
-        - name: win_wua.list
-        - download: true
-        - skip_installed: true
+        - win_wua.list:
+            - download: true
+            - skip_installed: true
 
 Install Windows Updates:
     module.run:
-        - name: win_wua.list
-        - download: false
-        - skip_installed: true
-        - install: true
+        - win_wua.list:
+            - download: false
+            - skip_installed: true
+            - install: true
         - require:
             - Download Windows Updates
 
