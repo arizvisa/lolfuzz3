@@ -42,4 +42,4 @@ six==1.12.0
 smmap2==2.0.5
 tempora==1.14.1
 urllib3==1.24.2
-wempy==0.1.5
+#wempy==0.1.5
