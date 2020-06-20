@@ -3,7 +3,7 @@ container:
     salt-stack:
         bootstrap: https://bootstrap.saltstack.com
 
-        version: 3000.3
+        version: 3001
         python: python3
         pip: pip3
 
