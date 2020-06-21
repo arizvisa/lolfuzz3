@@ -111,12 +111,21 @@ Install all required Python modules:
             - Install required Python module -- pythonnet
             - Install required Python module -- pycurl
 
+Install required Python module -- salt:
+    pip.installed:
+        - name: 'salt == {{ grains["saltversion"] }}'
+        - bin_env: C:/Python37/Scripts/pip.exe
+        - no_deps: true
+        - require:
+            - Install all required Python modules
+
 ## Install the new minion configuration (and service configuration)
 Create minion configuration directory:
     file.directory:
         - name: '{{ ConfigDir }}/minion.d'
         - require:
             - Install all required Python modules
+            - Install required Python module -- salt
 
 Install minion common configuration:
     file.managed:
@@ -179,6 +188,7 @@ Re-install minion configuration:
         - require:
             - Upgrade required package -- pip
             - Install all required Python Modules
+            - Install required Python module -- salt
             - Synchronize all modules for the minion
             {% if grains["saltversioninfo"][0] | int < 3000 -%}
             - Deploy the salt.utils.templates module directly into the remote-minion's site-packages
@@ -224,6 +234,7 @@ Update the Windows Service (salt-minion) to use external Python interpreter (old
             - Install required Python module -- pycurl
             - Install required Python module -- pythonnet
             - Install all required Python modules
+            - Install required Python module -- salt
 
 Update the Windows Service (salt-minion) to use external Python interpreter:
     reg.present:
@@ -239,6 +250,7 @@ Update the Windows Service (salt-minion) to use external Python interpreter:
             - Install required Python module -- pycurl
             - Install required Python module -- pythonnet
             - Install all required Python modules
+            - Install required Python module -- salt
 
 ## Restart the minion into the new cluster
 Restart minion with new configuration:
@@ -265,4 +277,5 @@ Restart minion on failure:
             - Install required Python module -- pycurl
             - Install required Python module -- pythonnet
             - Install all required Python modules
+            - Install required Python module -- salt
             - Synchronize all modules for the minion
