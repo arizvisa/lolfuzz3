@@ -71,7 +71,7 @@ Install required Python module -- wheel:
 ## Install the binary packages required by Salt
 Install required Python module -- pywin32:
     pip.installed:
-        - name: 'pywin32 == 224'
+        - name: 'pywin32 == 227'
         - bin_env: C:/Python37/Scripts/pip.exe
         - require:
             - Install required Python module -- wheel
@@ -92,7 +92,7 @@ Install required Python module -- WMI:
 
 Install required Python module -- pythonnet:
     pip.installed:
-        - name: pythonnet
+        - name: 'pythonnet == 2.4.0'
         - bin_env: C:/Python37/Scripts/pip.exe
         - require:
             - Install required Python module -- wheel
