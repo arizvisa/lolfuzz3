@@ -1,6 +1,5 @@
 {% set Root = pillar["local"]["root"] %}
-{% set Config = salt["config.get"]("conf_file") %}
-{% set ConfigDir = Config.rsplit("/" if Config.startswith("/") else "\\", 1)[0] %}
+{% set ConfigDir = salt["config.get"]("config_dir") %}
 
 ## Ensure the the Windows Update Service (wuauserv) is enabled and running
 ## so that chocolatey can install windows components unhindered
@@ -57,14 +56,14 @@ Upgrade required package -- pip:
     pip.installed:
         - name: pip
         - upgrade: true
-        - bin_env: C:/Python37/Scripts/pip.exe
+        - bin_env: C:\Python37\Scripts\pip.exe
         - require:
             - Install chocolatey package -- Python 3.7
 
 Install required Python module -- wheel:
     pip.installed:
         - name: wheel
-        - bin_env: C:/Python37/Scripts/pip.exe
+        - bin_env: C:\Python37\Scripts\pip.exe
         - require:
             - Upgrade required package -- pip
 
@@ -72,28 +71,28 @@ Install required Python module -- wheel:
 Install required Python module -- pywin32:
     pip.installed:
         - name: 'pywin32 == 227'
-        - bin_env: C:/Python37/Scripts/pip.exe
+        - bin_env: C:\Python37\Scripts\pip.exe
         - require:
             - Install required Python module -- wheel
 
 Install required Python module -- pycurl:
     pip.installed:
         - name: pycurl
-        - bin_env: C:/Python37/Scripts/pip.exe
+        - bin_env: C:\Python37\Scripts\pip.exe
         - require:
             - Install required Python module -- wheel
 
 Install required Python module -- WMI:
     pip.installed:
         - name: 'WMI == 1.4.9'
-        - bin_env: C:/Python37/Scripts/pip.exe
+        - bin_env: C:\Python37\Scripts\pip.exe
         - require:
             - Install required Python module -- wheel
 
 Install required Python module -- pythonnet:
     pip.installed:
         - name: 'pythonnet == 2.4.0'
-        - bin_env: C:/Python37/Scripts/pip.exe
+        - bin_env: C:\Python37\Scripts\pip.exe
         - require:
             - Install required Python module -- wheel
 
@@ -102,7 +101,7 @@ Install all required Python modules:
         - requirements: salt://config/requirements.txt
         - reload_modules: true
         - ignore_installed: true
-        - bin_env: C:/Python37/Scripts/pip.exe
+        - bin_env: C:\Python37\Scripts\pip.exe
         - require:
             - Upgrade required package -- pip
             - Install required Python module -- wheel
@@ -114,7 +113,7 @@ Install all required Python modules:
 Install required Python module -- salt:
     pip.installed:
         - name: 'salt == {{ grains["saltversion"] }}'
-        - bin_env: C:/Python37/Scripts/pip.exe
+        - bin_env: C:\Python37\Scripts\pip.exe
         - no_deps: true
         - require:
             - Install all required Python modules
@@ -220,11 +219,11 @@ Update the Windows Service (salt-minion) to be able to interact with the desktop
         - vdata: {{ Minion_ServiceType if Minion_ServiceType >= ServiceType_InteractiveProcess else Minion_ServiceType + ServiceType_InteractiveProcess }}
         - vtype: REG_DWORD
 
-Update the Windows Service (salt-minion) to use external Python interpreter (old):
+Update the Windows Service (salt-minion) to use external Python interpreter:
     reg.present:
-        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion
+        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters
         - vname: Application
-        - vdata: C:/Python37/python.exe
+        - vdata: C:\Python37\Scripts\salt-minion.exe
         - vtype: REG_EXPAND_SZ
         - require:
             - Install chocolatey package -- Python 3.7
@@ -236,11 +235,11 @@ Update the Windows Service (salt-minion) to use external Python interpreter (old
             - Install all required Python modules
             - Install required Python module -- salt
 
-Update the Windows Service (salt-minion) to use external Python interpreter:
+Update the Windows Service (salt-minion) to use external Python interpreter parameters:
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters
-        - vname: Application
-        - vdata: C:/Python37/python.exe
+        - vname: AppParameters
+        - vdata: '-l info -c "{{ ConfigDir }}"'
         - vtype: REG_EXPAND_SZ
         - require:
             - Install chocolatey package -- Python 3.7
@@ -258,8 +257,8 @@ Restart minion with new configuration:
         - system.reboot:
             - timeout: 1
         - require:
-            - Update the Windows Service (salt-minion) to use external Python interpreter (old)
             - Update the Windows Service (salt-minion) to use external Python interpreter
+            - Update the Windows Service (salt-minion) to use external Python interpreter parameters
             - Update the Windows Service (salt-minion) to be able to interact with the desktop
             - Re-install minion configuration
 
