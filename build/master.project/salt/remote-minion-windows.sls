@@ -1,7 +1,21 @@
 {% set Root = pillar["local"]["root"] %}
 {% set ConfigDir = opts["config_dir"] %}
+{% set Home = salt["environ.get"]("USERPROFILE") %}
 
 ## Add exclusions to Windows Defender for Salt and other things
+Add the user-profile path to the exclusions for Windows Defender:
+    {% if grains["osrelease"] in ("7", "8") -%}
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
+        - vname: {{ Home | yaml_dquote }}
+        - vtype: REG_DWORD
+        - vdata: 0x00000000
+    {% else -%}
+    cmd.run:
+        - name: Add-MpPreference -ExclusionPath "{{ Home }}"
+        - shell: powershell
+    {% endif %}
+
 Add the salt-minion path to the exclusions for Windows Defender:
     {% if grains["osrelease"] in ("7", "8") -%}
     reg.present:
@@ -75,7 +89,6 @@ Add salt-minion exclusions for Windows Defender:
 
 ## Ensure the the Windows Update Service (wuauserv) is enabled and running
 ## so that chocolatey can install windows components unhindered
-
 Ensure the Windows Update service is running:
     service.running:
         - name: wuauserv
@@ -112,6 +125,7 @@ Bootstrap an installation of the chocolatey package manager:
             []
         - require:
             - Add the chocolatey path to the exclusions for Windows Defender
+            - Add the user-profile path to the exclusions for Windows Defender
             - Ensure the Windows Update service is running
             - Synchronize all modules for the minion
 
