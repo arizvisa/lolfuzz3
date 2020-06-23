@@ -1,6 +1,67 @@
 {% set Root = pillar["local"]["root"] %}
 {% set ConfigDir = salt["config.get"]("config_dir") %}
 
+## Add exclusions to Windows Defender for Salt and other things
+Add the salt-minion path to the exclusions for Windows Defender:
+    {% if grains["osrelease"] in ("7", "8") -%}
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
+        - vname: {{ grains["saltpath"].split("\\", 2)[:-1] | join("\\") | yaml_dquote }}
+        - vtype: REG_DWORD
+        - vdata: 0x00000000
+    {% else -%}
+    cmd.run:
+        - name: Add-MpPreference -ExclusionPath "{{ grains["saltpath"].split("\\", 2)[:-1] | join("\\") }}"
+        - shell: powershell
+    {% endif %}
+
+Add the salt-minion process to the exclusions for Windows Defender:
+    {% if grains["osrelease"] in ("7", "8") -%}
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Processes
+        - vname: salt-minion.exe
+        - vtype: REG_DWORD
+        - vdata: 0x00000000
+    {% else -%}
+    cmd.run:
+        - name: Add-MpPreference -ExclusionProcess "salt-minion.exe"
+        - shell: powershell
+    {% endif %}
+
+Add the python path to the exclusions for Windows Defender:
+    {% if grains["osrelease"] in ("7", "8") -%}
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
+        - vname: C:\Python37
+        - vtype: REG_DWORD
+        - vdata: 0x00000000
+    {% else -%}
+    cmd.run:
+        - name: Add-MpPreference -ExclusionPath "C:\Python37"
+        - shell: powershell
+    {% endif %}
+
+Add the python process to the exclusions for Windows Defender:
+    {% if grains["osrelease"] in ("7", "8") -%}
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Processes
+        - vname: python.exe
+        - vtype: REG_DWORD
+        - vdata: 0x00000000
+    {% else -%}
+    cmd.run:
+        - name: Add-MpPreference -ExclusionProcess "python.exe"
+        - shell: powershell
+    {% endif %}
+
+Add exclusions for Windows Defender:
+    test.succeed_without_changes:
+        - require:
+            - Add the salt-minion path to the exclusions for Windows Defender
+            - Add the salt-minion process to the exclusions for Windows Defender
+            - Add the python path to the exclusions for Windows Defender
+            - Add the python process to the exclusions for Windows Defender
+
 ## Ensure the the Windows Update Service (wuauserv) is enabled and running
 ## so that chocolatey can install windows components unhindered
 
@@ -14,6 +75,8 @@ Synchronize all modules for the minion:
     saltutil.sync_all:
         - refresh: true
         - saltenv: bootstrap
+        - require:
+            - Add exclusions for Windows Defender
 
 {% if grains["saltversioninfo"][0] | int < 3000 -%}
 Deploy the salt.utils.templates module directly into the remote-minion's site-packages:
@@ -50,6 +113,7 @@ Install chocolatey package -- Python 3.7:
         - force_x86: false
         {% endif -%}
         - require:
+            - Add exclusions for Windows Defender
             - Bootstrap an installation of the chocolatey package manager
 
 Upgrade required package -- pip:
@@ -226,6 +290,7 @@ Update the Windows Service (salt-minion) to use external Python interpreter:
         - vdata: C:\Python37\Scripts\salt-minion.exe
         - vtype: REG_EXPAND_SZ
         - require:
+            - Add exclusions for Windows Defender
             - Install chocolatey package -- Python 3.7
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
@@ -242,6 +307,7 @@ Update the Windows Service (salt-minion) to use external Python interpreter para
         - vdata: '-l info -c "{{ ConfigDir }}"'
         - vtype: REG_EXPAND_SZ
         - require:
+            - Add exclusions for Windows Defender
             - Install chocolatey package -- Python 3.7
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
