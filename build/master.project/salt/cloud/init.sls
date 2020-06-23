@@ -11,10 +11,14 @@ Install salt-cloud configuration:
         - name: '{{ Root }}/etc/salt/cloud'
         - defaults:
             log_level: info
-            pool_size: 10
+            pool_size: 16
+
             minion:
                 master: {{ pillar["local"]["ip4"] | yaml_dquote }}
                 startup_states: highstate
+
+                log_level: info
+                log_file: /var/log/salt/minion.bootstrap.log
 
                 ipv6: false
                 transport: zeromq
