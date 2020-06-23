@@ -54,13 +54,24 @@ Add the python process to the exclusions for Windows Defender:
         - shell: powershell
     {% endif %}
 
-Add exclusions for Windows Defender:
+Add the chocolatey path to the exclusions for Windows Defender:
+    {% if grains["osrelease"] in ("7", "8") -%}
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
+        - vname: {{ (salt["environ.get"]("ProgramData") + "\\" + "chocolatey") | yaml_dquote }}
+        - vtype: REG_DWORD
+        - vdata: 0x00000000
+    {% else -%}
+    cmd.run:
+        - name: Add-MpPreference -ExclusionPath "{{ salt["environ.get"]("ProgramData") }}\chocolatey"
+        - shell: powershell
+    {% endif %}
+
+Add salt-minion exclusions for Windows Defender:
     test.succeed_without_changes:
         - require:
             - Add the salt-minion path to the exclusions for Windows Defender
             - Add the salt-minion process to the exclusions for Windows Defender
-            - Add the python path to the exclusions for Windows Defender
-            - Add the python process to the exclusions for Windows Defender
 
 ## Ensure the the Windows Update Service (wuauserv) is enabled and running
 ## so that chocolatey can install windows components unhindered
@@ -76,7 +87,7 @@ Synchronize all modules for the minion:
         - refresh: true
         - saltenv: bootstrap
         - require:
-            - Add exclusions for Windows Defender
+            - Add salt-minion exclusions for Windows Defender
 
 {% if grains["saltversioninfo"][0] | int < 3000 -%}
 Deploy the salt.utils.templates module directly into the remote-minion's site-packages:
@@ -100,6 +111,7 @@ Bootstrap an installation of the chocolatey package manager:
         - chocolatey.bootstrap:
             []
         - require:
+            - Add the chocolatey path to the exclusions for Windows Defender
             - Ensure the Windows Update service is running
             - Synchronize all modules for the minion
 
@@ -113,7 +125,8 @@ Install chocolatey package -- Python 3.7:
         - force_x86: false
         {% endif -%}
         - require:
-            - Add exclusions for Windows Defender
+            - Add the python path to the exclusions for Windows Defender
+            - Add the python process to the exclusions for Windows Defender
             - Bootstrap an installation of the chocolatey package manager
 
 Upgrade required package -- pip:
@@ -180,6 +193,7 @@ Install required Python module -- salt:
         - bin_env: C:\Python37\Scripts\pip.exe
         - no_deps: true
         - require:
+            - Add salt-minion exclusions for Windows Defender
             - Install all required Python modules
 
 ## Install the new minion configuration (and service configuration)
@@ -187,6 +201,7 @@ Create minion configuration directory:
     file.directory:
         - name: '{{ ConfigDir }}/minion.d'
         - require:
+            - Add salt-minion exclusions for Windows Defender
             - Install all required Python modules
             - Install required Python module -- salt
 
@@ -290,7 +305,6 @@ Update the Windows Service (salt-minion) to use external Python interpreter:
         - vdata: C:\Python37\Scripts\salt-minion.exe
         - vtype: REG_EXPAND_SZ
         - require:
-            - Add exclusions for Windows Defender
             - Install chocolatey package -- Python 3.7
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
@@ -307,7 +321,6 @@ Update the Windows Service (salt-minion) to use external Python interpreter para
         - vdata: '-l info -c "{{ ConfigDir }}"'
         - vtype: REG_EXPAND_SZ
         - require:
-            - Add exclusions for Windows Defender
             - Install chocolatey package -- Python 3.7
             - Upgrade required package -- pip
             - Install required Python module -- pywin32
