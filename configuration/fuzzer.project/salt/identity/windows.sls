@@ -2,7 +2,7 @@
 
 ## (Service) Windows Defender
 Stop Microsoft's Windows Defender:
-    {% if grains["osrelease"] in ("7", "8", "8.1") -%}
+    {% if grains["osrelease"] in ("7", "8") -%}
     service.dead:
         - name: WinDefend
     {% else -%}
@@ -11,7 +11,7 @@ Stop Microsoft's Windows Defender:
     {% endif %}
 
 Disable Microsoft's Windows Defender:
-    {% if grains["osrelease"] in ("7", "8", "8.1") -%}
+    {% if grains["osrelease"] in ("7", "8") -%}
     service.disabled:
         - name: WinDefend
     {% else -%}
@@ -23,15 +23,15 @@ Disable Microsoft's Windows Defender:
             - Stop Microsoft's Windows Defender
 
 Add the salt path to the exclusions for Windows Defender:
-    {% if grains["osrelease"] in ("7", "8", "8.1") %}
+    {% if grains["osrelease"] in ("7", "8") %}
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
-        - vname: {{ grains["saltpath"].rsplit("\\", 4)[0] | yaml_dquote }}
+        - vname: {{ grains["saltpath"].split("\\", 2)[:-1] | join("\\") | yaml_dquote }}
         - vtype: REG_DWORD
         - vdata: 0x00000000
     {% else %}
     cmd.run:
-        - name: Add-MpPreference -ExclusionPath "{{ grains["saltpath"].rsplit("\\", 4)[0] }}"
+        - name: Add-MpPreference -ExclusionPath "{{ grains["saltpath"].split("\\", 2)[:-1] | join("\\") }}"
         - shell: powershell
     {% endif %}
 
