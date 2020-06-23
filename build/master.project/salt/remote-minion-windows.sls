@@ -1,17 +1,17 @@
 {% set Root = pillar["local"]["root"] %}
-{% set ConfigDir = salt["config.get"]("config_dir") %}
+{% set ConfigDir = opts["config_dir"] %}
 
 ## Add exclusions to Windows Defender for Salt and other things
 Add the salt-minion path to the exclusions for Windows Defender:
     {% if grains["osrelease"] in ("7", "8") -%}
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
-        - vname: {{ grains["saltpath"].split("\\", 2)[:-1] | join("\\") | yaml_dquote }}
+        - vname: {{ Root | yaml_dquote }}
         - vtype: REG_DWORD
         - vdata: 0x00000000
     {% else -%}
     cmd.run:
-        - name: Add-MpPreference -ExclusionPath "{{ grains["saltpath"].split("\\", 2)[:-1] | join("\\") }}"
+        - name: Add-MpPreference -ExclusionPath "{{ Root }}"
         - shell: powershell
     {% endif %}
 
@@ -58,7 +58,7 @@ Add the chocolatey path to the exclusions for Windows Defender:
     {% if grains["osrelease"] in ("7", "8") -%}
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
-        - vname: {{ (salt["environ.get"]("ProgramData") + "\\" + "chocolatey") | yaml_dquote }}
+        - vname: {{ (salt["environ.get"]("ProgramData") ~ "\\" ~ "chocolatey") | yaml_dquote }}
         - vtype: REG_DWORD
         - vdata: 0x00000000
     {% else -%}

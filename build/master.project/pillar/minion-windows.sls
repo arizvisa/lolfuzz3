@@ -1,6 +1,6 @@
 local:
-    # path to root filesystem on windows minion
-    root: {{ grains["saltpath"].rsplit("\\", 4)[0] | yaml_dquote }}
+    # path to root filesystem (salt installation directory) on windows minion
+    root: {{ grains["systempath"] | select("match", ".*salt.*") | list | first }}
     machine_id: {{ grains["id"].rsplit(".", 1)[0] | yaml_dquote }}
 
     # networking information on windows minion
