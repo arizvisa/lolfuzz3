@@ -22,19 +22,6 @@ Disable Microsoft's Windows Defender:
         - require:
             - Stop Microsoft's Windows Defender
 
-Add the salt path to the exclusions for Windows Defender:
-    {% if grains["osrelease"] in ("7", "8") %}
-    reg.present:
-        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
-        - vname: {{ grains["saltpath"].split("\\", 2)[:-1] | join("\\") | yaml_dquote }}
-        - vtype: REG_DWORD
-        - vdata: 0x00000000
-    {% else %}
-    cmd.run:
-        - name: Add-MpPreference -ExclusionPath "{{ grains["saltpath"].split("\\", 2)[:-1] | join("\\") }}"
-        - shell: powershell
-    {% endif %}
-
 ## Hostname information
 Set the workgroup:
     system.workgroup:
@@ -65,7 +52,6 @@ Reboot after name change:
         - require:
             - Set the workgroup
             - Disable Microsoft's Windows Defender
-            - Add the salt path to the exclusions for Windows Defender
         - onchanges_any:
             - Set the hostname
             - Set the computer name
