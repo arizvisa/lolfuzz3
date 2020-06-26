@@ -85,12 +85,12 @@ Add the ramdisk path ({{ disk.drive }}:\) to the exclusions for Windows Defender
     {% if grains["osrelease"] in ("7", "8", "8.1") %}
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
-        - vname: {{ (disk.drive + ":\\") | yaml_dquote }}
+        - vname: {{ (disk.drive ~ ":\\") | yaml_dquote }}
         - vtype: REG_DWORD
         - vdata: 0x00000000
     {% else %}
     cmd.run:
-        - name: Add-MpPreference -ExclusionPath "{{ disk.drive + ":\\" }}"
+        - name: Add-MpPreference -ExclusionPath "{{ disk.drive ~ ":\\" }}"
         - shell: powershell
     {% endif %}
 {% endfor %}
