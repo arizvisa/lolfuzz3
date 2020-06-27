@@ -49,7 +49,7 @@ Install volume check tool:
         - name: {{ pillar["Drivers"]["Tools"] }}/Check-Volume.ps1
         - contents: |
             param(
-                [Parameter(Mandatory=$true)[string]$Drive
+                [Parameter(Mandatory=$true)][string]$Drive
             )
             $volume = Get-WmiObject -Class Win32_Volume | Where-Object {$_.Name -eq ($Drive + ":\")}
             if ( -not $volume ) {
@@ -65,7 +65,7 @@ Install volume unmount tool:
         - name: {{ pillar["Drivers"]["Tools"] }}/Unmount-Volume.ps1
         - contents: |
             param(
-                [Parameter(Mandatory=$true)[string]$Drive,
+                [Parameter(Mandatory=$true)][string]$Drive,
                 [bool]$Force = $false
             )
             $volume = Get-WmiObject -Class Win32_Volume | Where-Object {$_.Name -eq ($Drive + ":\")}
