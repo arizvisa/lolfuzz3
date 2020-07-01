@@ -1,4 +1,4 @@
-package:
+Package:
     glib2:
         {% if grains["os_family"] in ["RedHat"] -%}
         name: glib2

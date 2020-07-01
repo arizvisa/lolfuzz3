@@ -1,9 +1,9 @@
 Power-management package dependencies:
     pkg.installed:
         - pkgs:
-            - {{ pillar["package"]["glib2"]["name"] }}: '{{ pillar["package"]["glib2"]["version"] }}'
-            - {{ pillar["package"]["gnome-settings-daemon"]["name"] }}: '{{ pillar["package"]["gnome-settings-daemon"]["version"] }}'
-            - {{ pillar["package"]["gsettings-desktop-schemas"]["name"] }}: '{{ pillar["package"]["gsettings-desktop-schemas"]["version"] }}'
+            - {{ pillar["Package"]["glib2"]["name"] }}: '{{ pillar["Package"]["glib2"]["version"] }}'
+            - {{ pillar["Package"]["gnome-settings-daemon"]["name"] }}: '{{ pillar["Package"]["gnome-settings-daemon"]["version"] }}'
+            - {{ pillar["Package"]["gsettings-desktop-schemas"]["name"] }}: '{{ pillar["Package"]["gsettings-desktop-schemas"]["version"] }}'
 
 {% for schema in pillar["power-management"]["gsetting"] -%}
 {%- for key in pillar["power-management"]["gsetting"][schema] %}

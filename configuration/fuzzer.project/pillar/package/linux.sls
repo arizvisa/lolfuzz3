@@ -1,4 +1,4 @@
-package:
+Package:
 
 ## General packages
     xserver:
