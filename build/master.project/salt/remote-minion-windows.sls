@@ -29,19 +29,6 @@ Add the salt-minion path to the exclusions for Windows Defender:
         - shell: powershell
     {% endif %}
 
-Add the salt-minion process to the exclusions for Windows Defender:
-    {% if grains["osrelease"] in ("7", "8") -%}
-    reg.present:
-        - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Processes
-        - vname: salt-minion.exe
-        - vtype: REG_DWORD
-        - vdata: 0x00000000
-    {% else -%}
-    cmd.run:
-        - name: Add-MpPreference -ExclusionProcess "salt-minion.exe"
-        - shell: powershell
-    {% endif %}
-
 Add the python path to the exclusions for Windows Defender:
     {% if grains["osrelease"] in ("7", "8") -%}
     reg.present:
@@ -81,12 +68,6 @@ Add the chocolatey path to the exclusions for Windows Defender:
         - shell: powershell
     {% endif %}
 
-Add salt-minion exclusions for Windows Defender:
-    test.succeed_without_changes:
-        - require:
-            - Add the salt-minion path to the exclusions for Windows Defender
-            - Add the salt-minion process to the exclusions for Windows Defender
-
 ## Ensure the the Windows Update Service (wuauserv) is enabled and running
 ## so that chocolatey can install windows components unhindered
 Ensure the Windows Update service is running:
@@ -100,7 +81,7 @@ Synchronize all modules for the minion:
         - refresh: true
         - saltenv: bootstrap
         - require:
-            - Add salt-minion exclusions for Windows Defender
+            - Add the salt-minion path to the exclusions for Windows Defender
 
 {% if grains["saltversioninfo"][0] | int < 3000 -%}
 Deploy the salt.utils.templates module directly into the remote-minion's site-packages:
@@ -118,7 +99,7 @@ Deploy the salt.utils.path module directly into the remote-minion's site-package
             - Synchronize all modules for the minion
 {% endif -%}
 
-## Bootstrap chocolatey and install external version of Python
+## Bootstrap chocolatey and install an external version of Python
 Bootstrap an installation of the chocolatey package manager:
     module.run:
         - chocolatey.bootstrap:
@@ -206,20 +187,22 @@ Install required Python module -- salt:
         - name: 'salt == {{ grains["saltversion"] }}'
         - bin_env: C:\Python37\Scripts\pip.exe
         - no_deps: true
+        - use_wheel: false
+        - no_binary: ':all:'
         - require:
-            - Add salt-minion exclusions for Windows Defender
+            - Add the salt-minion path to the exclusions for Windows Defender
             - Install all required Python modules
 
 ## Install the new minion configuration (and service configuration)
-Create minion configuration directory:
+Create the salt-minion configuration directory:
     file.directory:
         - name: '{{ ConfigDir }}/minion.d'
         - require:
-            - Add salt-minion exclusions for Windows Defender
+            - Add the salt-minion path to the exclusions for Windows Defender
             - Install all required Python modules
             - Install required Python module -- salt
 
-Install minion common configuration:
+Install the salt-minion common configuration:
     file.managed:
         - template: jinja
         - name: '{{ ConfigDir }}/minion.d/common.conf'
@@ -228,9 +211,9 @@ Install minion common configuration:
             ipv6: false
             transport: zeromq
         - require:
-            - Create minion configuration directory
+            - Create the salt-minion configuration directory
 
-Install minion etcd configuration:
+Install the salt-minion etcd configuration:
     file.managed:
         - template: jinja
         - name: '{{ ConfigDir }}/minion.d/etcd.conf'
@@ -257,10 +240,10 @@ Install minion etcd configuration:
                 returner_root: '{{ pillar["configuration"]["salt"] }}/return'
 
         - require:
-            - Create minion configuration directory
+            - Create the salt-minion configuration directory
             - Synchronize all modules for the minion
 
-Re-install minion configuration:
+Re-install the salt-minion configuration:
     file.managed:
         - template: jinja
         - name: '{{ ConfigDir }}/minion'
@@ -286,8 +269,8 @@ Re-install minion configuration:
             - Deploy the salt.utils.templates module directly into the remote-minion's site-packages
             - Deploy the salt.utils.path module directly into the remote-minion's site-packages
             {% endif -%}
-            - Install minion common configuration
-            - Install minion etcd configuration
+            - Install the salt-minion common configuration
+            - Install the salt-minion etcd configuration
 
 # There's no binary arithmetic or negation in Jinja, so we hack/cheat by
 # checking if the ServiceType is larger than the flag we want, if it
@@ -312,11 +295,11 @@ Update the Windows Service (salt-minion) to be able to interact with the desktop
         - vdata: {{ Minion_ServiceType if Minion_ServiceType >= ServiceType_InteractiveProcess else Minion_ServiceType + ServiceType_InteractiveProcess }}
         - vtype: REG_DWORD
 
-Update the Windows Service (salt-minion) to use external Python interpreter:
+Update the Windows Service (salt-minion) to use the external Python interpreter:
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters
         - vname: Application
-        - vdata: C:\Python37\Scripts\salt-minion.exe
+        - vdata: C:\Python37\python.exe
         - vtype: REG_EXPAND_SZ
         - require:
             - Install chocolatey package -- Python 3.7
@@ -328,11 +311,27 @@ Update the Windows Service (salt-minion) to use external Python interpreter:
             - Install all required Python modules
             - Install required Python module -- salt
 
-Update the Windows Service (salt-minion) to use external Python interpreter parameters:
+Update the Windows Service (salt-minion) to use the external Python interpreter parameters:
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters
         - vname: AppParameters
-        - vdata: '-l info -c "{{ ConfigDir }}"'
+        - vdata: '"C:\Python37\Scripts\salt-minion" -l info -c "{{ ConfigDir }}"'
+        - vtype: REG_EXPAND_SZ
+        - require:
+            - Install chocolatey package -- Python 3.7
+            - Upgrade required package -- pip
+            - Install required Python module -- pywin32
+            - Install required Python module -- WMI
+            - Install required Python module -- pycurl
+            - Install required Python module -- pythonnet
+            - Install all required Python modules
+            - Install required Python module -- salt
+
+Update the Windows Service (salt-minion) to use the user-profile path as its application directory:
+    reg.present:
+        - name: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\salt-minion\Parameters
+        - vname: AppDirectory
+        - vdata: {{ Home | yaml_dquote }}
         - vtype: REG_EXPAND_SZ
         - require:
             - Install chocolatey package -- Python 3.7
@@ -350,10 +349,11 @@ Restart minion with new configuration:
         - system.reboot:
             - timeout: 1
         - require:
-            - Update the Windows Service (salt-minion) to use external Python interpreter
-            - Update the Windows Service (salt-minion) to use external Python interpreter parameters
             - Update the Windows Service (salt-minion) to be able to interact with the desktop
-            - Re-install minion configuration
+            - Update the Windows Service (salt-minion) to use the external Python interpreter
+            - Update the Windows Service (salt-minion) to use the external Python interpreter parameters
+            - Update the Windows Service (salt-minion) to use the user-profile path as its application directory
+            - Re-install the salt-minion configuration
 
 Restart minion on failure:
     module.run:
