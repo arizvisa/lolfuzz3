@@ -1,6 +1,6 @@
 ## (Service) Windows Defender
 Add the drivers path to the exclusions for Windows Defender:
-    {% if grains["osrelease"] in ("7", "8", "8.1") %}
+    {% if grains["osrelease"] in ("7", "8") %}
     reg.present:
         - name: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths
         - vname: {{ pillar["Drivers"]["Path"] | replace("/", "\\") | yaml_dquote }}
