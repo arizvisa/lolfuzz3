@@ -22,7 +22,7 @@ store:
 
         users:
             - accessKey: {{ grains["id"] }}
-              secretKey: {{ project_name }}
+              secretKey: {{ project_name }}.lol
               group: minion
 
         groups:
