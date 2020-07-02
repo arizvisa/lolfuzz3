@@ -97,7 +97,7 @@ trap "[ -f \"${imgtemp}\" ] && /bin/rm -f \"${imgtemp}\"; exit" SIGHUP SIGINT SI
 
 # And now we can execute it..
 pushd "${ruledir}" >/dev/null
-cat "${rule}" <( printf 'acbuild write --overwrite %s\nacbuild end\n' "${imgtemp}" ) | "${shtype}" /dev/stdin
+cat "${rule}" <( printf 'acbuild write --overwrite %s\nacbuild end\n' "${imgtemp}" ) | "${shtype}" -e -
 err=$?
 popd >/dev/null
 
