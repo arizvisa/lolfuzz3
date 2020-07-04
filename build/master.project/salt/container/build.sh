@@ -39,7 +39,7 @@ case "$rule" in
 
     if [ $err -ne 0 ] || [ ! -f "$IMAGEDIR/${imgname}:${imgver}.aci" ]; then
         printf 'Error trying to build image: "%s:%s"\n' "${imgname}" "${imgver}" 1>&2
-        rm -f "$IMAGEDIR/${imgname}:${imgver}.aci"
+        rm -vf "$IMAGEDIR/${imgname}:${imgver}.aci"
         exit 1
     fi
 
@@ -93,7 +93,7 @@ imgfile="${imgname}:${imgver}${imgtype}"
 printf 'Found rule for "%s:%s" to write image to %s.\n' "${imgname}" "${imgver}" "$IMAGEDIR/${imgname}:${imgver}${imgtype}" 1>&2
 
 imgtemp="$IMAGEDIR/${imgfull}.tmp"
-trap "[ -f \"${imgtemp}\" ] && /bin/rm -f \"${imgtemp}\"; exit" SIGHUP SIGINT SIGTERM
+trap "[ -f \"${imgtemp}\" ] && /bin/rm -vf \"${imgtemp}\"; [ -d \"${ruledir}/.acbuild\" ] && /bin/rm -vrf \"${ruledir}/.acbuild\"; exit" SIGHUP SIGINT SIGTERM
 
 # And now we can execute it..
 pushd "${ruledir}" >/dev/null
@@ -103,10 +103,17 @@ popd >/dev/null
 
 if [ $err -ne 0 ] || [ ! -f "${imgtemp}" ]; then
     printf 'Error trying to build image for rule "%s".\n' "${rule}" 1>&2
-    rm -f "${imgtemp}"
+    rm -vf "${imgtemp}"
+
+    # If we failed, then there might be a .acbuild directory left where our
+    # rules are, so we need to clean these up too.
+    if [ -d "${ruledir}/.acbuild" ]; then
+        printf 'Cleaning up acbuild directory (%s) for rule "%s".\n' "${ruledir}/.acbuild" "${rule}" 1>&2
+        rm -rf "${ruledir}/.acbuild"
+    fi
     exit 1
 else
-    mv -f "${imgtemp}" "$IMAGEDIR/${imgfile}"
+    mv -vf "${imgtemp}" "$IMAGEDIR/${imgfile}"
 fi
 
 # ..and now we can inform the user that it's there.
