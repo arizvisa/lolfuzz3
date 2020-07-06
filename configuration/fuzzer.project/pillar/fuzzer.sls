@@ -2,7 +2,7 @@ container:
     radamsa:
         name: radamsa
         image: lol/radamsa
-        version: 0.6
+        version: 0.5
         uuid: /var/lib/coreos/radamsa.uuid
 
 fuzzer:
