@@ -118,7 +118,7 @@ platform = $(subst $(comma),$(space),$(PLATFORM))
 
 ifneq ($(platform),)
 $(info [-] User has specified the following template type(s): $(platform))
-options := $(options) only='$(subst $(space),$(comma),$(foreach name,$(platform),$(name)-iso))'
+options := $(options) only='$(subst $(space),$(comma),$(strip $(foreach name,$(filter-out qemu,$(platform)),$(name)-iso) $(foreach name,$(filter qemu,$(platform)),$(name))))'
 else
 $(warning User has specified no template types. Assuming all platforms are available.)
 $(info [-] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
