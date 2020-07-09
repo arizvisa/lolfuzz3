@@ -1,7 +1,7 @@
 {
     "builders" : [
         { "type" : "qemu",
-            "headless" : false,
+            "headless" : "{{user `headless`}}",
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
                 "................",
@@ -76,7 +76,7 @@
         },
         { "type" : "virtualbox-iso",
             "format" : "ovf",
-            "headless" : false,
+            "headless" : "{{user `headless`}}",
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
                 "................",
@@ -115,7 +115,7 @@
             "guest_additions_mode" : "disable"
         },
         { "type" : "vmware-iso",
-            "headless" : false,
+            "headless" : "{{user `headless`}}",
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
                 "................",
@@ -157,6 +157,7 @@
             "serial" : "{{user `guest-serial`}}"
         },
         { "type" : "hyperv-iso",
+            "headless" : "{{user `headless`}}",
             "boot_wait" : "{{user `timeout-boot`}}",
             "boot_command" : [
                 "................",
@@ -193,6 +194,7 @@
     "provisioners" : [],
     "post-processors" : [],
     "variables" : {
+        "headless": "false",
         "timeout-boot" : "1s",
         "timeout-wait" : "10m",
 
