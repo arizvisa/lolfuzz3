@@ -87,6 +87,19 @@ ifeq ($(build),0)
     $(warning User has requested to skip building the target: $(boxname_template))
 endif
 
+## Headless option
+HEADLESS ?= 0
+headless := $(HEADLESS)
+headless := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(headless)))))
+headless := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(headless)))))
+
+ifeq ($(headless),1)
+    $(warning User has requested to build the target without the graphical user interface)
+	headless_option := true
+else
+	headless_option := false
+endif
+
 ## Debug option
 DEBUG ?= 0
 debug := $(DEBUG)
@@ -191,6 +204,7 @@ help:
 	@printf '\nParameters that are available:\n'
 	@printf '\tPROJECT: (mandatory) Name of the project (also used as the cluster%cs domain)\n' "'"
 	@printf '\tPLATFORM: Virtualization platform(s) to target the template towards (vmware, virtualbox, qemu, parallels, hyperv).\n'
+	@printf '\tHEADLESS: (default false) Specify whether the build should be headless (no gui).\n'
 	@printf '\tOUTPUT: (default /template) Path to deploy the template, its config, and auth keypair to\n'
 	@printf '\tSERVE: Path of initial service directory that is deployed to the template after installation of salt\n'
 	@printf '\tBUILDDIR: (default /build.dir) Path containing intermediary files for building template\n'
@@ -351,10 +365,10 @@ $(boxname_workdir)/serve.tar: $(serve)	| $(boxname_workdir)
 $(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(boxname_workdir)/serve.tar
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'guest-config=$(boxname).config' -var 'serve-directory-archive=$(boxname_workdir)/serve.tar' '$(boxname_workdir)/$(boxname).json'
+	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'headless=$(headless_option)' -var 'guest-config=$(boxname).config' -var 'serve-directory-archive=$(boxname_workdir)/serve.tar' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build %s -var-file %c%s%c -var %cguest-config=%s%c -var %cserve-directory-archive=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(boxname).config' "'" "'" '$(boxname_workdir)/serve.tar' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build %s -var-file %c%s%c -var %cheadless=%s%c -var %cguest-config=%s%c -var %cserve-directory-archive=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(headless_option)' "'" "'" '$(boxname).config' "'" "'" '$(boxname_workdir)/serve.tar' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
