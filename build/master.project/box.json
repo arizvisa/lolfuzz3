@@ -23,7 +23,6 @@
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
-            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
             "iso_checksum" : "{{user `iso-checksum`}}",
 
             "ssh_username" : "{{user `provision-user`}}",
@@ -61,7 +60,6 @@
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
-            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
             "iso_checksum" : "{{user `iso-checksum`}}",
 
             "ssh_username" : "{{user `provision-user`}}",
@@ -100,7 +98,6 @@
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
-            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
             "iso_checksum" : "{{user `iso-checksum`}}",
 
             "ssh_username" : "{{user `provision-user`}}",
@@ -140,7 +137,6 @@
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
-            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
             "iso_checksum" : "{{user `iso-checksum`}}",
 
             "ssh_username" : "{{user `provision-user`}}",
@@ -182,7 +178,6 @@
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
-            "iso_checksum_type" : "{{user `iso-checksum-type`}}",
             "iso_checksum" : "{{user `iso-checksum`}}",
 
             "ssh_username" : "{{user `provision-user`}}",
