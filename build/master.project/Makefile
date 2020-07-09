@@ -215,7 +215,7 @@ help:
 	@printf '\nThanks for playing!\n'
 
 .PHONY: template
-template: $(outdir)/$(boxname)
+template: $(foreach suffix,$(platform),$(outdir)/$(boxname)-$(suffix))
 	@printf '[!] Wrote completed template: %s\n' '$<'
 
 .PHONY: clean
@@ -242,14 +242,14 @@ download: download-installer download-tools
 	@printf '[*] Successfully downloaded all required files\n'
 
 .PHONY: output
-output: $(outdir)/$(boxname) $(project_filename) $(foreach f,$(output_identity),$(outdir)/$(f)) $(foreach f,$(output_config),$(outdir)/$(f)) $(foreach f,$(output_keypair),$(outdir)/$(f))
+output: $(foreach suffix,$(platform),$(outdir)/$(boxname)-$(suffix)) $(project_filename) $(foreach f,$(output_identity),$(outdir)/$(f)) $(foreach f,$(output_config),$(outdir)/$(f)) $(foreach f,$(output_keypair),$(outdir)/$(f))
 	@printf '[*] Sucessfully wrote output files to %s: %s\n' '$(outdir)' '$^'
 
 ## cleaning up files
 .PHONY: clean-output
 clean-output:
-	@printf '[*] Erasing template: %s\n' '$(outdir)/$(boxname)'
-	-rm -rf '$(outdir)/$(boxname)'
+	@printf '[*] Erasing template: %s\n' $(foreach suffix,vmware virtualbox qemu parallels hyperv,'$(outdir)/$(boxname)-$(suffix)')
+	-rm -rf $(foreach suffix,vmware virtualbox qemu parallels hyperv,'$(outdir)/$(boxname)-$(suffix)')
 	@printf '[*] Erasing output files from %s\n' '$(outdir)'
 	-rm -f $(foreach f,$(output_identity),'$(outdir)/$(f)')
 	-rm -f $(foreach f,$(output_config),'$(outdir)/$(f)')
@@ -264,7 +264,7 @@ clean-installer:
 .PHONY: clean-template
 clean-template:
 	@printf '[*] Erasing temporary template: %s\n' '$(boxname_template)'
-	-rm -rf '$(boxname_template)'
+	-rm -rf $(foreach suffix,vmware virtualbox qemu parallels hyperv,'$(boxname_template)-$(suffix)')
 
 .PHONY: clean-build
 clean-build:
@@ -339,12 +339,15 @@ $(eval $(call make_directory,$(boxname_workdir),$(workdir)))
 $(eval $(call make_directory,$(boxname_workdir)/empty,$(boxname_workdir)))
 
 ### Output recipes for performing tasks after building of the template
-$(outdir)/$(boxname): $(boxname_template)	| $(outdir)
-	$(call verify_expression_not,$(wildcard $@),Refusing to deploy $< over already existing file: $@)
-	@printf '[*] Moving template %s: %s\n' '$<' '$(dir $@)'
-	mv '$<' '$@'
-	@printf '[*] Leaving an empty directory as a placeholder: %s\n' '$<'
-	mkdir -p '$<'
+define output_template
+$$(outdir)/$$(boxname)-$(1): $$(boxname_template)-$(1)	| $$(outdir)
+	$$(call verify_expression_not,$$(wildcard $$@),Refusing to deploy $$< over already existing file: $$@)
+	@printf '[*] Moving template %s: %s\n' '$$<' '$$(dir $$@)'
+	mv '$$<' '$$@'
+	@printf '[*] Leaving an empty directory as a placeholder: %s\n' '$$<'
+	mkdir -p '$$<'
+endef
+$(foreach suffix,$(platform),$(eval $(call output_template,$(suffix))))
 
 $(project_filename):
 	@printf '[*] Writing project name to file: %s\n' '$@'
@@ -362,7 +365,7 @@ $(boxname_workdir)/serve.tar: $(serve)	| $(boxname_workdir)
 	$(GTAR) -C '$<' -cpf '$@' .
 
 ### Box recipes required to build the template
-$(boxname_template): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(boxname_workdir)/serve.tar
+$(foreach suffix,$(platform),$(boxname_template)-$(suffix)): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(boxname_workdir)/serve.tar
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
 	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'headless=$(headless_option)' -var 'guest-config=$(boxname).config' -var 'serve-directory-archive=$(boxname_workdir)/serve.tar' '$(boxname_workdir)/$(boxname).json'

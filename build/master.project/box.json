@@ -19,7 +19,7 @@
             "shutdown_command" : "sudo -S shutdown -P now",
 
             "vm_name" : "{{user `guest-name`}}",
-            "output_directory" : "{{user `install-output`}}",
+            "output_directory" : "{{user `install-output`}}-qemu",
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
@@ -56,7 +56,7 @@
             "shutdown_command" : "sudo -S shutdown -P now",
 
             "vm_name" : "{{user `guest-name`}}",
-            "output_directory" : "{{user `install-output`}}",
+            "output_directory" : "{{user `install-output`}}-parallels",
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
@@ -94,7 +94,7 @@
             "shutdown_command" : "sudo -S shutdown -P now",
 
             "vm_name" : "{{user `guest-name`}}",
-            "output_directory" : "{{user `install-output`}}",
+            "output_directory" : "{{user `install-output`}}-virtualbox",
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
@@ -133,7 +133,7 @@
             "shutdown_command" : "sudo -S shutdown -P now",
 
             "vm_name" : "{{user `guest-name`}}",
-            "output_directory" : "{{user `install-output`}}",
+            "output_directory" : "{{user `install-output`}}-vmware",
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
@@ -175,7 +175,7 @@
             "shutdown_command" : "sudo -S shutdown -P now",
 
             "vm_name" : "{{user `guest-name`}}",
-            "output_directory" : "{{user `install-output`}}",
+            "output_directory" : "{{user `install-output`}}-hyperv",
             "http_directory" : "{{user `install-input`}}",
 
             "iso_url" : "{{user `iso-url`}}",
