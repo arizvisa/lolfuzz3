@@ -33,7 +33,7 @@
             "cpus" : "{{user `guest-cpu-count`}}",
             "memory" : "{{user `guest-memory-size`}}",
 
-            "disk_interface" : "scsi",
+            "disk_interface" : "virtio-scsi",
             "format" : "qcow2",
             "disk_compression" : true,
             "disk_size" : "{{user `guest-disk-size`}}"
