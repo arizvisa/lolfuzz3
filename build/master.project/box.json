@@ -31,6 +31,9 @@
             "ssh_private_key_file" : "{{user `provision-key`}}",
             "ssh_timeout" : "{{user `timeout-wait`}}",
 
+            "cpus" : "{{user `guest-cpu-count`}}",
+            "memory" : "{{user `guest-memory-size`}}",
+
             "disk_interface" : "scsi",
             "format" : "qcow2",
             "disk_compression" : true,
