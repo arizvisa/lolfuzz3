@@ -95,9 +95,9 @@ headless := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(he
 
 ifeq ($(headless),1)
     $(warning User has requested to build the target without the graphical user interface)
-	headless_option := true
+    headless_option := true
 else
-	headless_option := false
+    headless_option := false
 endif
 
 ## Debug option

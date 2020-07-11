@@ -58,11 +58,11 @@ $$(outdir)/$$(build_bento_platform_box).$(3).box: $$(workdir)/$$(build_bento_pla
 $$(workdir)/$$(build_bento_platform_box).$(3).box: $(1) $$(workdir)/$(2).$(3).validate $$(MAKEDIR)/bento-vars.json	| $$(workdir)
 	@test -e $$(workdir)/$(2).$(3).validate
 	@printf '[!] Building %s from template: %s\n' '$$@' '$$<'
-	@packer build -only '$(3)-iso' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(workdir)' '$$<'
+	@packer build -only '$(3)-iso' -var 'headless=$$(headless_option)' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(workdir)' '$$<'
 
 $$(workdir)/$(2).$(3).validate: $(1) $$(MAKEDIR)/bento-vars.json	| $$(workdir)
 	@printf '[*] Validating template: %s\n' '$$<'
-	@packer validate -only '$(3)-iso' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(workdir)' '$$<'
+	@packer validate -only '$(3)-iso' -var 'headless=$$(headless_option)' -var-file '$$(MAKEDIR)/bento-vars.json' -var 'build_directory=$$(workdir)' '$$<'
 	jq -r --arg platform '$(3)' '(.variables | if .box_basename? then .box_basename else .template end) as $$$$name | ($$$$name + "." + $$$$platform + ".box")' '$$<' >| '$$@'
 endef
 

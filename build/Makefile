@@ -13,6 +13,19 @@ ROOTDIR := $(realpath $(MAKEDIR)..)
 BUILDDIR?=$(ROOTDIR)/build.dir
 OUTPUT?=$(ROOTDIR)/template
 
+## Headless option
+HEADLESS ?= 0
+headless := $(HEADLESS)
+headless := $(patsubst T%,1,$(patsubst F%,0,$(patsubst t%,1,$(patsubst f%,0,$(headless)))))
+headless := $(patsubst Y%,1,$(patsubst N%,0,$(patsubst y%,1,$(patsubst n%,0,$(headless)))))
+
+ifeq ($(headless),1)
+    $(warning User has requested to build the target without the graphical user interface)
+    headless_option := true
+else
+    headless_option := false
+endif
+
 ### Internal variables that are used for building
 outdir := $(patsubst %/,%,$(OUTPUT))
 workdir := $(BUILDDIR)

@@ -102,10 +102,10 @@ $$(outdir)/$(2).$(3).box: $$(workdir)/boxcutter-$(3)/$(build_boxcutter_platform_
 $$(workdir)/boxcutter-$(3)/$(build_boxcutter_platform_box).box: $$(MAKEDIR)/boxcutter-windows/$(2).json $$(workdir)/boxcutter-$(3).$(2).validate $$(MAKEDIR)/boxcutter-vars.json $$(workdir)/boxcutter-$(2)-iso-vars.json	| $$(workdir)
 	@test -e $$(workdir)/boxcutter-$(3).$(2).validate
 	@printf '[!] Building %s from template: %s\n' 'boxcutter-$(3)/$$(notdir $$@)' '$$<'
-	@packer build -only '$(3)-iso' -var-file '$$(MAKEDIR)/boxcutter-vars.json' -var-file '$$(workdir)/boxcutter-$(2)-iso-vars.json' -var 'box_directory=$$(workdir)/boxcutter-' '$$<'
+	@packer build -only '$(3)-iso' -var 'headless=$$(headless_option)' -var-file '$$(MAKEDIR)/boxcutter-vars.json' -var-file '$$(workdir)/boxcutter-$(2)-iso-vars.json' -var 'box_directory=$$(workdir)/boxcutter-' '$$<'
 
 $$(workdir)/boxcutter-$(3).$(2).validate: $$(MAKEDIR)/boxcutter-windows/$(2).json $$(MAKEDIR)/boxcutter-vars.json $$(workdir)/boxcutter-$(2)-iso-vars.json	| $$(workdir)
 	@printf '[*] Validating template: %s\n' '$$<'
-	@packer validate -only '$(3)-iso' -var-file '$$(MAKEDIR)/boxcutter-vars.json' -var-file '$$(workdir)/boxcutter-$(2)-iso-vars.json' -var 'box_directory=$$(workdir)/boxcutter-' '$$<'
+	@packer validate -only '$(3)-iso' -var 'headless=$$(headless_option)' -var-file '$$(MAKEDIR)/boxcutter-vars.json' -var-file '$$(workdir)/boxcutter-$(2)-iso-vars.json' -var 'box_directory=$$(workdir)/boxcutter-' '$$<'
 	touch '$$@'
 endef
