@@ -50,7 +50,7 @@ $$(workdir)/$(2).verified: $$(cachedir)/$$(notdir $(3)).$(call lc,$(1)) $$(workd
 	@test -e '$$@'
 
 $$(workdir)/$(2).$(call lc,$(1)):	| $$(workdir)
-	@echo -n '$(2)' >| '$$@'
+	@printf '$(2)' >| '$$@'
 
 $$(cachedir)/$$(notdir $(3)).$(call lc,$(1)): $$(cachedir)/$$(notdir $(3))	| $$(cachedir)
 	@printf '[-] Calculating %s checksum: %s\n' '$(call uc,$(1))' '$$<'
