@@ -1,0 +1,19 @@
+[Unit]
+Description=Service for virtual machines hosted on VMware
+Documentation=http://open-vm-tools.sourceforge.net/about.php
+ConditionVirtualization=vmware
+
+[Service]
+Environment="RKT_RUN_ARGS=--uuid-file-save=/var/lib/coreos/vmtoolsd.uuid"
+
+ExecStartPre=-/bin/rkt rm --uuid-file=/var/lib/coreos/vmtoolsd.uuid
+ExecStart=/bin/rkt run \
+            ${RKT_RUN_ARGS} \
+            --net=host \
+            --volume systemd,kind=host,source=/run/systemd \
+            --mount volume=systemd,target=/run/systemd \
+            docker://${VMTOOLS_IMAGE}:${VMTOOLS_IMAGE_TAG}
+
+ExecStop=-/bin/rkt stop --uuid-file=/var/lib/coreos/vmtoolsd.uuid
+ExecStopPost=/bin/rkt gc --mark-only
+ExecStopPost=-/bin/rm -f /var/lib/coreos/vmtoolsd.uuid
