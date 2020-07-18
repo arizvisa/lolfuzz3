@@ -1,5 +1,8 @@
 {% set Root = pillar["local"]["root"] %}
 
+include:
+    - container
+
 ### Prerequisites required for any system units
 Fetch the open-vm-tools image:
     cmd.run:
@@ -19,6 +22,8 @@ Fetch the open-vm-tools image:
             >| '{{ Root }}{{ pillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["vmtoolsd"]["name"] }}:{{ pillar["container"]["vmtoolsd"]["version"] }}.id'
 
         - creates: '{{ Root }}{{ pillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["vmtoolsd"]["name"] }}:{{ pillar["container"]["vmtoolsd"]["version"] }}.id'
+        - require:
+            - Make container image directory
 
 ### Dropins for the different units
 Make dropin directory for swap.service:
