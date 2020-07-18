@@ -4,16 +4,14 @@ Documentation=http://open-vm-tools.sourceforge.net/about.php
 ConditionVirtualization=vmware
 
 [Service]
-Environment="RKT_RUN_ARGS=--uuid-file-save=/var/lib/coreos/vmtoolsd.uuid"
-
-ExecStartPre=-/bin/rkt rm --uuid-file=/var/lib/coreos/vmtoolsd.uuid
+ExecStartPre=-/bin/rkt rm --uuid-file=${VMTOOLS_IMAGE_ID}
 ExecStart=/bin/rkt run \
-            ${RKT_RUN_ARGS} \
+            --uuid-file-save=${VMTOOLS_IMAGE_ID} \
             --net=host \
             --volume systemd,kind=host,source=/run/systemd \
             --mount volume=systemd,target=/run/systemd \
-            docker://${VMTOOLS_IMAGE}:${VMTOOLS_IMAGE_TAG}
+            ${VMTOOLS_IMAGE}:${VMTOOLS_IMAGE_TAG}
 
-ExecStop=-/bin/rkt stop --uuid-file=/var/lib/coreos/vmtoolsd.uuid
+ExecStop=-/bin/rkt stop --uuid-file=${VMTOOLS_IMAGE_ID}
 ExecStopPost=/bin/rkt gc --mark-only
-ExecStopPost=-/bin/rm -f /var/lib/coreos/vmtoolsd.uuid
+ExecStopPost=-/bin/rm -f ${VMTOOLS_IMAGE_ID}

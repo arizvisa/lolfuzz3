@@ -343,15 +343,6 @@
         },
 
         { "type" : "shell-local",
-            "command" : "echo \"[*] Downloading vmtoolsd container environment (v0.8)\""
-        },
-        { "type" : "shell",
-            "inline" : [
-                "until sudo -H -E -- /usr/bin/rkt fetch --insecure-options=image docker://linuxkit/open-vm-tools:v0.8; do :; done"
-            ]
-        },
-
-        { "type" : "shell-local",
             "command" : "echo \"[-] Staging the custom configuration\""
         },
         { "type" : "file",
