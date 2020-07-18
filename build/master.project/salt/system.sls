@@ -1,13 +1,39 @@
 {% set Root = pillar["local"]["root"] %}
 
-### Dropins for the different swap units
+### Prerequisites required for any system units
+Fetch the open-vm-tools image:
+    cmd.run:
+        - name: >-
+            /usr/bin/ssh
+            -i "{{ Root }}{{ pillar["toolbox"]["self-service"]["key"] }}"
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            --
+            {{ pillar["toolbox"]["self-service"]["host"] | yaml_squote }}
+            sudo
+            --
+            /bin/rkt
+            fetch
+            --insecure-options=image
+            '{{ pillar["container"]["vmtoolsd"]["image"] }}:{{ pillar["container"]["vmtoolsd"]["version"] }}'
+            >| '{{ Root }}{{ pillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["vmtoolsd"]["name"] }}:{{ pillar["container"]["vmtoolsd"]["version"] }}.id'
+
+        - creates: '{{ Root }}{{ pillar["service"]["container"]["paths"]["image"] }}/{{ pillar["container"]["vmtoolsd"]["name"] }}:{{ pillar["container"]["vmtoolsd"]["version"] }}.id'
+
+### Dropins for the different units
 Make dropin directory for swap.service:
     file.directory:
         - name: {{ Root }}/etc/systemd/system/var-swap-default.service.d
         - mode: 0755
         - makedirs: true
 
-### Swap file size
+Make dropin directory for vmtoolsd.service:
+    file.directory:
+        - name: {{ Root }}/etc/systemd/system/vmtoolsd.service.d
+        - mode: 0755
+        - makedirs: true
+
+### Dropins for the different units
 Set the default swap size:
     file.managed:
         - name: {{ Root }}/etc/systemd/system/var-swap-default.service.d/00-defaults.conf
@@ -22,7 +48,6 @@ Set the default swap size:
         - require:
             - Make dropin directory for swap.service
 
-### Update dependency
 Update swap.service dependency:
     file.managed:
         - name: {{ Root }}/etc/systemd/system/swap.service.d/50-var-swap-default.conf
@@ -34,6 +59,20 @@ Update swap.service dependency:
         - require:
             - Set the default swap size
 
+Set the runtime environment for vmtoolsd.service:
+    file.managed:
+        - name: {{ Root }}/etc/systemd/system/vmtoolsd.service.d/50-environment.conf
+        - mode: 0644
+        - contents: |
+            [Service]
+            Environment="VMTOOLS_IMAGE={{ pillar["container"]["vmtoolsd"]["image"] }}"
+            Environment="VMTOOLS_IMAGE_TAG={{ pillar["container"]["vmtoolsd"]["version"] }}"
+
+            Environment="VMTOOLS_IMAGE_ID={{ pillar["container"]["vmtoolsd"]["uuid"] }}"
+        - require:
+            - Make dropin directory for vmtoolsd.service
+            - Fetch the open-vm-tools image
+
 ### Systemd installation
 Enable systemd multi-user.target wants swap.service:
     file.symlink:
@@ -42,3 +81,11 @@ Enable systemd multi-user.target wants swap.service:
         - makedirs: true
         - require:
             - Update swap.service dependency
+
+Enable systemd multi-user.target wants vmtoolsd.service:
+    file.symlink:
+        - name: {{ Root }}/etc/systemd/system/multi-user.target.wants/vmtoolsd.service
+        - target: /etc/systemd/system/vmtoolsd.service
+        - makedirs: true
+        - require:
+            - Set the runtime environment for vmtoolsd.service
