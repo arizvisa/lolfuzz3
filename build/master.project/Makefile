@@ -382,7 +382,7 @@ $(boxname_workdir)/$(boxname)-vars.json.iso: $(workdir)/$(coreos_iso) $(boxname_
 	@jq -n --arg checksum_type '$(checksum_type)' --arg url '$<' --slurpfile iso_checksum '$(boxname_workdir)/$(coreos_iso).$(checksum_type).json-raw' '{ "iso-checksum-type": $$checksum_type, "iso-url": $$url, "iso-checksum": $$iso_checksum[0] }' >| '$@'
 
 # Build json file containing all information for ssh'ing to the box
-$(boxname_workdir)/$(boxname)-vars.json.ssh: $(workdir)/$(output_keypair_prv)	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname)-vars.json.ssh: $(outdir)/$(output_keypair_prv)	| $(boxname_workdir)
 	@printf '[-] Generating SSH variables %s: %s\n' '$@' '$^'
 	@jq -n --arg key '$<' '{ "provision-key": $$key }' >| '$@'
 
