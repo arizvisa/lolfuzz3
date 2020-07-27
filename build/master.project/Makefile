@@ -323,8 +323,8 @@ clean-ignition:
 clean-json:
 	@printf '[*] Erasing temporary packer template: %s\n' '$(boxname).json'
 	-rm -f '$(boxname_workdir)/$(boxname).json'
-	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/$(boxname).iid' '$(boxname_workdir)/$(boxname).iid.json-raw'
-	-rm -f '$(boxname_workdir)/$(boxname).iid' '$(boxname_workdir)/$(boxname).iid.json-raw'
+	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/$(boxname).iid.antinewline' '$(boxname_workdir)/$(boxname).iid.json-raw'
+	-rm -f '$(boxname_workdir)/$(boxname).iid.antinewline' '$(boxname_workdir)/$(boxname).iid.json-raw'
 	@printf '[*] Erasing temporary files for building packer template: %s\n' '$(foreach suffix,base iso salt ssh tools,$(boxname_workdir)/$(boxname)-vars.json.$(suffix))'
 	-rm -f '$(boxname_workdir)/$(boxname)-vars.json'{,.base,.iso,.salt,.ssh,.tools}
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
@@ -421,13 +421,13 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json	
 # If the private key for the box has already been deployed, then re-use the
 # keypair that was previously generated and deployed.
 ifneq ($(wildcard $(outdir)/$(output_keypair_prv)),)
-$(outdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv) $(outdir)/$(output_keypair_pub)	| $(outdir)
+$(outdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_pub)	| $(outdir)
 	@printf '[-] Using already existing private key: %s\n' '$<'
 
 # Use the already existing deployed public key from the output directory
 # This is required since things won't work without actually having the
 # whole keypair.
-$(outdir)/$(output_keypair_pub): $(outdir)/$(output_keypair_pub)	| $(outdir)
+$(outdir)/$(output_keypair_pub):	| $(outdir)
 	@printf '[-] Using already existing public key: %s\n' '$<'
 
 else
@@ -438,7 +438,7 @@ $(outdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv).enc $(outdir)/$
 	@printf '[!] Found encrypted key: %s\n' '$<'
 	openssl enc -d -$(cipher) -in '$<' -out '$@'
 
-$(outdir)/$(output_keypair_pub): $(outdir)/$(output_keypair_pub)	| $(outdir)
+$(outdir)/$(output_keypair_pub):	| $(outdir)
 	@printf '[-] Using already existing public key: %s\n' '$<'
 
 else
@@ -492,6 +492,12 @@ $(outdir)/$(output_identity_name):	| $(outdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!)
 	@printf '[-] Writing name of host into file: %s\n' '$@'
 	@printf -- '%s' '$(boxname)' >| '$@'
+
+# Write the identity file
+$(outdir)/$(output_identity_file): $(outdir)/$(output_identity_name)	| $(outdir)
+	$(call verify_expression,$(wildcard $<),File not found: $<)
+	@printf '[-] Calculating %s checksum for %s: $@\n' '$(call uc,md5)' '$<'
+	@openssl dgst -md5 '$<' | rev | cut -d' ' -f 1 | rev >| '$@'
 
 # Pack the machine identifier and hostname into an array
 $(boxname_workdir)/$(boxname).config-identifier: $(boxname_workdir)/ignition-id.json $(boxname_workdir)/ignition-hostname.json	| $(boxname_workdir)
@@ -624,11 +630,10 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 ## Components used to build the Ignition configuration
 
 # Generate a static machine identifier for the master to work around hashicorp/packer#8528
-$(eval $(call checksum,$(outdir)/$(output_identity_name),md5,$(boxname_workdir)/$(boxname).iid))
-$(eval $(call newline_file,$(boxname_workdir)/$(boxname).iid,$(outdir)/$(output_identity_file)))
+$(eval $(call antinewline_file,$(outdir)/$(output_identity_file),$(boxname_workdir)/$(boxname).iid.antinewline))
 
 # This id is fed to the kernel at bootup in order to force the machine id
-$(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).iid,$(boxname_workdir)/$(boxname).iid.json-raw))
+$(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).iid.antinewline,$(boxname_workdir)/$(boxname).iid.json-raw))
 
 # This id is fed to ignition so that the id never changes
 $(eval $(call json_rawfile,$(outdir)/$(output_identity_file),$(boxname_workdir)/ignition-id.json-raw))
