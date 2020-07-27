@@ -56,7 +56,8 @@ boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
 # List of static files that are required for deployment (does not include template)
-output_identity := $(boxname).name $(boxname).iid
+output_identity_name := $(boxname).name
+output_identity_file := $(boxname).iid
 output_config := $(boxname).config
 output_keypair_pub := $(boxname).id_rsa.pub
 output_keypair_prv := $(boxname).id_rsa
@@ -487,7 +488,7 @@ $(boxname_workdir)/$(boxname).config: $(outdir)/$(output_config)
 endif
 
 # Write the hostname
-$(workdir)/$(boxname).name:	| $(workdir)
+$(workdir)/$(output_identity_name):	| $(workdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!)
 	@printf '[-] Writing name of host into file: %s\n' '$@'
 	@printf -- '%s' '$(boxname)' >| '$@'
@@ -623,7 +624,7 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 ## Components used to build the Ignition configuration
 
 # Generate a static machine identifier for the master to work around hashicorp/packer#8528
-$(eval $(call checksum,$(workdir)/$(boxname).name,md5,$(boxname_workdir)/$(boxname).iid))
+$(eval $(call checksum,$(workdir)/$(output_identity_name),md5,$(boxname_workdir)/$(boxname).iid))
 $(eval $(call newline_file,$(boxname_workdir)/$(boxname).iid,$(workdir)/$(boxname).iid))
 
 # This id is fed to the kernel at bootup in order to force the machine id
@@ -634,7 +635,7 @@ $(eval $(call json_rawfile,$(workdir)/$(boxname).iid,$(boxname_workdir)/ignition
 $(eval $(call ignition_root_file,$(boxname_workdir)/ignition-id.json-raw,$(boxname_workdir)/ignition-id.json,etc/machine-id,292))
 
 # Generate an ignition file to write the hostname file
-$(eval $(call newline_file,$(workdir)/$(boxname).name,$(boxname_workdir)/$(boxname).name.newline))
+$(eval $(call newline_file,$(workdir)/$(output_identity_name),$(boxname_workdir)/$(boxname).name.newline))
 $(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).name.newline,$(boxname_workdir)/ignition-hostname.json-raw))
 $(eval $(call ignition_root_file,$(boxname_workdir)/ignition-hostname.json-raw,$(boxname_workdir)/ignition-hostname.json,etc/hostname,420))
 
