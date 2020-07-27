@@ -417,37 +417,41 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json	
 
 ### Recipes for dealing with the public/private keypair
 
-# If there's an encrypted key that needs to be decrypted, then decrypt it
-# by asking the user for their password.
-ifneq ($(wildcard $(outdir)/$(output_keypair_prv).enc),)
-$(workdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv).enc $(workdir)/$(output_keypair_pub)	| $(workdir)
-	@printf '[!] Found encrypted key: %s\n' '$<'
-	openssl enc -d -$(cipher) -in '$<' -out '$@'
-endif
-
 # If the private key for the box has already been deployed, then re-use the
 # keypair that was previously generated and deployed.
 ifneq ($(wildcard $(outdir)/$(output_keypair_prv)),)
 $(workdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv) $(workdir)/$(output_keypair_pub)	| $(workdir)
 	@printf '[-] Using already existing private key: %s\n' '$<'
 	cp '$<' '$@'
-endif
+
+# Use the existing deployed public key and copy it into the working
+# directory. This is required since things won't work without actually
+# having the whole pair.
+$(workdir)/$(output_keypair_pub): $(outdir)/$(output_keypair_pub)	| $(workdir)
+	@printf '[-] Using already existing public key: %s\n' '$<'
+	cp '$<' '$@'
+
+else
+
+# If there's an encrypted key that needs to be decrypted, then decrypt it
+# by asking the user for their password.
+ifneq ($(wildcard $(outdir)/$(output_keypair_prv).enc),)
+$(workdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv).enc $(workdir)/$(output_keypair_pub)	| $(workdir)
+	@printf '[!] Found encrypted key: %s\n' '$<'
+	openssl enc -d -$(cipher) -in '$<' -out '$@'
+
+$(workdir)/$(output_keypair_pub): $(outdir)/$(output_keypair_pub)	| $(workdir)
+	@printf '[-] Using already existing public key: %s\n' '$<'
+	cp '$<' '$@'
+
+else
 
 # If there's no keypair components, then use ssh-keygen to generate it
-ifeq ($(wildcard $(outdir)/$(output_keypair_prv)$(wildcard $(outdir)/$(output_keypair_prv).enc),)
 $(workdir)/$(output_keypair_prv) $(workdir)/$(output_keypair_pub):	| $(workdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to to generate public/private keypair!)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
 	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(workdir)/$(output_keypair_prv)' -N ''
 
-else
-# Otherwise use the existing deployed public key and copy it into the working
-# directory. This is required since things won't work without actually
-# having the whole pair.
-ifeq ($(wildcard $(workdir)/$(output_keypair_pub),)
-$(workdir)/$(output_keypair_pub): $(outdir)/$(output_keypair_pub)	| $(workdir)
-	@printf '[-] Using already existing public key: %s\n' '$<'
-	cp '$<' '$@'
 endif
 endif
 
