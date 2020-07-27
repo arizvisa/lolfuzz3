@@ -625,13 +625,13 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 
 # Generate a static machine identifier for the master to work around hashicorp/packer#8528
 $(eval $(call checksum,$(outdir)/$(output_identity_name),md5,$(boxname_workdir)/$(boxname).iid))
-$(eval $(call newline_file,$(boxname_workdir)/$(boxname).iid,$(workdir)/$(boxname).iid))
+$(eval $(call newline_file,$(boxname_workdir)/$(boxname).iid,$(outdir)/$(output_identity_file)))
 
 # This id is fed to the kernel at bootup in order to force the machine id
 $(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).iid,$(boxname_workdir)/$(boxname).iid.json-raw))
 
 # This id is fed to ignition so that the id never changes
-$(eval $(call json_rawfile,$(workdir)/$(boxname).iid,$(boxname_workdir)/ignition-id.json-raw))
+$(eval $(call json_rawfile,$(outdir)/$(output_identity_file),$(boxname_workdir)/ignition-id.json-raw))
 $(eval $(call ignition_root_file,$(boxname_workdir)/ignition-id.json-raw,$(boxname_workdir)/ignition-id.json,etc/machine-id,292))
 
 # Generate an ignition file to write the hostname file
