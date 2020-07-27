@@ -94,6 +94,15 @@ $(2): $(1)
 	@echo >> '$$@'
 endef
 
+# Same as the checksum function except the generated recipe also strips any
+# newlines from the file that gets written.
+#
+# Usage: antinewline_file($filename, $target)
+define antinewline_file
+$(2): $(1)
+	@tr -d $$$$'\r\n' < '$$<' >| '$$@'
+endef
+
 # Generate a recipe that converts the source file (raw) into a json form that
 # is properly escaped. This is necessary if trying to use the contents of a raw
 # file as a field in json.
