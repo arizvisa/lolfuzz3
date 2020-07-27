@@ -491,10 +491,10 @@ endif
 $(outdir)/$(output_identity_name):	| $(outdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!)
 	@printf '[-] Writing name of host into file: %s\n' '$@'
-	@printf -- '%s' '$(boxname)' >| '$@'
+	@printf -- '%s\n' '$(boxname)' >| '$@'
 
 # Write the identity file
-$(outdir)/$(output_identity_file): $(outdir)/$(output_identity_name)	| $(outdir)
+$(outdir)/$(output_identity_file): $(boxname_workdir)/$(boxname).name.antinewline	| $(outdir)
 	$(call verify_expression,$(wildcard $<),File not found: $<)
 	@printf '[-] Calculating %s checksum for %s: $@\n' '$(call uc,md5)' '$<'
 	@openssl dgst -md5 '$<' | rev | cut -d' ' -f 1 | rev >| '$@'
@@ -640,8 +640,8 @@ $(eval $(call json_rawfile,$(outdir)/$(output_identity_file),$(boxname_workdir)/
 $(eval $(call ignition_root_file,$(boxname_workdir)/ignition-id.json-raw,$(boxname_workdir)/ignition-id.json,etc/machine-id,292))
 
 # Generate an ignition file to write the hostname file
-$(eval $(call newline_file,$(outdir)/$(output_identity_name),$(boxname_workdir)/$(boxname).name.newline))
-$(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).name.newline,$(boxname_workdir)/ignition-hostname.json-raw))
+$(eval $(call antinewline_file,$(outdir)/$(output_identity_name),$(boxname_workdir)/$(boxname).name.antinewline))
+$(eval $(call json_rawfile,$(outdir)/$(output_identity_name),$(boxname_workdir)/ignition-hostname.json-raw))
 $(eval $(call ignition_root_file,$(boxname_workdir)/ignition-hostname.json-raw,$(boxname_workdir)/ignition-hostname.json,etc/hostname,420))
 
 # Making the ignition sysctl list
