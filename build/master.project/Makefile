@@ -19,7 +19,7 @@ include $(MAKEDIR)Makefile.inc
 
 ### Parameters that the user can supply
 BUILDDIR?=$(ROOTDIR)/build.dir
-OUTPUT?=$(ROOTDIR)/template
+OUTPUT?=$(ROOTDIR)
 
 ### List of options that the user can provide to influence the build
 include $(MAKEDIR)Makefile.config
@@ -48,7 +48,7 @@ endif
 boxname?=master.$(project)
 
 # Output directory to write the template into
-outdir := $(patsubst %/,%,$(OUTPUT))
+outdir := $(patsubst %/,%,$(OUTPUT))/$(project_output_path)
 
 # Intermediary work directory to stage required files into
 workdir?=$(BUILDDIR)
