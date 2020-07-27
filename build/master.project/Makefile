@@ -307,8 +307,8 @@ clean-ignition:
 	@printf '[*] Erasing temporary files for ignition rootfs: %s\n' '$(boxname_workdir)/rootfs'
 	-rm -f $(foreach name,$(ignition_root_files),'$(boxname_workdir)/rootfs/$(name)'{,.json-raw})
 	-rm -rf '$(boxname_workdir)/rootfs'
-	@printf '[*] Erasing temporary files for ssh keys: %s\n' '$(foreach name,$(output_keypair_pub) $(output_keypair_prv),$(boxname_workdir)/$(name))'
-	-rm -f '$(foreach name,$(output_keypair_pub) $(output_keypair_prv),$(boxname_workdir)/$(name))'
+	@printf '[*] Erasing temporary files for ssh keys: %s\n' '$(foreach name,$(boxname).id_rsa.pub.json-raw,$(boxname_workdir)/$(name))'
+	-rm -f '$(foreach name,$(boxname).id_rsa.pub.json-raw,$(boxname_workdir)/$(name))'
 	@printf '[*] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network rootfs,$(boxname_workdir)/$(boxname).config-$(name))'
 	-rm -f $(foreach name,original files units users identifier sysctl pubkey network rootfs,'$(boxname_workdir)/$(boxname).config-$(name)')
 	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
@@ -420,37 +420,32 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json	
 # If the private key for the box has already been deployed, then re-use the
 # keypair that was previously generated and deployed.
 ifneq ($(wildcard $(outdir)/$(output_keypair_prv)),)
-$(workdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv) $(workdir)/$(output_keypair_pub)	| $(workdir)
+$(outdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv) $(outdir)/$(output_keypair_pub)	| $(outdir)
 	@printf '[-] Using already existing private key: %s\n' '$<'
-	cp '$<' '$@'
 
-# Use the existing deployed public key and copy it into the working
-# directory. This is required since things won't work without actually
-# having the whole pair.
-$(workdir)/$(output_keypair_pub): $(outdir)/$(output_keypair_pub)	| $(workdir)
+# Use the already existing deployed public key from the output directory
+# This is required since things won't work without actually having the
+# whole keypair.
+$(outdir)/$(output_keypair_pub): $(outdir)/$(output_keypair_pub)	| $(outdir)
 	@printf '[-] Using already existing public key: %s\n' '$<'
-	cp '$<' '$@'
 
 else
-
 # If there's an encrypted key that needs to be decrypted, then decrypt it
 # by asking the user for their password.
 ifneq ($(wildcard $(outdir)/$(output_keypair_prv).enc),)
-$(workdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv).enc $(workdir)/$(output_keypair_pub)	| $(workdir)
+$(outdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv).enc $(outdir)/$(output_keypair_pub)	| $(outdir)
 	@printf '[!] Found encrypted key: %s\n' '$<'
 	openssl enc -d -$(cipher) -in '$<' -out '$@'
 
-$(workdir)/$(output_keypair_pub): $(outdir)/$(output_keypair_pub)	| $(workdir)
+$(outdir)/$(output_keypair_pub): $(outdir)/$(output_keypair_pub)	| $(outdir)
 	@printf '[-] Using already existing public key: %s\n' '$<'
-	cp '$<' '$@'
 
 else
-
 # If there's no keypair components, then use ssh-keygen to generate it
-$(workdir)/$(output_keypair_prv) $(workdir)/$(output_keypair_pub):	| $(workdir)
+$(outdir)/$(output_keypair_prv) $(outdir)/$(output_keypair_pub):	| $(outdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to to generate public/private keypair!)
 	@printf '[-] Generating public/private keypair: %s\n' '$@'
-	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(workdir)/$(output_keypair_prv)' -N ''
+	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(outdir)/$(output_keypair_prv)' -N ''
 
 endif
 endif
@@ -597,16 +592,6 @@ ifeq ($(wildcard $(outdir)/$(output_config)),)
 $(eval $(call output_file,$(workdir)/$(output_config),$(outdir)))
 endif
 
-# If the keypairs have not already been created/deployed, then create a
-# recipe which copies them from the working into the output directory
-ifeq ($(wildcard $(outdir)/$(output_keypair_pub)),)
-$(eval $(call output_file,$(workdir)/$(output_keypair_pub),$(outdir)))
-endif
-
-ifeq ($(wildcard $(outdir)/$(output_keypair_prv)),)
-$(eval $(call output_file,$(workdir)/$(output_keypair_prv),$(outdir)))
-endif
-
 # Mark the identity files as things to output as well
 $(foreach name,$(output_identity),$(eval $(call output_file,$(workdir)/$(name),$(outdir))))
 
@@ -693,7 +678,7 @@ $(foreach name,$(ignition_units_names),$(eval $(call json_rawfile,$(ignition_con
 $(foreach name,$(ignition_dropins_names),$(foreach f,$(wildcard $(ignition_config)/dropins/$(name)/*.conf),$(eval $(call json_rawfile,$(f),$(boxname_workdir)/ignition-dropins.json-$(name)-$(notdir $(f)).json-raw))))
 
 # Raw ssh pubkey contents
-$(eval $(call json_rawfile,$(workdir)/$(output_keypair_pub),$(boxname_workdir)/$(boxname).id_rsa.pub.json-raw))
+$(eval $(call json_rawfile,$(outdir)/$(output_keypair_pub),$(boxname_workdir)/$(boxname).id_rsa.pub.json-raw))
 
 # Directory structure for the ignition root files
 $(foreach name,$(ignition_root_directories),$(eval $(call make_directory,$(boxname_workdir)/rootfs/$(name))))
