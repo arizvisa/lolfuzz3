@@ -367,13 +367,13 @@ $(boxname_workdir)/serve.tar: $(serve)	| $(boxname_workdir)
 	$(GTAR) -C '$<' -cpf '$@' .
 
 ### Box recipes required to build the template
-$(foreach suffix,$(platform),$(boxname_template)-$(suffix)): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(workdir)/$(boxname).config $(coreos_installer_files) $(boxname_workdir)/serve.tar
+$(foreach suffix,$(platform),$(boxname_template)-$(suffix)): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(outdir)/$(output_config) $(coreos_installer_files) $(boxname_workdir)/serve.tar
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
-	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'headless=$(headless_option)' -var 'guest-config=$(boxname).config' -var 'serve-directory-archive=$(boxname_workdir)/serve.tar' '$(boxname_workdir)/$(boxname).json'
+	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'headless=$(headless_option)' -var 'guest-config=$(outdir)/$(output_config)' -var 'serve-directory-archive=$(boxname_workdir)/serve.tar' '$(boxname_workdir)/$(boxname).json'
 else
 	@printf '[!] Refusing to build template %s due to BUILD being set to %d\n' '$@' '$(build)'
-	@printf 'packer build %s -var-file %c%s%c -var %cheadless=%s%c -var %cguest-config=%s%c -var %cserve-directory-archive=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(headless_option)' "'" "'" '$(boxname).config' "'" "'" '$(boxname_workdir)/serve.tar' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
+	@printf 'packer build %s -var-file %c%s%c -var %cheadless=%s%c -var %cguest-config=%s%c -var %cserve-directory-archive=%s%c %c%s%c\n' '$(foreach opt,$(options),-$(opt))' "'" '$(boxname_workdir)/$(boxname)-vars.json' "'" "'" '$(headless_option)' "'" "'" '$(outdir)/$(output_config)' "'" "'" '$(boxname_workdir)/serve.tar' "'" "'" '$(boxname_workdir)/$(boxname).json' "'"
 	@false
 endif
 
@@ -464,7 +464,7 @@ else
 endif
 
 # Validate the results from our box configuration
-$(workdir)/$(boxname).config: $(boxname_workdir)/$(boxname).config.validate $(boxname_workdir)/$(boxname).config	| $(workdir)
+$(workdir)/$(output_config): $(boxname_workdir)/$(boxname).config.validate $(boxname_workdir)/$(boxname).config	| $(workdir)
 	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$<' | while read y x message; do \
 		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
 	done
