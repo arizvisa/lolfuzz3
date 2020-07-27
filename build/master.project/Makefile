@@ -316,8 +316,8 @@ clean-ignition:
 	-rm -f '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
 	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/ignition-id.json' '$(boxname_workdir)/ignition-id.json-raw'
 	-rm -f '$(boxname_workdir)/ignition-id.json' '$(boxname_workdir)/ignition-id.json-raw'
-	@printf '[*] Erasing hostname files: %s %s %s\n' '$(boxname_workdir)/$(boxname).name.newline' '$(boxname_workdir)/ignition-hostname.json' '$(boxname_workdir)/ignition-hostname.json-raw'
-	-rm -f '$(boxname_workdir)/$(boxname).name.newline' '$(boxname_workdir)/ignition-hostname.json' '$(boxname_workdir)/ignition-hostname.json-raw'
+	@printf '[*] Erasing hostname files: %s %s %s\n' '$(boxname_workdir)/$(boxname).name.antinewline' '$(boxname_workdir)/ignition-hostname.json' '$(boxname_workdir)/ignition-hostname.json-raw'
+	-rm -f '$(boxname_workdir)/$(boxname).name.antinewline' '$(boxname_workdir)/ignition-hostname.json' '$(boxname_workdir)/ignition-hostname.json-raw'
 
 .PHONY: clean-json
 clean-json:
