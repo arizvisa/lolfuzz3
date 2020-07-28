@@ -312,8 +312,8 @@ clean-ignition:
 	-rm -f '$(foreach name,$(boxname).id_rsa.pub.json-raw,$(boxname_workdir)/$(name))'
 	@printf '[*] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network rootfs,$(boxname_workdir)/$(boxname).config-$(name))'
 	-rm -f $(foreach name,original files units users identifier sysctl pubkey network rootfs,'$(boxname_workdir)/$(boxname).config-$(name)')
-	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(workdir)/$(boxname).config.ok' '$(boxname_workdir)/$(boxname).config.validate'
-	-rm -f '$(workdir)/$(boxname).config.ok' '$(boxname_workdir)/$(boxname).config.validate'
+	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(boxname_workdir)/$(boxname).config.ok' '$(boxname_workdir)/$(boxname).config.validate'
+	-rm -f '$(boxname_workdir)/$(boxname).config.ok' '$(boxname_workdir)/$(boxname).config.validate'
 	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/ignition-id.json' '$(boxname_workdir)/ignition-id.json-raw'
 	-rm -f '$(boxname_workdir)/ignition-id.json' '$(boxname_workdir)/ignition-id.json-raw'
 	@printf '[*] Erasing hostname files: %s %s %s\n' '$(boxname_workdir)/$(boxname).name.antinewline' '$(boxname_workdir)/ignition-hostname.json' '$(boxname_workdir)/ignition-hostname.json-raw'
@@ -367,7 +367,7 @@ $(boxname_workdir)/serve.tar: $(serve)	| $(boxname_workdir)
 	$(GTAR) -C '$<' -cpf '$@' .
 
 ### Box recipes required to build the template
-$(foreach suffix,$(platform),$(boxname_template)-$(suffix)): $(workdir)/$(boxname).config.ok $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(outdir)/$(output_config) $(coreos_installer_files) $(boxname_workdir)/serve.tar
+$(foreach suffix,$(platform),$(boxname_template)-$(suffix)): $(boxname_workdir)/$(boxname).config.ok $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(outdir)/$(output_config) $(coreos_installer_files) $(boxname_workdir)/serve.tar
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
 	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'headless=$(headless_option)' -var 'guest-config=$(outdir)/$(output_config)' -var 'serve-directory-archive=$(boxname_workdir)/serve.tar' '$(boxname_workdir)/$(boxname).json'
@@ -464,7 +464,7 @@ else
 endif
 
 # Validate the results from our box configuration
-$(workdir)/$(boxname).config.ok: $(boxname_workdir)/$(boxname).config.validate $(outdir)/$(output_config)	| $(workdir)
+$(boxname_workdir)/$(boxname).config.ok: $(boxname_workdir)/$(boxname).config.validate $(outdir)/$(output_config)	| $(workdir)
 	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$<' | while read y x message; do \
 		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
 	done
