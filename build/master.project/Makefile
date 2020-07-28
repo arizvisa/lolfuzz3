@@ -244,7 +244,7 @@ download: download-installer download-tools
 	@printf '[*] Successfully downloaded all required files\n'
 
 .PHONY: output
-output: $(foreach suffix,$(platform),$(outdir)/$(boxname)-$(suffix)) $(project_filename) $(foreach f,$(output_identity),$(outdir)/$(f)) $(foreach f,$(output_config),$(outdir)/$(f)) $(foreach f,$(output_keypair),$(outdir)/$(f))
+output: $(foreach suffix,$(platform),$(outdir)/$(boxname)-$(suffix)) #$(project_filename) #$(foreach f,$(output_identity_name) $(output_identity_file),$(outdir)/$(f)) $(foreach f,$(output_config),$(outdir)/$(f)) $(foreach f,$(output_keypair_pub) $(output_keypair_prv),$(outdir)/$(f))
 	@printf '[*] Sucessfully wrote output files to %s: %s\n' '$(outdir)' '$^'
 
 ## cleaning up files
@@ -312,8 +312,8 @@ clean-ignition:
 	-rm -f '$(foreach name,$(boxname).id_rsa.pub.json-raw,$(boxname_workdir)/$(name))'
 	@printf '[*] Erasing temporary files for building config: %s\n' '$(foreach name,original files units users hostname sysctl pubkey network rootfs,$(boxname_workdir)/$(boxname).config-$(name))'
 	-rm -f $(foreach name,original files units users identifier sysctl pubkey network rootfs,'$(boxname_workdir)/$(boxname).config-$(name)')
-	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
-	-rm -f '$(boxname_workdir)/$(boxname).config' '$(boxname_workdir)/$(boxname).config.validate'
+	@printf '[*] Erasing temporary configuration files: %s %s\n' '$(workdir)/$(boxname).config.ok' '$(boxname_workdir)/$(boxname).config.validate'
+	-rm -f '$(workdir)/$(boxname).config.ok' '$(boxname_workdir)/$(boxname).config.validate'
 	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/ignition-id.json' '$(boxname_workdir)/ignition-id.json-raw'
 	-rm -f '$(boxname_workdir)/ignition-id.json' '$(boxname_workdir)/ignition-id.json-raw'
 	@printf '[*] Erasing hostname files: %s %s %s\n' '$(boxname_workdir)/$(boxname).name.antinewline' '$(boxname_workdir)/ignition-hostname.json' '$(boxname_workdir)/ignition-hostname.json-raw'
@@ -367,7 +367,7 @@ $(boxname_workdir)/serve.tar: $(serve)	| $(boxname_workdir)
 	$(GTAR) -C '$<' -cpf '$@' .
 
 ### Box recipes required to build the template
-$(foreach suffix,$(platform),$(boxname_template)-$(suffix)): $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(outdir)/$(output_config) $(coreos_installer_files) $(boxname_workdir)/serve.tar
+$(foreach suffix,$(platform),$(boxname_template)-$(suffix)): $(workdir)/$(boxname).config.ok $(boxname_workdir)/$(boxname).json $(boxname_workdir)/$(boxname)-vars.json $(outdir)/$(output_config) $(coreos_installer_files) $(boxname_workdir)/serve.tar
 ifneq ($(build),0)
 	@printf '[!] Building template %s using var-file %s: %s\n' '$(boxname_workdir)/$(boxname).json' '$(boxname_workdir)/$(boxname)-vars.json' '$(boxname_template)'
 	packer build $(foreach opt,$(options),-$(opt)) -var-file '$(boxname_workdir)/$(boxname)-vars.json' -var 'headless=$(headless_option)' -var 'guest-config=$(outdir)/$(output_config)' -var 'serve-directory-archive=$(boxname_workdir)/serve.tar' '$(boxname_workdir)/$(boxname).json'
@@ -454,7 +454,7 @@ endif
 ### Recipes for bootstrapping the configuration of the OS
 
 # Validate the ignition configuration that was generated
-$(boxname_workdir)/$(boxname).config.validate: $(boxname_workdir)/$(boxname).config
+$(boxname_workdir)/$(boxname).config.validate: $(outdir)/$(output_config)	| $(boxname_workdir)
 ifneq ($(validate),0)
 	@printf '[!] Validating ignition configuration %s: %s\n' '$<' '$(coreos_validate_url)'
 	${PUT} '@$<' '$(coreos_validate_url)' >| '$@'
@@ -464,7 +464,7 @@ else
 endif
 
 # Validate the results from our box configuration
-$(workdir)/$(output_config): $(boxname_workdir)/$(boxname).config.validate $(boxname_workdir)/$(boxname).config	| $(workdir)
+$(workdir)/$(boxname).config.ok: $(boxname_workdir)/$(boxname).config.validate $(outdir)/$(output_config)	| $(workdir)
 	@jq '(.result // []) | .[] | select(.kind == "warning") | [(.line | tostring), (.column | tostring), .message] | @sh' '$<' | while read y x message; do \
 		printf 'Validation Warning: (line %d, col %d) %s\n' $$y $$x "$$message" 1>&2; \
 	done
@@ -473,19 +473,13 @@ $(workdir)/$(output_config): $(boxname_workdir)/$(boxname).config.validate $(box
 		exit 1; \
 	done
 	@printf '[*] Successfully validated ignition configuration: %s\n' '$@'
-	@cp -f '$(boxname_workdir)/$(boxname).config' '$@'
+	@touch '$@'
 
 # Check if the box configuration has already been deployed, if not then combine
 # all ignition jsons into the template to generate it.
-ifeq ($(wildcard $(outdir)/$(output_config)),)
-$(boxname_workdir)/$(boxname).config: $(ignition_template) $(boxname_workdir)/$(boxname).config-files $(boxname_workdir)/$(boxname).config-units $(boxname_workdir)/$(boxname).config-users $(boxname_workdir)/$(boxname).config-network
+$(outdir)/$(output_config): $(ignition_template) $(boxname_workdir)/$(boxname).config-files $(boxname_workdir)/$(boxname).config-units $(boxname_workdir)/$(boxname).config-users $(boxname_workdir)/$(boxname).config-network
 	@printf '[*] Making ignition configuration with template %s: %s\n' '$<' '$@'
 	@jq --slurpfile files '$(boxname_workdir)/$(boxname).config-files' --slurpfile units '$(boxname_workdir)/$(boxname).config-units' --slurpfile users '$(boxname_workdir)/$(boxname).config-users' --slurpfile networks '$(boxname_workdir)/$(boxname).config-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
-else
-$(boxname_workdir)/$(boxname).config: $(outdir)/$(output_config)
-	@printf '[*] Using already deployed configuration: %s\n' '$<'
-	cp '$<' '$@'
-endif
 
 # Write the hostname
 $(outdir)/$(output_identity_name):	| $(outdir)
@@ -592,12 +586,6 @@ $(boxname_workdir)/pillar/configuration-name.sls:	| $(boxname_workdir)/pillar
 	@printf -- '%s\n' '$(project)' >| '$@'
 
 ### List of recipes that are dynamically generated using macros
-
-# If the configuration has not already been created/deployed, then create a
-# recipe which copies it from the working into the output directory
-ifeq ($(wildcard $(outdir)/$(output_config)),)
-$(eval $(call output_file,$(workdir)/$(output_config),$(outdir)))
-endif
 
 # Mark the identity files as things to output as well
 $(foreach name,$(output_identity),$(eval $(call output_file,$(workdir)/$(name),$(outdir))))
