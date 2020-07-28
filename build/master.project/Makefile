@@ -244,7 +244,7 @@ download: download-installer download-tools
 	@printf '[*] Successfully downloaded all required files\n'
 
 .PHONY: output
-output: $(foreach suffix,$(platform),$(outdir)/$(boxname)-$(suffix)) #$(project_filename) #$(foreach f,$(output_identity_name) $(output_identity_file),$(outdir)/$(f)) $(foreach f,$(output_config),$(outdir)/$(f)) $(foreach f,$(output_keypair_pub) $(output_keypair_prv),$(outdir)/$(f))
+output: $(foreach suffix,$(platform),$(outdir)/$(boxname)-$(suffix))
 	@printf '[*] Sucessfully wrote output files to %s: %s\n' '$(outdir)' '$^'
 
 ## cleaning up files
