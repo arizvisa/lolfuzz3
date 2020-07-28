@@ -89,7 +89,7 @@ endef
 #
 # Usage: newline_file($filename, $target)
 define newline_file
-$(2): $(1)
+$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@cp '$$<' '$$@'
 	@echo >> '$$@'
 endef
@@ -99,7 +99,7 @@ endef
 #
 # Usage: antinewline_file($filename, $target)
 define antinewline_file
-$(2): $(1)
+$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@tr -d $$$$'\r\n' < '$$<' >| '$$@'
 endef
 
