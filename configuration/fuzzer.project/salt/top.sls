@@ -17,5 +17,6 @@ base:
     # All targets
     'not G@role:master':
         - identity
+        - optimization-fixes
         - audio
         - ramdisk
