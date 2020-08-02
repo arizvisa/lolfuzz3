@@ -57,7 +57,7 @@ boxname_template=$(boxname_workdir)/template
 
 # List of static files that are required for deployment (does not include template)
 output_identity_name := $(boxname).name
-output_identity_file := $(boxname).iid
+output_identity_file := $(boxname).id
 output_config := $(boxname).config
 output_keypair_pub := $(boxname).id_rsa.pub
 output_keypair_prv := $(boxname).id_rsa
@@ -323,8 +323,8 @@ clean-ignition:
 clean-json:
 	@printf '[*] Erasing temporary packer template: %s\n' '$(boxname).json'
 	-rm -f '$(boxname_workdir)/$(boxname).json'
-	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/$(boxname).iid.antinewline' '$(boxname_workdir)/$(boxname).iid.json-raw'
-	-rm -f '$(boxname_workdir)/$(boxname).iid.antinewline' '$(boxname_workdir)/$(boxname).iid.json-raw'
+	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/$(boxname).id.antinewline' '$(boxname_workdir)/$(boxname).id.json-raw'
+	-rm -f '$(boxname_workdir)/$(boxname).id.antinewline' '$(boxname_workdir)/$(boxname).id.json-raw'
 	@printf '[*] Erasing temporary files for building packer template: %s\n' '$(foreach suffix,base iso salt ssh tools,$(boxname_workdir)/$(boxname)-vars.json.$(suffix))'
 	-rm -f '$(boxname_workdir)/$(boxname)-vars.json'{,.base,.iso,.salt,.ssh,.tools}
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
@@ -388,7 +388,7 @@ $(boxname_workdir)/$(boxname)-vars.json.ssh: $(outdir)/$(output_keypair_prv)	| $
 	@jq -n --arg key '$<' '{ "provision-key": $$key }' >| '$@'
 
 # Build json file containing any build-specific variables
-$(boxname_workdir)/$(boxname)-vars.json.base: $(boxname_workdir)/$(boxname).iid.json-raw	| $(boxname_workdir)
+$(boxname_workdir)/$(boxname)-vars.json.base: $(boxname_workdir)/$(boxname).id.json-raw	| $(boxname_workdir)
 	@printf '[-] Generating build variables: %s\n' '$@'
 	@jq -n --arg name '$(boxname)' --slurpfile id '$<' --arg input '$(workdir)' --arg output '$(boxname_template)' '{ "guest-name": $$name, "guest-id": $$id | join(""), "install-input": $$input, "install-output": $$output }' >| '$@'
 
@@ -618,10 +618,10 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 ## Components used to build the Ignition configuration
 
 # Generate a static machine identifier for the master to work around hashicorp/packer#8528
-$(eval $(call antinewline_file,$(outdir)/$(output_identity_file),$(boxname_workdir)/$(boxname).iid.antinewline))
+$(eval $(call antinewline_file,$(outdir)/$(output_identity_file),$(boxname_workdir)/$(boxname).id.antinewline))
 
 # This id is fed to the kernel at bootup in order to force the machine id
-$(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).iid.antinewline,$(boxname_workdir)/$(boxname).iid.json-raw))
+$(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).id.antinewline,$(boxname_workdir)/$(boxname).id.json-raw))
 
 # This id is fed to ignition so that the id never changes
 $(eval $(call json_rawfile,$(outdir)/$(output_identity_file),$(boxname_workdir)/ignition-id.json-raw))
