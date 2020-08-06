@@ -259,7 +259,7 @@ clean-output:
 	@printf '[*] Erasing template: %s\n' $(foreach suffix,vmware virtualbox qemu parallels hyperv,'$(outdir)/$(boxname)-$(suffix)')
 	-rm -rf $(foreach suffix,vmware virtualbox qemu parallels hyperv,'$(outdir)/$(boxname)-$(suffix)')
 	@printf '[*] Erasing output files from %s\n' '$(outdir)'
-	-rm -f $(foreach f,$(output_identity),'$(outdir)/$(f)')
+	-rm -f $(foreach f,$(output_identity_file),'$(outdir)/$(f)')
 	-rm -f $(foreach f,$(output_config),'$(outdir)/$(f)')
 
 .PHONY: clean-installer
@@ -278,7 +278,6 @@ clean-template:
 clean-build:
 	@printf '[*] Erasing temporary output files from %s\n' '$(workdir)'
 	-rm -f $(foreach f,$(output_config),'$(workdir)/$(f)')
-	-rm -f $(foreach f,$(output_identity),'$(workdir)/$(f)')
 
 .PHONY: clean-provisioning
 clean-provisioning:
@@ -594,9 +593,6 @@ $(boxname_workdir)/pillar/configuration-name.sls:	| $(boxname_workdir)/pillar
 	@printf -- '%s\n' '$(project)' >| '$@'
 
 ### List of recipes that are dynamically generated using macros
-
-# Mark the identity files as things to output as well
-$(foreach name,$(output_identity),$(eval $(call output_file,$(workdir)/$(name),$(outdir))))
 
 ## Container Linux installation and configuration
 
