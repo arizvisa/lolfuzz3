@@ -12,6 +12,9 @@
 {% set bpillar = salt["pillar.items"](pillarenv="base") %}
 {% set Root = mpillar["local"]["root"] %}
 
+include:
+    - store.deploy
+
 Create a new account for the client:
     cmd.run:
         - name: >-
@@ -26,8 +29,11 @@ Create a new account for the client:
             {{ bpillar["store"]["minio"]["client"] }} --no-color
             admin user add
             local
-            "{{ pillar["accessKey"] }}"
-            "{{ pillar["secretKey"] }}"
+            "{{ pillar.accessKey }}"
+            "{{ pillar.secretKey }}"
+
+        - require:
+            - Configure the {{ bpillar["container"]["minio-client"]["name"] }} client
 
 {% if "groupName" in pillar -%}
 Add the newly created account for the client to a group:
@@ -44,8 +50,8 @@ Add the newly created account for the client to a group:
             {{ bpillar["store"]["minio"]["client"] }} --no-color
             admin group add
             local
-            "{{ pillar["groupName"] }}"
-            "{{ pillar["accessKey"] }}"
+            "{{ pillar.groupName }}"
+            "{{ pillar.accessKey }}"
         - require:
             - Create a new account for the client
 {% endif -%}
