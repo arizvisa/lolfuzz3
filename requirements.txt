@@ -1,6 +1,6 @@
 jsonmerge==1.2.1
 jsonschema==2.4.0
-MarkupSafe==0.23
-PyYAML==3.12
+markupsafe==0.23
+pyyamL==4.2b1
 yamlreader==3.0.4
 objectpath==0.5
