@@ -62,7 +62,6 @@ boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
 # List of static files that are required for deployment (does not include template)
-output_identity_name := $(boxname).name
 output_project_name := $(project_filename)
 output_identity_file := $(boxname).id
 output_config := $(boxname).config
@@ -489,7 +488,7 @@ $(outdir)/$(output_config): $(ignition_template) $(boxname_workdir)/$(boxname).c
 	@jq --slurpfile files '$(boxname_workdir)/$(boxname).config-files' --slurpfile units '$(boxname_workdir)/$(boxname).config-units' --slurpfile users '$(boxname_workdir)/$(boxname).config-users' --slurpfile networks '$(boxname_workdir)/$(boxname).config-network' '.storage.files |= $$files[0] | .systemd.units |= $$units[0] | .passwd.users |= $$users[0] | .networkd.units |= $$networks[0]' '$(ignition_template)' >| '$@'
 
 # Write the hostname
-$(outdir)/$(output_identity_name):	| $(outdir)
+$(boxname_workdir)/$(boxname).name:	| $(boxname_workdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!)
 	@printf '[-] Writing name of host into file: %s\n' '$@'
 	@printf -- '%s\n' '$(boxname)' >| '$@'
@@ -635,8 +634,8 @@ $(eval $(call json_rawfile,$(outdir)/$(output_identity_file),$(boxname_workdir)/
 $(eval $(call ignition_root_file,$(boxname_workdir)/ignition-id.json-raw,$(boxname_workdir)/ignition-id.json,etc/machine-id,292))
 
 # Generate an ignition file to write the hostname file
-$(eval $(call antinewline_file,$(outdir)/$(output_identity_name),$(boxname_workdir)/$(boxname).name.antinewline))
-$(eval $(call json_rawfile,$(outdir)/$(output_identity_name),$(boxname_workdir)/ignition-hostname.json-raw))
+$(eval $(call antinewline_file,$(boxname_workdir)/$(boxname).name,$(boxname_workdir)/$(boxname).name.antinewline))
+$(eval $(call json_rawfile,$(boxname_workdir)/$(boxname).name,$(boxname_workdir)/ignition-hostname.json-raw))
 $(eval $(call ignition_root_file,$(boxname_workdir)/ignition-hostname.json-raw,$(boxname_workdir)/ignition-hostname.json,etc/hostname,420))
 
 # Making the ignition sysctl list
