@@ -331,6 +331,8 @@ clean-json:
 	-rm -f '$(boxname_workdir)/$(boxname).json'
 	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/$(boxname).id.antinewline' '$(boxname_workdir)/$(boxname).id.json-raw'
 	-rm -f '$(boxname_workdir)/$(boxname).id.antinewline' '$(boxname_workdir)/$(boxname).id.json-raw'
+	@printf '[*] Erasing project file: %s\n' '$(boxname_workdir)/$(project_filename).antinewline'
+	-rm -f '$(boxname_workdir)/$(project_filename).antinewline'
 	@printf '[*] Erasing temporary files for building packer template: %s\n' '$(foreach suffix,base iso salt ssh tools,$(boxname_workdir)/$(boxname)-vars.json.$(suffix))'
 	-rm -f '$(boxname_workdir)/$(boxname)-vars.json'{,.base,.iso,.salt,.ssh,.tools}
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
@@ -494,7 +496,7 @@ $(boxname_workdir)/$(boxname).name:	| $(boxname_workdir)
 	@printf -- '%s\n' '$(boxname)' >| '$@'
 
 # Write the identity file
-$(outdir)/$(output_identity_file): $(boxname_workdir)/$(boxname).name.antinewline	| $(outdir)
+$(outdir)/$(output_identity_file): $(boxname_workdir)/$(project_filename).antinewline	| $(outdir)
 	$(call verify_expression,$(wildcard $<),File not found: $<)
 	@printf '[-] Calculating %s checksum for %s: $@\n' '$(call uc,md5)' '$<'
 	@openssl dgst -md5 '$<' | rev | cut -d' ' -f 1 | rev >| '$@'
@@ -624,6 +626,7 @@ $(eval $(call gh_download,$(workdir)/$(salt_bootstrap_file),$(salt_bootstrap_fil
 ## Components used to build the Ignition configuration
 
 # Generate a static machine identifier for the master to work around hashicorp/packer#8528
+$(eval $(call antinewline_file,$(outdir)/$(output_project_name),$(boxname_workdir)/$(project_filename).antinewline))
 $(eval $(call antinewline_file,$(outdir)/$(output_identity_file),$(boxname_workdir)/$(boxname).id.antinewline))
 
 # This id is fed to the kernel at bootup in order to force the machine id
