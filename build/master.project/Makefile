@@ -24,16 +24,28 @@ OUTPUT?=$(ROOTDIR)
 ### List of options that the user can provide to influence the build
 include $(MAKEDIR)Makefile.config
 
-### Project variable used to name the current project
+### Internal variables that are used for building
+
+# Output directory to write the template into
+outdir := $(patsubst %/,%,$(OUTPUT))/$(project_output_path)
+
+# Intermediary work directory to stage required files into
+workdir?=$(BUILDDIR)
+
+### Box-specific internal variables used for building the box
+
+# Project variable used to name the current project
 project := $(call lc,${PROJECT})
+
+# Validate the project variable since it determines our working directories
 ifeq ($(project),)
-    ifeq ($(wildcard $(project_filename)),)
+    ifeq ($(wildcard $(outdir)/$(project_filename)),)
         # If the file doesn't exist, then use a default
         project := null
         $(warning No PROJECT was specified. Using project name "$(project)" until failure.)
     else
         # Extract the name straight out of the file in the root of the repo
-        project := $(file <$(project_filename))
+        project := $(file <$(outdir)/$(project_filename))
         $(info [-] Found already existing project name: $(project))
     endif
 
@@ -42,21 +54,16 @@ else
     $(info [-] Using project name: $(project))
 endif
 
-### Internal variables that are used for building
-
 # Figure out the name of the box using the project name
 boxname?=master.$(project)
 
-# Output directory to write the template into
-outdir := $(patsubst %/,%,$(OUTPUT))/$(project_output_path)
-
-# Intermediary work directory to stage required files into
-workdir?=$(BUILDDIR)
+# Intermediary box working directories for staging build-specific files in
 boxname_workdir=$(workdir)/$(boxname)
 boxname_template=$(boxname_workdir)/template
 
 # List of static files that are required for deployment (does not include template)
 output_identity_name := $(boxname).name
+output_project_name := $(project_filename)
 output_identity_file := $(boxname).id
 output_config := $(boxname).config
 output_keypair_pub := $(boxname).id_rsa.pub
@@ -351,7 +358,7 @@ $$(outdir)/$$(boxname)-$(1): $$(boxname_template)-$(1)	| $$(outdir)
 endef
 $(foreach suffix,$(platform),$(eval $(call output_template,$(suffix))))
 
-$(project_filename):
+$(outdir)/$(output_project_name):
 	@printf '[*] Writing project name to file: %s\n' '$@'
 	@echo '$(project)' >| '$@'
 
