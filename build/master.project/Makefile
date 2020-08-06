@@ -39,19 +39,37 @@ project := $(call lc,${PROJECT})
 
 # Validate the project variable since it determines our working directories
 ifeq ($(project),)
+
+	# If the file doesn't exist, then use a default
     ifeq ($(wildcard $(outdir)/$(project_filename)),)
-        # If the file doesn't exist, then use a default
         project := null
         $(warning No PROJECT was specified. Using project name "$(project)" until failure.)
+
+	# Extract the name straight out of the file in the root of the repo
     else
-        # Extract the name straight out of the file in the root of the repo
         project := $(file <$(outdir)/$(project_filename))
-        $(info [-] Found already existing project name: $(project))
+        $(info [-] Continuing with project name defined in $(outdir)/$(project_filename): $(project))
     endif
 
+# If the user already assigned it, then figure out whether we're being asked
+# to change the project name (and refuse), or continue as requested.
 else
-    # If the user already assigned it, then just use it
-    $(info [-] Using project name: $(project))
+    # If the file doesn't exist, then proceed as requested
+    ifeq ($(wildcard $(outdir)/$(project_filename)),)
+        $(info [-] Using explicit project name specified by environment: $(project))
+
+    # Otherwise, we need to warn the user that another project already exists
+    # in our output directory.
+    else
+        original := $(file <$(outdir)/$(project_filename))
+        ifneq ($(original),$(project))
+            $(info [!] User explicitly specified project name which doesn't match $(outdir)/$(project_filename): $(original))
+            $(warning Overriding project name in output directory with project name specified by environment: $(project))
+        else
+            project := $(file <$(outdir)/$(project_filename))
+            $(info [*] Updating template for already defined project: $(project))
+        endif
+    endif
 endif
 
 # Figure out the name of the box using the project name
