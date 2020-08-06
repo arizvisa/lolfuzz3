@@ -196,10 +196,10 @@ else
 endif
 
 ### Notify the user what directories we're going to write files to
-$(info [+] Using the work directory: $(abspath $(workdir)))
+$(info [*] Using the work directory: $(abspath $(workdir)))
 
 ifeq ($(wildcard $(outdir)/$(boxname)),)
-    $(info [+] Using the output path for $(boxname): $(abspath $(outdir)/$(boxname)))
+    $(info [*] Using the output path for $(boxname): $(abspath $(outdir)/$(boxname)))
 else
     $(warning The output path for $(boxname) already exists (builder will refuse to overwrite during deployment): $(abspath $(outdir)/$(boxname)))
 endif
@@ -219,7 +219,7 @@ FORCE:
 ## Regular recipes that the user can use
 .PHONY: help
 help:
-	$(info [+] User requested help for the makefile)
+	$(info [+] User requested help for the Makefile)
 	@printf '\nThe following recipes are available:\n'
 	@printf '\t%s\n' 'all' 'output' 'template' 'clean' 'download'
 	@printf '\nTo pre-download an individual class of files needed for the build:\n'
