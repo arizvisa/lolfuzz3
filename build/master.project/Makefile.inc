@@ -89,9 +89,18 @@ endef
 #
 # Usage: newline_file($filename, $target)
 define newline_file
-$(2): $(1)
+$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
 	@cp '$$<' '$$@'
 	@echo >> '$$@'
+endef
+
+# Same as the checksum function except the generated recipe also strips any
+# newlines from the file that gets written.
+#
+# Usage: antinewline_file($filename, $target)
+define antinewline_file
+$(2): $(1)	| $(patsubst %/,%,$(dir $(2)))
+	@tr -d $$$$'\r\n' < '$$<' >| '$$@'
 endef
 
 # Generate a recipe that converts the source file (raw) into a json form that
