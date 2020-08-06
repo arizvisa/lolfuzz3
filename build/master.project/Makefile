@@ -331,8 +331,8 @@ clean-json:
 	-rm -f '$(boxname_workdir)/$(boxname).json'
 	@printf '[*] Erasing identification files: %s %s\n' '$(boxname_workdir)/$(boxname).id.antinewline' '$(boxname_workdir)/$(boxname).id.json-raw'
 	-rm -f '$(boxname_workdir)/$(boxname).id.antinewline' '$(boxname_workdir)/$(boxname).id.json-raw'
-	@printf '[*] Erasing project file: %s\n' '$(boxname_workdir)/$(project_filename).antinewline'
-	-rm -f '$(boxname_workdir)/$(project_filename).antinewline'
+	@printf '[*] Erasing project files: %s %s\n' '$(boxname_workdir)/$(boxname).name' '$(boxname_workdir)/$(project_filename).antinewline'
+	-rm -f '$(boxname_workdir)/$(boxname).name' '$(boxname_workdir)/$(project_filename).antinewline'
 	@printf '[*] Erasing temporary files for building packer template: %s\n' '$(foreach suffix,base iso salt ssh tools,$(boxname_workdir)/$(boxname)-vars.json.$(suffix))'
 	-rm -f '$(boxname_workdir)/$(boxname)-vars.json'{,.base,.iso,.salt,.ssh,.tools}
 	-rm -f $(foreach suffix,base iso salt ssh tools,'$(boxname_workdir)/$(boxname)-vars.json.$(suffix)')
