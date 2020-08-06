@@ -377,7 +377,7 @@ $$(outdir)/$$(boxname)-$(1): $$(boxname_template)-$(1)	| $$(outdir)
 endef
 $(foreach suffix,$(platform),$(eval $(call output_template,$(suffix))))
 
-$(outdir)/$(output_project_name):
+$(outdir)/$(output_project_name):	| $(outdir)
 	@printf '[+] Writing project name to file: %s\n' '$@'
 	@echo '$(project)' >| '$@'
 
@@ -530,7 +530,7 @@ $(boxname_workdir)/$(boxname).config-sysctl: $(foreach f,$(ignition_sysctl_files
 	@printf '[*] Merging all ignition sysctl files into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $(foreach file,$^,'$(file)') >| '$@'
 else
-$(boxname_workdir)/$(boxname).config-sysctl:
+$(boxname_workdir)/$(boxname).config-sysctl:	| $(boxname_workdir)
 	@printf '[-] Generating an empty ignition sysctl file list: %s\n' '$@'
 	@jq -n '[]' >| '$@'
 endif
@@ -540,7 +540,7 @@ $(boxname_workdir)/$(boxname).config-rootfs: $(foreach name,$(ignition_root_file
 	@printf '[*] Merging all ignition root files into %s: %s\n' '$@' '$^'
 	jq '[., inputs]' $(foreach file,$^,'$(file)') >| '$@'
 else
-$(boxname_workdir)/$(boxname).config-rootfs:
+$(boxname_workdir)/$(boxname).config-rootfs:	| $(boxname_workdir)
 	@printf '[-] Generating an empty ignition root file list: %s\n' '$@'
 	@jq -n '[]' >| '$@'
 endif
@@ -556,7 +556,7 @@ $(boxname_workdir)/$(boxname).config-units: $(foreach name,$(ignition_units_name
 	@printf '[*] Merging the ignition unit section into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $(foreach unit,$^,'$(unit)') >| '$@'
 else
-$(boxname_workdir)/$(boxname).config-units:
+$(boxname_workdir)/$(boxname).config-units:	| $(boxname_workdir)
 	@printf '[-] Generating an empty ignition unit list: %s\n' '$@'
 	@jq -n '[]' >| '$@'
 endif
@@ -572,7 +572,7 @@ $(boxname_workdir)/$(boxname).config-users: $(foreach f,$(ignition_users_files),
 	@printf '[*] Merging the ignition user section into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $(foreach user,$^,'$(user)') >| '$@'
 else
-$(boxname_workdir)/$(boxname).config-users:
+$(boxname_workdir)/$(boxname).config-users:	| $(boxname_workdir)
 	$(error Not having any users defined may make it impossible to authenticate to template: $@)
 	@printf '[-] Generating an empty ignition user section: %s\n' '$@'
 	@jq -n '[]' >| '$@'
@@ -584,7 +584,7 @@ $(boxname_workdir)/$(boxname).config-network: $(foreach f,$(ignition_network_fil
 	@printf '[*] Merging all ignition network files into %s: %s\n' '$@' '$^'
 	@jq '[., inputs]' $(foreach config,$^,'$(config)') >| '$@'
 else
-$(boxname_workdir)/$(boxname).config-network:
+$(boxname_workdir)/$(boxname).config-network:	| $(boxname_workdir)
 	@printf '[-] Generating an empty ignition network file list: %s\n' '$@'
 	@jq -n '[]' >| '$@'
 endif
