@@ -48,7 +48,7 @@ ifeq ($(project),)
 	# Extract the name straight out of the file in the root of the repo
     else
         project := $(file <$(outdir)/$(project_filename))
-        $(info [-] Continuing with project name defined in $(outdir)/$(project_filename): $(project))
+        $(info [*] Continuing with project name defined in $(outdir)/$(project_filename): $(project))
     endif
 
 # If the user already assigned it, then figure out whether we're being asked
@@ -56,7 +56,7 @@ ifeq ($(project),)
 else
     # If the file doesn't exist, then proceed as requested
     ifeq ($(wildcard $(outdir)/$(project_filename)),)
-        $(info [-] Using explicit project name specified by environment: $(project))
+        $(info [+] Using explicit project name specified by environment: $(project))
 
     # Otherwise, we need to warn the user that another project already exists
     # in our output directory.
@@ -67,7 +67,7 @@ else
             $(warning Overriding project name in output directory with project name specified by environment: $(project))
         else
             project := $(file <$(outdir)/$(project_filename))
-            $(info [*] Updating template for already defined project: $(project))
+            $(info [+] Updating template for already defined project: $(project))
         endif
     endif
 endif
@@ -143,11 +143,11 @@ endif
 platform = $(subst $(comma),$(space),$(PLATFORM))
 
 ifneq ($(platform),)
-$(info [-] User has specified the following template type(s): $(platform))
+$(info [+] User has specified the following template type(s): $(platform))
 options := $(options) only='$(subst $(space),$(comma),$(strip $(foreach name,$(filter-out qemu,$(platform)),$(name)-iso) $(foreach name,$(filter qemu,$(platform)),$(name))))'
 else
 $(warning User has specified no template types. Assuming all platforms are available.)
-$(info [-] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
+$(info [!] To target a specific build platform, set the PLATFORM variable to one or more of the following: vmware, virtualbox, parallels, hyperv, qemu)
 endif
 
 ### Check for any default service configurations included in the repository
@@ -196,10 +196,10 @@ else
 endif
 
 ### Notify the user what directories we're going to write files to
-$(info [-] Using the work directory: $(abspath $(workdir)))
+$(info [+] Using the work directory: $(abspath $(workdir)))
 
 ifeq ($(wildcard $(outdir)/$(boxname)),)
-    $(info [-] Using the output path for $(boxname): $(abspath $(outdir)/$(boxname)))
+    $(info [+] Using the output path for $(boxname): $(abspath $(outdir)/$(boxname)))
 else
     $(warning The output path for $(boxname) already exists (builder will refuse to overwrite during deployment): $(abspath $(outdir)/$(boxname)))
 endif
@@ -219,7 +219,7 @@ FORCE:
 ## Regular recipes that the user can use
 .PHONY: help
 help:
-	$(info [*] User requested help for the makefile)
+	$(info [+] User requested help for the makefile)
 	@printf '\nThe following recipes are available:\n'
 	@printf '\t%s\n' 'all' 'output' 'template' 'clean' 'download'
 	@printf '\nTo pre-download an individual class of files needed for the build:\n'
@@ -279,6 +279,7 @@ clean-output:
 	@printf '[*] Erasing output files from %s\n' '$(outdir)'
 	-rm -f $(foreach f,$(output_identity_file),'$(outdir)/$(f)')
 	-rm -f $(foreach f,$(output_config),'$(outdir)/$(f)')
+	@printf '[!] Skipping removal of keypairs: %s %s\n' '$(outdir)/$(output_keypair_pub)' '$(outdir)/$(output_keypair_prv)'
 
 .PHONY: clean-installer
 clean-installer:
@@ -371,24 +372,24 @@ $$(outdir)/$$(boxname)-$(1): $$(boxname_template)-$(1)	| $$(outdir)
 	$$(call verify_expression_not,$$(wildcard $$@),Refusing to deploy $$< over already existing file: $$@)
 	@printf '[*] Moving template %s: %s\n' '$$<' '$$(dir $$@)'
 	mv '$$<' '$$@'
-	@printf '[*] Leaving an empty directory as a placeholder: %s\n' '$$<'
+	@printf '[-] Leaving an empty directory as a placeholder: %s\n' '$$<'
 	mkdir -p '$$<'
 endef
 $(foreach suffix,$(platform),$(eval $(call output_template,$(suffix))))
 
 $(outdir)/$(output_project_name):
-	@printf '[*] Writing project name to file: %s\n' '$@'
+	@printf '[+] Writing project name to file: %s\n' '$@'
 	@echo '$(project)' >| '$@'
 
 ### Recipe for using the "serve" branch
 $(boxname_workdir)/serve:	| $(boxname_workdir)
-	@printf '[!] Cloning branch %s from repository into target: %s\n' '$(project_serve_branch)' '$@'
+	@printf '[*] Cloning branch %s from repository into target: %s\n' '$(project_serve_branch)' '$@'
 	git -C '$(ROOTDIR)' clone --dissociate -n --single-branch --branch '$(project_serve_branch)' . '$@'
-	@printf '[!] Checking out commit %s in target: %s\n' '$(repository_serve)' '$@'
+	@printf '[*] Checking out commit %s in target: %s\n' '$(repository_serve)' '$@'
 	git -C '$@' checkout -B master '$(repository_serve)'
 
 $(boxname_workdir)/serve.tar: $(serve)	| $(boxname_workdir)
-	@printf '[-] Archiving the service directory: %s\n' '$<'
+	@printf '[*] Archiving the service directory: %s\n' '$<'
 	$(GTAR) -C '$<' -cpf '$@' .
 
 ### Box recipes required to build the template
@@ -419,7 +420,7 @@ $(boxname_workdir)/$(boxname)-vars.json.base: $(boxname_workdir)/$(boxname).id.j
 
 # Concatenate entire template configuration into a single .json file
 $(boxname_workdir)/$(boxname)-vars.json: $(MAKEDIR)box-vars.json $(boxname_workdir)/$(boxname)-vars.json.iso $(boxname_workdir)/$(boxname)-vars.json.ssh $(boxname_workdir)/$(boxname)-vars.json.salt $(boxname_workdir)/$(boxname)-vars.json.tools $(boxname_workdir)/$(boxname)-vars.json.base
-	@printf '[*] Merging build variables together into %s: %s\n' '$@' '$^'
+	@printf '[-] Merging build variables together into %s: %s\n' '$@' '$^'
 	@jq 'reduce inputs as $$item (.; . * $$item)' $(foreach json,$^,'$(json)') >| '$@'
 
 # Grab all the specified tools into the tools directory and build a json for it
@@ -447,13 +448,13 @@ $(boxname_workdir)/$(boxname).json: $(MAKEDIR)box.json $(MAKEDIR)provision.json	
 # keypair that was previously generated and deployed.
 ifneq ($(wildcard $(outdir)/$(output_keypair_prv)),)
 $(outdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_pub)	| $(outdir)
-	@printf '[-] Using already existing private key: %s\n' '$<'
+	@printf '[+] Using already existing private key: %s\n' '$<'
 
 # Use the already existing deployed public key from the output directory
 # This is required since things won't work without actually having the
 # whole keypair.
 $(outdir)/$(output_keypair_pub):	| $(outdir)
-	@printf '[-] Using already existing public key: %s\n' '$<'
+	@printf '[+] Using already existing public key: %s\n' '$<'
 
 else
 # If there's an encrypted key that needs to be decrypted, then decrypt it
@@ -464,13 +465,13 @@ $(outdir)/$(output_keypair_prv): $(outdir)/$(output_keypair_prv).enc $(outdir)/$
 	openssl enc -d -$(cipher) -in '$<' -out '$@'
 
 $(outdir)/$(output_keypair_pub):	| $(outdir)
-	@printf '[-] Using already existing public key: %s\n' '$<'
+	@printf '[+] Using already existing public key: %s\n' '$<'
 
 else
 # If there's no keypair components, then use ssh-keygen to generate it
 $(outdir)/$(output_keypair_prv) $(outdir)/$(output_keypair_pub):	| $(outdir)
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to to generate public/private keypair!)
-	@printf '[-] Generating public/private keypair: %s\n' '$@'
+	@printf '[+] Generating public/private keypair: %s\n' '$@'
 	ssh-keygen -q -t rsa -C 'core@$(project)' -f '$(outdir)/$(output_keypair_prv)' -N ''
 
 endif
@@ -497,7 +498,7 @@ $(boxname_workdir)/$(boxname).config.ok: $(boxname_workdir)/$(boxname).config.va
 		printf 'Validation Error: %s\n' "$$message" 1>&2; \
 		exit 1; \
 	done
-	@printf '[*] Successfully validated ignition configuration: %s\n' '$@'
+	@printf '[-] Successfully validated ignition configuration: %s\n' '$@'
 	@touch '$@'
 
 # Check if the box configuration has already been deployed, if not then combine
@@ -515,12 +516,12 @@ $(boxname_workdir)/$(boxname).name:	| $(boxname_workdir)
 # Write the identity file
 $(outdir)/$(output_identity_file): $(boxname_workdir)/$(project_filename).antinewline	| $(outdir)
 	$(call verify_expression,$(wildcard $<),File not found: $<)
-	@printf '[-] Calculating %s checksum for %s: $@\n' '$(call uc,md5)' '$<'
+	@printf '[*] Calculating %s checksum for %s: $@\n' '$(call uc,md5)' '$<'
 	@openssl dgst -md5 '$<' | rev | cut -d' ' -f 1 | rev >| '$@'
 
 # Pack the machine identifier and hostname into an array
 $(boxname_workdir)/$(boxname).config-identifier: $(boxname_workdir)/ignition-id.json $(boxname_workdir)/ignition-hostname.json	| $(boxname_workdir)
-	@printf '[-] Packing the ignition machine identifier and hostname into an array: %s\n' '$<'
+	@printf '[*] Packing the ignition machine identifier and hostname into an array: %s\n' '$<'
 	@jq '[., inputs]' $(foreach file,$^,'$(file)') >| '$@'
 
 # Bootstrap the ignition/sysctl directory
@@ -607,7 +608,7 @@ $(boxname_workdir)/pillar/acbuild.sls: $(acbuild_files)	| $(boxname_workdir)/pil
 
 $(boxname_workdir)/pillar/configuration-name.sls:	| $(boxname_workdir)/pillar
 	$(call verify_expression,$(project),No PROJECT was specified. Unable to write project name into pillar configuration!)
-	@printf '[-] Writing project name into pillar configuration: %s\n' '$@'
+	@printf '[+] Writing project name ($(project)) into pillar configuration: %s\n' '$@'
 	@printf -- '%s\n' '$(project)' >| '$@'
 
 ### List of recipes that are dynamically generated using macros
