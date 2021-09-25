@@ -30,9 +30,9 @@ $(1).template.count: $(1).template	| $$(patsubst %/,%,$$(dir $(1)))
 
 $(1).template.valid: $(1).template.count	| $$(patsubst %/,%,$$(dir $(1)))
 	@printf '[*] Validating template name for "%s"...\n' '$$(notdir $(1))'
-	@test `cat '$$<'` -eq 1
+	@cat '$$<' | xargs printf "%s\n-eq\n1" | xargs test
 
 $(2): $(1).files $(1).name
-	ovftool '$$<'/`cat '$(1).name'` '$$@'
+	cat '$(1).name' | xargs printf "$$</%s\n$$@\n" | xargs ovftool
 	@printf '[*] Successfully created template "%s"\n' '$$(notdir $$@)'
 endef
