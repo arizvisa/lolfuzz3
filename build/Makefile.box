@@ -22,7 +22,7 @@ $(1).files: $(1)	| $$(patsubst %/,%,$$(dir $(1)))
 
 # If the template and its name is valid, then this will write the name to a file
 $(1).name: $(1).template $(1).template.valid	| $$(patsubst %/,%,$$(dir $(1)))
-	ln '$$<' '$$@'
+	ln -f '$$<' '$$@'
 
 # Test that the template name is actually valid
 $(1).template.count: $(1).template	| $$(patsubst %/,%,$$(dir $(1)))
