@@ -70,7 +70,7 @@ else
 $$(cachedir)/$$(notdir $(1)):	| $$(cachedir)
 	@printf '[*] Transferring iso from path (%s) to cache: %s\n' '$(1)' '$$@'
 	@test -e '$(1)'
-	ln -s '$(1)' '$$@'
+	ln '$(1)' '$$@' 2>/dev/null || ln -s '$(1)' '$$@'
 endif
 endef
 
